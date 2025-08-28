@@ -12,6 +12,7 @@ from .template import (
     TestCaseTemplate,
     make_tests_from_template
 )
+from .test import ComparisonTest
 
 __all__ = [
     "FilePath",
@@ -23,5 +24,6 @@ __all__ = [
     "TemplateSubstitution",
     "TSub",
     "TestCaseTemplate",
-    "make_tests_from_template"
+    "make_tests_from_template",
+    "ComparisonTest",
 ]
