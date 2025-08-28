@@ -147,6 +147,9 @@ class TestCaseProtocol(Protocol):
     def get_name(self): ...
     def get_input(self): ...
     def get_expected_output(self): ...
+
+# Notice that TestCaseProtocol defaults to equal-weights
+class WeightedTestCaseProtocol(TestCaseProtocol):
     def get_weight(self): ...
 
 # ... or you can directly return a dict with the following keys.
@@ -159,7 +162,7 @@ class TestCaseDict(TypedDict):
 # Here's an example of the syntax as well as the required 
 # signature of such a method:
 @make_tests_from_generator
-def test_suite_1() -> Generator[TestCaseProtocol | TestCaseDict, None, None]:
+def test_suite_1() -> Generator[TestCaseProtocol | WeightedTestCaseProtocol | TestCaseDict, None, None]:
     pass
 ```
 
