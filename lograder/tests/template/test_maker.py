@@ -17,6 +17,6 @@ class TestCaseTemplate:
         # TODO: Make implementation of the `TestCaseTemplate` class.
         ...
 
-def make_tests_from_template(template: TestCaseTemplate):
+def make_tests_from_template(template: TestCaseTemplate) -> None:
     # TODO: Make implementation of `make_tests_from_template` function.
     ...

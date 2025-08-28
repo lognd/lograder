@@ -9,6 +9,6 @@ def make_tests_from_files(
         inputs: Sequence[FilePath],
         expected_outputs: Sequence[FilePath],
         weights: Optional[Sequence[float]] = None # Defaults to equal-weight.
-):
+) -> None:
     # TODO: Make `make_tests_from_file` implementation
     ...

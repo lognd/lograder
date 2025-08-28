@@ -1,5 +1,9 @@
-from .types import TestCaseProtocol, WeightedTestCaseProtocol, TestCaseDict
+from typing import Callable, Generator
 
-def make_tests_from_generator():
+from .types import TestCase
+
+def make_tests_from_generator(
+        generator: Callable[[], Generator[TestCase, None, None]]
+) -> None:
     # TODO: Make the `@make_tests_from_generator` as specified in the README.md
     ...
