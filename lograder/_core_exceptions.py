@@ -1,0 +1,2 @@
+class LograderError(Exception):
+    pass
