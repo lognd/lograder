@@ -43,6 +43,31 @@ There are a few types of tests that we support:
 
 ## Output Comparison
 
+### Compare Simple Strings (*WIP*)
+
+For the smallest number of tiny test cases, there's no reason
+to have an over-bloated mess. You can just use:
+
+```py
+from typing import Sequence, Optional
+from lograder.tests import make_tests_from_strs
+
+def make_tests_from_files(
+        *,  # kwargs-only; to avoid confusion with argument sequence.
+        names: Sequence[str],
+        inputs: Sequence[str],
+        expected_outputs: Sequence[str],
+        weights: Optional[Sequence[float]] = None # Defaults to equal-weight.
+): ...
+
+# Here's an example of how you'd use the above method:
+make_tests_from_files(
+    names=["Test Case 1", "Test Case 2"],
+    inputs=["stdin-1", "stdin-2"],
+    expected_outputs=["stdout-1", "stdout-2"]
+)
+```
+
 ### Compare from Files (*WIP*)
 
 If you have a larger test, it would be very convenient to
@@ -51,10 +76,7 @@ method to do so:
 
 ```py
 from typing import Sequence, Optional
-from os import PathLike
-from lograder.tests import make_tests_from_files
-
-FilePath = str | bytes | PathLike[str] | PathLike[bytes]
+from lograder.tests import make_tests_from_files, FilePath
 
 # `make_tests_from_files` has the following signature.
 def make_tests_from_files(
@@ -81,10 +103,7 @@ and pass a `TestCaseTemplate` object and ...
 
 ```py
 from typing import Sequence, Optional
-from os import PathLike
-from lograder.tests import make_tests_from_template, TestCaseTemplate
-
-FilePath = str | bytes | PathLike[str] | PathLike[bytes]
+from lograder.tests import make_tests_from_template, TestCaseTemplate, FilePath
 
 # Here's the signature of a `TemplateSubstitution`
 class TemplateSubstitution:
