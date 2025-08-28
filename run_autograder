@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -e
-
-cd /autograder/source
-
-# Run your autograder
-python3 main.py
