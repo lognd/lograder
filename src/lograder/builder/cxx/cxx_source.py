@@ -3,23 +3,26 @@ from pathlib import Path
 from typing import List, Union
 
 from ...common.types import FilePath
-from ...tests.test import ComparisonTest
-from ..common import BuilderInterface, bfs_walk, is_cxx_source_file
+from ..common import BuilderInterface, bfs_walk, is_cxx_source_file, CxxRuntimeInterface
 from ..common.exceptions import GxxCompilationError
 from ..constants import (
     DEFAULT_CXX_COMPILATION_FLAGS,
     DEFAULT_CXX_STANDARD,
     DEFAULT_EXECUTABLE_NAME,
+    DEFAULT_EXECUTION_FLAGS
 )
 
 
-class CxxSourceBuilder(BuilderInterface):
+class CxxSourceBuilder(CxxRuntimeInterface, BuilderInterface):
     def __init__(self, project_root: FilePath):
         self._sources: List[Path] = []
         self._executable_path: Path = Path(project_root) / DEFAULT_EXECUTABLE_NAME
         for file in bfs_walk(Path(project_root)):
             if is_cxx_source_file(file):
                 self._sources.append(file)
+
+    def get_arguments(self) -> List[str]:
+        return DEFAULT_EXECUTION_FLAGS
 
     def get_executable_path(self) -> Path:
         return self._executable_path.resolve()
@@ -43,6 +46,3 @@ class CxxSourceBuilder(BuilderInterface):
             raise GxxCompilationError(proc)
 
         return Path(self.get_executable_path())
-
-    def run(self, test: ComparisonTest):
-        pass

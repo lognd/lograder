@@ -4,7 +4,7 @@ from .file_operations import (
     is_default_target,
     is_executable,
 )
-from .interface import BuilderInterface, ResultInterface
+from .interface import BuilderInterface, ResultInterface, CxxRuntimeInterface
 from .validation import validate_paths
 
 __all__ = [
@@ -15,4 +15,5 @@ __all__ = [
     "is_executable",
     "is_default_target",
     "is_cxx_source_file",
+    "CxxRuntimeInterface"
 ]
