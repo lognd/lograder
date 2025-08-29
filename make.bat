@@ -44,18 +44,18 @@ echo Running pre-install scripts...
 goto :eof
 
 :uninstall
-echo Uninstalling ariad...
-call %VENV_PIP% uninstall -y ariad || echo (Already uninstalled)
+echo Uninstalling lograder...
+call %VENV_PIP% uninstall -y lograder || echo (Already uninstalled)
 goto :eof
 
 :reinstall
-echo Installing ariad in editable mode with test extras...
+echo Installing lograder in editable mode with test extras...
 call %VENV_PIP% install -e .[dev]
 goto :eof
 
 :test
 echo Running tests...
-call %VENV_PYTEST% -q --tb=short --maxfail=5
+call %VENV_PYTEST% tests/ -q --tb=short --maxfail=5
 goto :eof
 
 :type

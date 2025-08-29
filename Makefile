@@ -36,7 +36,7 @@ reinstall:
 
 test:
 	@echo "Running tests..."
-	@$(VENV_PYTEST) -q --tb=short --maxfail=5
+	@$(VENV_PYTEST) tests/ -q --tb=short --maxfail=5
 
 type:
 	@echo "Type-checking with mypy..."
