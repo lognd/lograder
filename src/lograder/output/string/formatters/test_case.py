@@ -1,19 +1,23 @@
 from typing import Union
 
-from colorama import Fore, Style
+from colorama import Fore
 
-from .common import StreamFormatter, FormatterInterface
+from .common import FormatterInterface, StreamFormatter
 
 
 class StatusFormatter:
     pass
 
 
-class ActualSTDOUTFormatter(StreamFormatter, stream_name="actual stdout", stream_color=Fore.MAGENTA):
+class ActualSTDOUTFormatter(
+    StreamFormatter, stream_name="actual stdout", stream_color=Fore.MAGENTA
+):
     pass
 
 
-class ExpectedSTDOUTFormatter(StreamFormatter, stream_name="expected stdout", stream_color=Fore.GREEN):
+class ExpectedSTDOUTFormatter(
+    StreamFormatter, stream_name="expected stdout", stream_color=Fore.GREEN
+):
     pass
 
 
@@ -30,8 +34,8 @@ class ReprFormatter(FormatterInterface):
         super().__init__(*args, **kwargs)
         self._content: Union[FormatterInterface, str] = ""
 
-    def set(self, *, content: Union[FormatterInterface, str] = "", **_):
+    def set(self, *, content: Union[FormatterInterface, str] = "", **_) -> None:
         self._content = content
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{repr(self._content if isinstance(self._content, str) else self._content.to_string())}"

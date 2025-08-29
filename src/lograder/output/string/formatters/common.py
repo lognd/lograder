@@ -64,6 +64,7 @@ class ContextFormatter(FormatterInterface):
     def __str__(self):
         return f"{self._prefix}{self._content if isinstance(self._content, str) else self._content.to_string()}{self._suffix}"
 
+
 class StreamFormatter(ContextFormatter):  # type: ignore[call-arg]
     def __init_subclass__(  # I override the __init_subclass__, but mypy doesn't know that.
         cls, *args, stream_name: str, stream_color: str = Fore.CYAN, **kwargs

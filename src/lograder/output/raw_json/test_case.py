@@ -18,3 +18,7 @@ class TestCaseJSON(BaseModel):
     tags: List[str] = Field(default_factory=list)
     visibility: Optional[Visibility] = "hidden"
     extra_data: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+    @property
+    def is_scored(self) -> bool:
+        return self.score is not None
