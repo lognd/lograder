@@ -6,6 +6,8 @@ from .generator import (
     WeightedTestCaseProtocol,
     make_tests_from_generator,
 )
+from .registry import TestRegistry
+from .simple import make_tests_from_strs
 from .template import (
     TemplateSubstitution,
     TestCaseTemplate,
@@ -15,6 +17,7 @@ from .template import (
 from .test import ComparisonTest
 
 __all__ = [
+    "make_tests_from_strs",
     "FilePath",
     "make_tests_from_files",
     "TestCaseProtocol",
@@ -26,4 +29,5 @@ __all__ = [
     "TestCaseTemplate",
     "make_tests_from_template",
     "ComparisonTest",
+    "TestRegistry",
 ]

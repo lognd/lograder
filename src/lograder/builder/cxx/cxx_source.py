@@ -3,13 +3,13 @@ from pathlib import Path
 from typing import List, Union
 
 from ...common.types import FilePath
-from ..common import BuilderInterface, bfs_walk, is_cxx_source_file, CxxRuntimeInterface
+from ..common import BuilderInterface, CxxRuntimeInterface, bfs_walk, is_cxx_source_file
 from ..common.exceptions import GxxCompilationError
 from ..constants import (
     DEFAULT_CXX_COMPILATION_FLAGS,
     DEFAULT_CXX_STANDARD,
     DEFAULT_EXECUTABLE_NAME,
-    DEFAULT_EXECUTION_FLAGS
+    DEFAULT_EXECUTION_FLAGS,
 )
 
 
