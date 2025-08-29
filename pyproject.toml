@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lograder"
+version = "0.0.1"
+description = "An API for easy Gradescope Autograder assignment creation."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name = "lognd", email = "logan@logand.app" }
+]
+keywords = ["gradescope", "autograder"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent"
+]
+requires-python = ">=3.9"
+
+dependencies = [
+  "pydantic>=2.11.7",
+  "colorama>=0.4.6"
+]
+
+[project.urls]
+Homepage = "https://github.com/lognd/lograder"
+Documentation = "https://github.com/lognd/lograder"
+Source = "https://github.com/lognd/lograder"
+Issues = "https://github.com/lognd/lograder/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Development dependencies
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+  "black>=24.0",
+  "ruff>=0.2",
+  "isort>=5.13",
+  "mypy>=1.0",
+]
+
+[tool.ruff]
+line-length = 88
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
