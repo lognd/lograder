@@ -1,2 +1,0 @@
-class ContextFormatter:
-    pass
