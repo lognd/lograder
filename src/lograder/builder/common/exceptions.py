@@ -1,5 +1,6 @@
-from .._core_exceptions import LograderPreprocessorError
 from ...common.types import FilePath
+from .._core_exceptions import LograderPreprocessorError
+
 
 class RequiredFileNotFoundError(LograderPreprocessorError):
     def __init__(self, path: FilePath):

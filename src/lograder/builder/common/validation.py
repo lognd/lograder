@@ -1,8 +1,9 @@
-from typing import Sequence
 from pathlib import Path
+from typing import Sequence
 
-from .exceptions import RequiredFileNotFoundError
 from ...common.types import FilePath
+from .exceptions import RequiredFileNotFoundError
+
 
 def validate_paths(paths: Sequence[FilePath]) -> None:
     for path in paths:
