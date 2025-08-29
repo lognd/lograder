@@ -60,7 +60,7 @@ goto :eof
 
 :type
 echo Type-checking with mypy...
-call %VENV_MYPY% src
+call %VENV_MYPY% src --check-untyped-defs
 goto :eof
 
 :lint

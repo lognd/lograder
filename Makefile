@@ -40,7 +40,7 @@ test:
 
 type:
 	@echo "Type-checking with mypy..."
-	@$(VENV_MYPY) src
+	@$(VENV_MYPY) src --check-untyped-defs
 
 lint:
 	@echo "Linting the code..."
