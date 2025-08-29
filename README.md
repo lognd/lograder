@@ -49,21 +49,21 @@ For the smallest number of tiny test cases, there's no reason
 to have an over-bloated mess. You can just use:
 
 ```py
-from typing import Sequence, Optional
-from src.lograder import make_tests_from_strs
+from typing import Sequence, Optional, List
+from lograder.tests import make_tests_from_strs, ComparisonTest
 
 
-def make_tests_from_files(
-        *,  # kwargs-only; to avoid confusion with argument sequence.
-        names: Sequence[str],
-        inputs: Sequence[str],
-        expected_outputs: Sequence[str],
-        weights: Optional[Sequence[float]] = None  # Defaults to equal-weight.
-): ...
+def make_test_from_strs(
+    *,  # kwargs-only; to avoid confusion with argument sequence.
+    names: Sequence[str],
+    inputs: Sequence[str],
+    expected_outputs: Sequence[str],
+    weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
+) -> List[ComparisonTest]: ...
 
 
 # Here's an example of how you'd use the above method:
-make_tests_from_files(
+make_tests_from_strs(
     names=["Test Case 1", "Test Case 2"],
     inputs=["stdin-1", "stdin-2"],
     expected_outputs=["stdout-1", "stdout-2"]
@@ -77,25 +77,27 @@ read files for input and output. Luckily, there's just the
 method to do so:
 
 ```py
-from typing import Sequence, Optional
-from src.lograder import make_tests_from_files, FilePath
+from typing import Sequence, Optional, List
+from lograder.tests import make_tests_from_files, FilePath, ComparisonTest
 
 
 # `make_tests_from_files` has the following signature.
 def make_tests_from_files(
-        *,  # kwargs-only; to avoid confusion with argument sequence.
-        names: Sequence[str],
-        inputs: Sequence[FilePath],
-        expected_outputs: Sequence[FilePath],
-        weights: Optional[Sequence[float]] = None  # Defaults to equal-weight.
-): ...
+    *,  # kwargs-only; to avoid confusion with argument sequence.
+    names: Sequence[str],
+    input_files: Optional[Sequence[FilePath]] = None,  # `input_files` and `input_strs` mutually exclusive.
+    input_strs: Optional[Sequence[str]] = None,
+    expected_output_files: Optional[Sequence[FilePath]] = None,  # same with `expected_output_files` and `expected_output_strs`
+    expected_output_strs: Optional[Sequence[str]] = None,
+    weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
+) -> List[ComparisonTest]: ...
 
 
 # Here's an example of how you'd use the above method:
 make_tests_from_files(
     names=["Test Case 1", "Test Case 2"],
-    inputs=["test/inputs/input1.txt", "test/inputs/input2.txt"],
-    expected_outputs=["test/inputs/output1.txt", "test/inputs/output2.txt"]
+    input_files=["test/inputs/input1.txt", "test/inputs/input2.txt"],
+    expected_output_files=["test/inputs/output1.txt", "test/inputs/output2.txt"]
 )
 ```
 
@@ -107,7 +109,7 @@ and pass a `TestCaseTemplate` object and ...
 
 ```py
 from typing import Sequence, Optional
-from src.lograder import make_tests_from_template, TestCaseTemplate, FilePath
+from lograder.tests import make_tests_from_template, TestCaseTemplate, FilePath
 
 
 # Here's the signature of a `TemplateSubstitution`
@@ -155,7 +157,10 @@ test_suite_1 = TestCaseTemplate(
         TSub(7.0, 6.0, kwarged="middle-arg-3"),  # Case 3 Substitutions
     ]
 )
-make_tests_from_template(test_suite_1)  # remember to construct the tests!
+make_tests_from_template(
+    ["Test 1", "Test 2", "Test 3"],
+    test_suite_1
+)  # remember to construct the tests!
 
 ```
 
@@ -168,7 +173,7 @@ follows either the following `Protocol` or `TypedDict`.
 
 ```py
 from typing import Protocol, TypedDict, Generator, NotRequired
-from src.lograder import make_tests_from_generator
+from lograder.tests import make_tests_from_generator
 
 
 # Your generator may return objects following the protocol...
@@ -198,6 +203,8 @@ class TestCaseDict(TypedDict):
 @make_tests_from_generator
 def test_suite_1() -> Generator[TestCaseProtocol | WeightedTestCaseProtocol | TestCaseDict, None, None]:
     pass
+
+# You'll have to query the `TestRegistry` from `lograder.tests` to access these tests, though.
 ```
 
 
