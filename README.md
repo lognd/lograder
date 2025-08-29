@@ -50,15 +50,17 @@ to have an over-bloated mess. You can just use:
 
 ```py
 from typing import Sequence, Optional
-from lograder.tests import make_tests_from_strs
+from src.lograder import make_tests_from_strs
+
 
 def make_tests_from_files(
         *,  # kwargs-only; to avoid confusion with argument sequence.
         names: Sequence[str],
         inputs: Sequence[str],
         expected_outputs: Sequence[str],
-        weights: Optional[Sequence[float]] = None # Defaults to equal-weight.
+        weights: Optional[Sequence[float]] = None  # Defaults to equal-weight.
 ): ...
+
 
 # Here's an example of how you'd use the above method:
 make_tests_from_files(
@@ -76,7 +78,8 @@ method to do so:
 
 ```py
 from typing import Sequence, Optional
-from lograder.tests import make_tests_from_files, FilePath
+from src.lograder import make_tests_from_files, FilePath
+
 
 # `make_tests_from_files` has the following signature.
 def make_tests_from_files(
@@ -84,8 +87,9 @@ def make_tests_from_files(
         names: Sequence[str],
         inputs: Sequence[FilePath],
         expected_outputs: Sequence[FilePath],
-        weights: Optional[Sequence[float]] = None # Defaults to equal-weight.
+        weights: Optional[Sequence[float]] = None  # Defaults to equal-weight.
 ): ...
+
 
 # Here's an example of how you'd use the above method:
 make_tests_from_files(
@@ -103,15 +107,19 @@ and pass a `TestCaseTemplate` object and ...
 
 ```py
 from typing import Sequence, Optional
-from lograder.tests import make_tests_from_template, TestCaseTemplate, FilePath
+from src.lograder import make_tests_from_template, TestCaseTemplate, FilePath
+
 
 # Here's the signature of a `TemplateSubstitution`
 class TemplateSubstitution:
     def __init__(self, *args, **kwargs):
         # Stores args and kwargs to pass to str.format(...) later.
         ...
+
+
 TSub = TemplateSubstitution  # Here's an alias that's quicker to type.
-    
+
+
 # Here's the signature of a `TestCaseTemplate`
 class TestCaseTemplate:
     def __init__(self, *,
@@ -136,11 +144,12 @@ class TestCaseTemplate:
         #     and `expected_output_substitutions`
         ...
 
+
 # Here's an example of how you would use TestCaseTemplate
 test_suite_1 = TestCaseTemplate(
     inputs=["A", "B", "C"],  # Three (3) Total Cases
     expected_output_template_str="{}, {kwarged}, {}",
-    expected_output_substitutions = [
+    expected_output_substitutions=[
         TSub(1.0, 2.0, kwarged="middle-arg-1"),  # Case 1 Substitutions
         TSub(2.0, 5.0, kwarged="middle-arg-2"),  # Case 2 Substitutions
         TSub(7.0, 6.0, kwarged="middle-arg-3"),  # Case 3 Substitutions
@@ -159,17 +168,22 @@ follows either the following `Protocol` or `TypedDict`.
 
 ```py
 from typing import Protocol, TypedDict, Generator, NotRequired
-from lograder.tests import make_tests_from_generator
+from src.lograder import make_tests_from_generator
+
 
 # Your generator may return objects following the protocol...
 class TestCaseProtocol(Protocol):
     def get_name(self): ...
+
     def get_input(self): ...
+
     def get_expected_output(self): ...
+
 
 # Notice that TestCaseProtocol defaults to equal-weights
 class WeightedTestCaseProtocol(TestCaseProtocol):
     def get_weight(self): ...
+
 
 # ... or you can directly return a dict with the following keys.
 class TestCaseDict(TypedDict):
@@ -177,6 +191,7 @@ class TestCaseDict(TypedDict):
     input: str
     expected_output: str
     weight: NotRequired[float]  # Defaults to 1.0, a.k.a. equal-weight.
+
 
 # Here's an example of the syntax as well as the required 
 # signature of such a method:
