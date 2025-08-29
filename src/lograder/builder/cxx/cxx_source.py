@@ -5,7 +5,7 @@ from typing import List, Union
 from ...common.types import FilePath
 from ...tests.test import ComparisonTest
 from ..common import BuilderInterface, bfs_walk, is_cxx_source_file
-from ..common.exceptions import GPPEntryPointNotFoundError
+from ..common.exceptions import GxxCompilationError
 from ..constants import (
     DEFAULT_CXX_COMPILATION_FLAGS,
     DEFAULT_CXX_STANDARD,
@@ -40,7 +40,7 @@ class CxxSourceBuilder(BuilderInterface):
 
         proc = subprocess.run(cmd, capture_output=True, text=True)
         if proc.returncode != 0:
-            raise GPPEntryPointNotFoundError(proc)
+            raise GxxCompilationError(proc)
 
         return Path(self.get_executable_path())
 
