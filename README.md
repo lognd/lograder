@@ -18,11 +18,65 @@ There are a few types of tests that we support:
 ### C++ Complete Project with [I/O Comparison](#output-comparison)
 
 #### Build from C++ Source (*WIP*)
+To build from source, you will need to import the C++
+`CxxSourceBuilder`. The executable will be randomly
+named and put in either a build directory, if the student
+has one (`./build`) or the project root directory (`./`).
+```py
+from lograder.builder import CxxSourceBuilder
+from lograder.output import AssignmentSummary
+
+# Note that when you make a test, it's automatically
+# registered with the `lograder.tests.registry.TestRegistry`
+
+assignment = CxxSourceBuilder(project_root="/autograder/submission")
+preprocessor_results = assignment.preprocess()
+build_results = assignment.build()
+runtime_results = assignment.run_tests()
+
+summary = AssignmentSummary(
+    preprocessor_output = preprocessor_results.get_output(),
+    build_output = build_results.get_output(),
+    build_info = build_results.get_info(),
+    runtime_summary = runtime_results.get_summary(),
+    test_cases = runtime_results.get_test_cases()
+)
+```
 
 #### Build using CMake (*WIP*)
+To build from a `CMakeLists.txt`, you will need to import the C++
+`CMakeBuilder`. This method will automatically run a breadth-first
+search starting in the project root directory (`./`) and "lock on"
+the first (i.e. the file in the highest-level) `CMakeLists.txt` that
+it finds. If it can't find a `CMakeLists.txt`, it will raise an error.
 
-#### Build using Makefile (*WIP*)
+Additionally, the program will look for the following targets first:
+`main`, `build`, and `demo`. Afterward, it will search for any target
+that doesn't match: `all`, `install`, `test`, `package`, `package_source`,
+`edit_cache`, `rebuild_cache`, `clean`, `help`, `ALL_BUILD`, `ZERO_CHECK`,
+`INSTALL`, `RUN_TESTS`, and `PACKAGE`, and run the first target that it
+finds. If it can't find a valid target, it will raise an error.
 
+```py
+from lograder.builder import CMakeBuilder
+from lograder.output import AssignmentSummary
+
+# Note that when you make a test, it's automatically
+# registered with the `lograder.tests.registry.TestRegistry`
+
+assignment = CMakeBuilder(project_root="/autograder/submission")
+preprocessor_results = assignment.preprocess()
+build_results = assignment.build()
+runtime_results = assignment.run_tests()
+
+summary = AssignmentSummary(
+    preprocessor_output = preprocessor_results.get_output(),
+    build_output = build_results.get_output(),
+    build_info = build_results.get_info(),
+    runtime_summary = runtime_results.get_summary(),
+    test_cases = runtime_results.get_test_cases()
+)
+```
 ----
 
 ### C++ Catch2 Unit Testing (*WIP*)
@@ -38,6 +92,36 @@ There are a few types of tests that we support:
 ----
 
 ### Python pytest Unit Testing (*WIP*)
+
+----
+
+### Makefile Complete Project with [I/O Comparison](#output-comparison) (*WIP*)
+
+To build from a `Makefile`, you will need a `MakefileBuilder`. It follows
+the same general idea as the `CMakeBuilder` except that it searches for
+`Makefile` instead of `CMakeLists.txt`. Additionally, `MakefileBuilder`
+will just run the default `make`.
+
+```py
+from lograder.builder import MakefileBuilder
+from lograder.output import AssignmentSummary
+
+# Note that when you make a test, it's automatically
+# registered with the `lograder.tests.registry.TestRegistry`
+
+assignment = MakefileBuilder(project_root="/autograder/submission")
+preprocessor_results = assignment.preprocess()
+build_results = assignment.build()
+runtime_results = assignment.run_tests()
+
+summary = AssignmentSummary(
+    preprocessor_output = preprocessor_results.get_output(),
+    build_output = build_results.get_output(),
+    build_info = build_results.get_info(),
+    runtime_summary = runtime_results.get_summary(),
+    test_cases = runtime_results.get_test_cases()
+)
+```
 
 ----
 
