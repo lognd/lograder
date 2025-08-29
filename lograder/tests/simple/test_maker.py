@@ -3,7 +3,7 @@ from typing import Sequence, Optional, List
 from ..test import ComparisonTest
 from ..common.validation import validate_common_size
 
-def make_tests_from_files(
+def make_tests_from_strs(
         *,  # kwargs-only; to avoid confusion with argument sequence.
         names: Sequence[str],
         inputs: Sequence[str],
