@@ -1,4 +1,4 @@
-from typing import Dict, List, Generator
+from typing import Dict, List, Generator, Sequence
 from ..test import TestInterface
 
 class Registry[T]:
@@ -20,6 +20,10 @@ class Registry[T]:
     @classmethod
     def add(cls, value: T) -> None:
         cls._container.append(value)
+
+    @classmethod
+    def extend(cls, values: Sequence[T]) -> None:
+        cls._container.extend(values)
 
     @classmethod
     def remove(cls, value: T) -> None:
