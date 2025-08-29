@@ -1,0 +1,2 @@
+class TestInterface:
+    pass

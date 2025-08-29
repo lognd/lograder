@@ -43,6 +43,33 @@ There are a few types of tests that we support:
 
 ## Output Comparison
 
+### Compare Simple Strings (*WIP*)
+
+For the smallest number of tiny test cases, there's no reason
+to have an over-bloated mess. You can just use:
+
+```py
+from typing import Sequence, Optional, List
+from lograder.tests import make_tests_from_strs, ComparisonTest
+
+
+def make_test_from_strs(
+    *,  # kwargs-only; to avoid confusion with argument sequence.
+    names: Sequence[str],
+    inputs: Sequence[str],
+    expected_outputs: Sequence[str],
+    weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
+) -> List[ComparisonTest]: ...
+
+
+# Here's an example of how you'd use the above method:
+make_tests_from_strs(
+    names=["Test Case 1", "Test Case 2"],
+    inputs=["stdin-1", "stdin-2"],
+    expected_outputs=["stdout-1", "stdout-2"]
+)
+```
+
 ### Compare from Files (*WIP*)
 
 If you have a larger test, it would be very convenient to
@@ -50,26 +77,27 @@ read files for input and output. Luckily, there's just the
 method to do so:
 
 ```py
-from typing import Sequence, Optional
-from os import PathLike
-from lograder.tests import make_tests_from_files
+from typing import Sequence, Optional, List
+from lograder.tests import make_tests_from_files, FilePath, ComparisonTest
 
-FilePath = str | bytes | PathLike[str] | PathLike[bytes]
 
 # `make_tests_from_files` has the following signature.
 def make_tests_from_files(
-        *,  # kwargs-only; to avoid confusion with argument sequence.
-        names: Sequence[str],
-        inputs: Sequence[FilePath],
-        expected_outputs: Sequence[FilePath],
-        weights: Optional[Sequence[float]] = None # Defaults to equal-weight.
-): ...
+    *,  # kwargs-only; to avoid confusion with argument sequence.
+    names: Sequence[str],
+    input_files: Optional[Sequence[FilePath]] = None,  # `input_files` and `input_strs` mutually exclusive.
+    input_strs: Optional[Sequence[str]] = None,
+    expected_output_files: Optional[Sequence[FilePath]] = None,  # same with `expected_output_files` and `expected_output_strs`
+    expected_output_strs: Optional[Sequence[str]] = None,
+    weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
+) -> List[ComparisonTest]: ...
+
 
 # Here's an example of how you'd use the above method:
 make_tests_from_files(
     names=["Test Case 1", "Test Case 2"],
-    inputs=["test/inputs/input1.txt", "test/inputs/input2.txt"],
-    expected_outputs=["test/inputs/output1.txt", "test/inputs/output2.txt"]
+    input_files=["test/inputs/input1.txt", "test/inputs/input2.txt"],
+    expected_output_files=["test/inputs/output1.txt", "test/inputs/output2.txt"]
 )
 ```
 
@@ -81,18 +109,19 @@ and pass a `TestCaseTemplate` object and ...
 
 ```py
 from typing import Sequence, Optional
-from os import PathLike
-from lograder.tests import make_tests_from_template, TestCaseTemplate
+from lograder.tests import make_tests_from_template, TestCaseTemplate, FilePath
 
-FilePath = str | bytes | PathLike[str] | PathLike[bytes]
 
 # Here's the signature of a `TemplateSubstitution`
 class TemplateSubstitution:
     def __init__(self, *args, **kwargs):
         # Stores args and kwargs to pass to str.format(...) later.
         ...
+
+
 TSub = TemplateSubstitution  # Here's an alias that's quicker to type.
-    
+
+
 # Here's the signature of a `TestCaseTemplate`
 class TestCaseTemplate:
     def __init__(self, *,
@@ -117,17 +146,21 @@ class TestCaseTemplate:
         #     and `expected_output_substitutions`
         ...
 
+
 # Here's an example of how you would use TestCaseTemplate
 test_suite_1 = TestCaseTemplate(
     inputs=["A", "B", "C"],  # Three (3) Total Cases
     expected_output_template_str="{}, {kwarged}, {}",
-    expected_output_substitutions = [
+    expected_output_substitutions=[
         TSub(1.0, 2.0, kwarged="middle-arg-1"),  # Case 1 Substitutions
         TSub(2.0, 5.0, kwarged="middle-arg-2"),  # Case 2 Substitutions
         TSub(7.0, 6.0, kwarged="middle-arg-3"),  # Case 3 Substitutions
     ]
 )
-make_tests_from_template(test_suite_1)  # remember to construct the tests!
+make_tests_from_template(
+    ["Test 1", "Test 2", "Test 3"],
+    test_suite_1
+)  # remember to construct the tests!
 
 ```
 
@@ -142,12 +175,20 @@ follows either the following `Protocol` or `TypedDict`.
 from typing import Protocol, TypedDict, Generator, NotRequired
 from lograder.tests import make_tests_from_generator
 
+
 # Your generator may return objects following the protocol...
 class TestCaseProtocol(Protocol):
     def get_name(self): ...
+
     def get_input(self): ...
+
     def get_expected_output(self): ...
+
+
+# Notice that TestCaseProtocol defaults to equal-weights
+class WeightedTestCaseProtocol(TestCaseProtocol):
     def get_weight(self): ...
+
 
 # ... or you can directly return a dict with the following keys.
 class TestCaseDict(TypedDict):
@@ -156,11 +197,14 @@ class TestCaseDict(TypedDict):
     expected_output: str
     weight: NotRequired[float]  # Defaults to 1.0, a.k.a. equal-weight.
 
+
 # Here's an example of the syntax as well as the required 
 # signature of such a method:
 @make_tests_from_generator
-def test_suite_1() -> Generator[TestCaseProtocol | TestCaseDict, None, None]:
+def test_suite_1() -> Generator[TestCaseProtocol | WeightedTestCaseProtocol | TestCaseDict, None, None]:
     pass
+
+# You'll have to query the `TestRegistry` from `lograder.tests` to access these tests, though.
 ```
 
 
