@@ -1,7 +1,7 @@
 from typing import Sequence, Any
 from .exceptions import (
     MismatchedSequenceLengthError,
-    NonSingleArgumentSpecificationError
+    NonSingleArgumentSpecifiedError
 )
 
 def validate_common_size(**seqs: Sequence[Any]):
@@ -14,4 +14,4 @@ def validate_common_size(**seqs: Sequence[Any]):
 
 def validate_unique_argument(**kwargs: Any):
     if sum([val is None for val in kwargs.values()]) != 1:
-        raise NonSingleArgumentSpecificationError(**kwargs)
+        raise NonSingleArgumentSpecifiedError(**kwargs)
