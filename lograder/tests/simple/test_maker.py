@@ -2,6 +2,7 @@ from typing import Sequence, Optional, List
 
 from ..test import ComparisonTest
 from ..common.validation import validate_common_size
+from ..registry import TestRegistry
 
 def make_tests_from_strs(
         *,  # kwargs-only; to avoid confusion with argument sequence.
@@ -29,5 +30,6 @@ def make_tests_from_strs(
             expected_output = expected_output,
             weight = weight,
         ))
+    TestRegistry.extend(generated_tests)
 
     return generated_tests
