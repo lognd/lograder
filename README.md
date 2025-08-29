@@ -43,7 +43,7 @@ There are a few types of tests that we support:
 
 ## Output Comparison
 
-### Compare Simple Strings (*WIP*)
+### Compare Simple Strings
 
 For the smallest number of tiny test cases, there's no reason
 to have an over-bloated mess. You can just use:
@@ -70,7 +70,7 @@ make_tests_from_strs(
 )
 ```
 
-### Compare from Files (*WIP*)
+### Compare from Files
 
 If you have a larger test, it would be very convenient to
 read files for input and output. Luckily, there's just the
@@ -101,7 +101,7 @@ make_tests_from_files(
 )
 ```
 
-### Compare from Template (*WIP*)
+### Compare from Template
 
 Finally, sometimes the test-cases might be very long but 
 very repetitive. You can use `make_tests_from_template` 
@@ -164,7 +164,7 @@ make_tests_from_template(
 
 ```
 
-### Compare from Python Generator/Iterable (*WIP*)
+### Compare from Python Generator/Iterable
 
 Sometimes, you want to generate a ton of test-cases (especially
 small test-cases), and it would be incredibly waste to have thousands
