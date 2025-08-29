@@ -1,3 +1,3 @@
-from .types import FilePath
+from lograder.common.types import FilePath
 
 __all__ = ["FilePath"]
