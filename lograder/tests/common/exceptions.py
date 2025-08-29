@@ -19,7 +19,7 @@ class MismatchedSequenceLengthError(LograderValidationError):
             f"`{kw}` (length of {len(seq)})" for kw, seq in seqs.items()
         ]))
 
-class NonSingleArgumentSpecificationError(LograderValidationError):
+class NonSingleArgumentSpecifiedError(LograderValidationError):
     """
     This is the exception that is raised when more than one or zero
     arguments are passed.
@@ -28,3 +28,13 @@ class NonSingleArgumentSpecificationError(LograderValidationError):
         super().__init__("Must specify only a single argument; please choose one. Received the arguments: " + ", ".join([
             f'`{kw}` = {val}' for kw, val in kwargs.items() if val is not None
         ]))
+
+class ArgumentSpecifiedError(LograderValidationError):
+    """
+    This is the exception that is raised when an argument is passed
+    when it should not have been.
+    """
+    def __init__(self, conflicting_arg: str, **specified_args: Any):
+        super().__init__("Specified arguments, " + ", ".join([
+            f'`{kw}` = {val}' for kw, val in specified_args.items() if val is not None
+        ]) + f", that should have been left blank because argument, `{conflicting_arg}`, was specified.")
