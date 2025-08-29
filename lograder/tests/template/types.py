@@ -1,7 +1,15 @@
 
 class TemplateSubstitution:
     def __init__(self, *args, **kwargs):
-        # TODO: Implement logic for `TemplateSubstitution` class.
-        # Stores args and kwargs to pass to str.format(...) later.
-        ...
+        self._args = args
+        self._kwargs = kwargs
+
+    @property
+    def args(self):
+        return self._args
+
+    @property
+    def kwargs(self):
+        return self._kwargs
+
 TSub = TemplateSubstitution  # faster-to-type alias.
