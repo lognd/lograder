@@ -44,7 +44,8 @@ dev = [
   "ruff>=0.2",
   "isort>=5.13",
   "mypy>=1.0",
-  "pytest>=8.4.1"
+  "pytest>=8.4.1",
+  "types-colorama>=0.4.15.20250801"
 ]
 
 [tool.ruff]
