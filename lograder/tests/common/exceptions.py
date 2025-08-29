@@ -18,3 +18,13 @@ class MismatchedSequenceLengthError(LograderValidationError):
         super().__init__("Mismatched sequence lengths passed to parameters: " + ", ".join([
             f"`{kw}` (length of {len(seq)})" for kw, seq in seqs.items()
         ]))
+
+class NonSingleArgumentSpecificationError(LograderValidationError):
+    """
+    This is the exception that is raised when more than one or zero
+    arguments are passed.
+    """
+    def __init__(self, **kwargs: Any):
+        super().__init__("Must specify only a single argument; please choose one. Received the arguments: " + ", ".join([
+            f'`{kw}` = {val}' for kw, val in kwargs.items() if val is not None
+        ]))

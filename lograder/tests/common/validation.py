@@ -1,5 +1,8 @@
 from typing import Sequence, Any
-from .exceptions import MismatchedSequenceLengthError
+from .exceptions import (
+    MismatchedSequenceLengthError,
+    NonSingleArgumentSpecificationError
+)
 
 def validate_common_size(**seqs: Sequence[Any]):
     seq_lens = [len(seq) for _, seq in seqs.items()]
@@ -8,3 +11,7 @@ def validate_common_size(**seqs: Sequence[Any]):
     initial_seq_len = seq_lens[0]
     if not all([initial_seq_len == seq_len for seq_len in seq_lens]):
         raise MismatchedSequenceLengthError(**seqs)
+
+def validate_unique_argument(**kwargs: Any):
+    if sum([val is None for val in kwargs.values()]) != 1:
+        raise NonSingleArgumentSpecificationError(**kwargs)
