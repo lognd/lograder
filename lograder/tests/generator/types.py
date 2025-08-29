@@ -1,10 +1,12 @@
-from typing import Protocol, TypedDict, NotRequired, Union
+from typing import Protocol, TypedDict, NotRequired, Union, runtime_checkable
 
+@runtime_checkable
 class TestCaseProtocol(Protocol):
     def get_name(self): ...
     def get_input(self): ...
     def get_expected_output(self): ...
 
+@runtime_checkable
 class WeightedTestCaseProtocol(TestCaseProtocol, Protocol):
     def get_weight(self): ...
 
