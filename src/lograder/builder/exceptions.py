@@ -5,7 +5,7 @@ from ._core_exceptions import (
     LograderPreprocessorError,
     LograderRuntimeError,
 )
-from .common.exceptions import RequiredFileNotFoundError
+from .common.exceptions import GxxCompilationError, RequiredFileNotFoundError
 
 __all__ = [
     "LograderError",
@@ -14,4 +14,5 @@ __all__ = [
     "LograderCompilationError",
     "LograderBuilderError",
     "RequiredFileNotFoundError",
+    "GxxCompilationError",
 ]
