@@ -2,7 +2,7 @@ from typing import Union
 
 from colorama import Fore, Style
 
-from .common import ContextFormatter, FormatterInterface
+from .common import ContextFormatter, FormatterInterface, RedText
 
 
 class StatusFormatter:
@@ -19,6 +19,22 @@ class StreamFormatter(ContextFormatter):  # type: ignore[call-arg]
             suffix=f"\n<{Style.BRIGHT}{stream_color}END {stream_name.upper()}{Fore.RESET}{Style.RESET_ALL}>",
             **kwargs,
         )
+
+
+class ActualSTDOUTFormatter(StreamFormatter, stream_name="actual-stdout", stream_color=Fore.MAGENTA):
+    pass
+
+
+class ExpectedSTDOUTFormatter(StreamFormatter, stream_name="expected-stdout", stream_color=Fore.GREEN):
+    pass
+
+
+class STDERRFormatter(StreamFormatter, stream_name="stderr", stream_color=Fore.RED):
+    pass
+
+
+class STDINFormatter(StreamFormatter, stream_name="stdin", stream_color=Fore.CYAN):
+    pass
 
 
 class ReprFormatter(FormatterInterface):

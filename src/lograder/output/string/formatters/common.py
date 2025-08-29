@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Union
 
+from colorama import Fore, Style
+
 
 class FormatterInterface(ABC):
     @abstractmethod
@@ -15,13 +17,41 @@ class FormatterInterface(ABC):
         return self.__str__()
 
 
+class ColoredText(FormatterInterface):
+    _prefix: str = ""
+    _suffix: str = ""
+
+    def __init__(self, content: Union[FormatterInterface, str] = "", *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._content: Union[FormatterInterface, str] = content
+
+    def __init_subclass__(cls, *args, color: str, **kwargs):
+        super().__init_subclass__(*args, **kwargs)
+        cls._prefix = color
+        cls._suffix = Fore.RESET + Style.RESET_ALL
+
+    def set(self, *, content: Union[FormatterInterface, str] = "", **_):
+        self._content = content
+
+    def __str__(self):
+        return f"{self._prefix}{self._content if isinstance(self._content, str) else self._content.to_string()}{self._suffix}"
+
+
+class RedText(ColoredText, color=Fore.LIGHTRED_EX):
+    pass
+
+
+class GreenText(ColoredText, color=Fore.LIGHTGREEN_EX):
+    pass
+
+
 class ContextFormatter(FormatterInterface):
     _prefix: str = ""
     _suffix: str = ""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, content: Union[FormatterInterface, str] = "", *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._content: Union[FormatterInterface, str] = ""
+        self._content: Union[FormatterInterface, str] = content
 
     def __init_subclass__(cls, *args, prefix: str, suffix: str, **kwargs):
         super().__init_subclass__(*args, **kwargs)
