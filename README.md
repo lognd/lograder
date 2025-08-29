@@ -10,8 +10,7 @@ completely free to use, remix, refactor, and abuse this code
 as much as you like.
 
 ----
-## Features
-There are a few types of tests that we support:
+# Project Builders
 
 ----
 
@@ -122,6 +121,9 @@ summary = AssignmentSummary(
     test_cases = runtime_results.get_test_cases()
 )
 ```
+
+----
+# Test Generation
 
 ----
 
