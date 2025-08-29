@@ -1,6 +1,7 @@
 from typing import Callable
+from .interface import TestInterface
 
-class ComparisonTest:
+class ComparisonTest(TestInterface):
     def __init__(self,
                  name: str,
                  input: str,
