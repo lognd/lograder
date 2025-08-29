@@ -1,4 +1,5 @@
 from typing import Union
+
 from colorama import Fore, Style
 
 from .common import ContextFormatter, FormatterInterface
@@ -10,7 +11,7 @@ class StatusFormatter:
 
 class StreamFormatter(ContextFormatter):  # type: ignore[call-arg]
     def __init_subclass__(  # I override the __init_subclass__, but mypy doesn't know that.
-        cls, *args, stream_name: str, stream_color: Fore = Fore.CYAN, **kwargs
+        cls, *args, stream_name: str, stream_color: str = Fore.CYAN, **kwargs
     ):
         super().__init_subclass__(
             *args,
