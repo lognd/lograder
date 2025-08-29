@@ -21,6 +21,12 @@ class ExpectedSTDOUTFormatter(
     pass
 
 
+class STDOUTFormatter(
+    StreamFormatter, stream_name="stdout", stream_color=Fore.LIGHTBLUE_EX
+):
+    pass
+
+
 class STDERRFormatter(StreamFormatter, stream_name="stderr", stream_color=Fore.RED):
     pass
 
