@@ -56,3 +56,8 @@ line-length = 88
 
 [tool.isort]
 profile = "black"
+
+[tool.pytest.ini_options]
+markers = [
+  "description(text): add a human-readable description to a test"
+]
