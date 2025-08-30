@@ -2,13 +2,13 @@ import os
 import re
 import subprocess
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
-from ...constants import DEFAULT_PROJECT_TIMEOUT
 from ...common.types import FilePath
 from ...common.utils import random_name
+from ...constants import DEFAULT_PROJECT_TIMEOUT
 
 
 class LossEntry(BaseModel):
@@ -29,7 +29,7 @@ class ValgrindLeakSummary(BaseModel):
     @property
     def is_safe(self) -> bool:
         return (
-            self.directly_lost.is_safe
+            self.definitely_lost.is_safe
             and self.indirectly_lost.is_safe
             and self.possibly_lost.is_safe
         )
@@ -91,7 +91,7 @@ class ValgrindOutput:
         # Init structures
         leaks: ValgrindLeakSummary = ValgrindLeakSummary()
         warnings: ValgrindWarningSummary = ValgrindWarningSummary()
-        warnings["other"] = 0
+        warnings.other = 0
 
         with open(Path(path), "r", encoding="utf-8", errors="ignore") as f:
             for line in f:
@@ -103,21 +103,28 @@ class ValgrindOutput:
                     kind = leak_match.group(3).replace(
                         " ", "_"
                     )  # normalize to dict key
-                    prev_bytes, prev_blocks = leaks[kind]
-                    leaks[kind] = (prev_bytes + bytes_count, prev_blocks + blocks_count)
+                    prev_bytes, prev_blocks = getattr(leaks, kind)
+                    setattr(
+                        leaks,
+                        kind,
+                        LossEntry(
+                            bytes=prev_bytes + bytes_count,
+                            blocks=prev_blocks + blocks_count,
+                        ),
+                    )
                     continue
 
                 # --- Warning parsing ---
                 matched = False
                 for key, pattern in cls.WARNING_PATTERNS.items():
                     if pattern.search(line):
-                        warnings[key] += 1
+                        setattr(warnings, key, getattr(warnings, key) + 1)
                         matched = True
                         break
                 if not matched and "==" in line and "==" in line.strip():
                     # heuristic: unknown Valgrind warning line
                     if not any(x in line for x in ["lost", "reachable"]):
-                        warnings["other"] += 1
+                        warnings.other += 1
 
         return leaks, warnings
 
@@ -201,7 +208,7 @@ class TimeOutput:
 
     @staticmethod
     def parse_usr_time(stderr: str) -> ExecutionTimeSummary:
-        stats = {}
+        stats: dict[str, Any] = {}
         for line in stderr.splitlines():
             if "=" in line:
                 k, v = line.split("=", 1)

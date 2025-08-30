@@ -3,7 +3,15 @@ from typing import Callable, List, Optional
 
 from ...constants import DEFAULT_PROJECT_TIMEOUT
 from ..common.exceptions import TestNotRunError
-from .analytics import CallgrindSummary, ValgrindLeakSummary, ExecutionTimeSummary, ValgrindWarningSummary, usr_time, valgrind, callgrind
+from .analytics import (
+    CallgrindSummary,
+    ExecutionTimeSummary,
+    ValgrindLeakSummary,
+    ValgrindWarningSummary,
+    callgrind,
+    usr_time,
+    valgrind,
+)
 from .interface import TestInterface
 
 
@@ -27,7 +35,7 @@ class ComparisonTest(TestInterface):
         self._weight: float = weight
 
     def set_cmd(self, cmd: List[str]):
-        self._saved_cmd: List[str] = cmd
+        self._saved_cmd = cmd
 
     def is_correct(self) -> bool:
         return self.get_actual_output().strip() == self._expected_output.strip()
@@ -39,13 +47,15 @@ class ComparisonTest(TestInterface):
             input=self.get_input(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            timeout=DEFAULT_PROJECT_TIMEOUT
+            timeout=DEFAULT_PROJECT_TIMEOUT,
         )
         self._actual_output = result.stdout.decode()
         self._error = result.stderr.decode()
         return self.is_correct()
 
     def get_error(self) -> str:
+        if self._error is None:
+            raise TestNotRunError(self.get_name())
         return self._error
 
     def is_correct_str(self, actual_output: str) -> bool:
@@ -57,34 +67,38 @@ class ComparisonTest(TestInterface):
         return self.is_correct()
 
     def get_warnings(self) -> Optional[ValgrindWarningSummary]:
-        if self.get_cmd() is None:
-            return None
+        cmd = self.get_cmd()
+        if cmd is None:
+            raise TestNotRunError(self.get_name())
         if self._cached_warnings is None:
-            self._cached_leaks, self._cached_warnings = valgrind(self.get_cmd(), self.get_input())
+            self._cached_leaks, self._cached_warnings = valgrind(cmd, self.get_input())
         return self._cached_warnings
 
     def get_cmd(self) -> Optional[List[str]]:
         return self._saved_cmd
 
     def get_execution_time(self) -> Optional[ExecutionTimeSummary]:
-        if self.get_cmd() is None:
-            return None
+        cmd = self.get_cmd()
+        if cmd is None:
+            raise TestNotRunError(self.get_name())
         if self._cached_times is None:
-            self._cached_times = usr_time(self.get_cmd(), self.get_input())
+            self._cached_times = usr_time(cmd, self.get_input())
         return self._cached_times
 
     def get_calls(self) -> Optional[List[CallgrindSummary]]:
-        if self.get_cmd() is None:
-            return None
+        cmd = self.get_cmd()
+        if cmd is None:
+            raise TestNotRunError(self.get_name())
         if self._cached_calls is None:
-            self._cached_calls = callgrind(self.get_cmd(), self.get_input())
+            self._cached_calls = callgrind(cmd, self.get_input())
         return self._cached_calls
 
     def get_leaks(self) -> Optional[ValgrindLeakSummary]:
-        if self.get_cmd() is None:
-            return None
+        cmd = self.get_cmd()
+        if cmd is None:
+            raise TestNotRunError(self.get_name())
         if self._cached_warnings is None:
-            self._cached_leaks, self._cached_warnings = valgrind(self.get_cmd(), self.get_input())
+            self._cached_leaks, self._cached_warnings = valgrind(cmd, self.get_input())
         return self._cached_leaks
 
     def get_name(self) -> str:

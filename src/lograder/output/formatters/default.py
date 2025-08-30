@@ -1,7 +1,7 @@
 import shlex
 from datetime import timedelta
 from os import PathLike
-from typing import List
+from typing import Optional, Sequence, Union
 
 from colorama import Fore
 
@@ -12,17 +12,23 @@ from ...builder.common.types import (
 )
 from ...constants import DEFAULT_TOPIC_BREAK
 from ...tests.test import TestInterface
+from ...tests.test.analytics import (
+    CallgrindSummary,
+    ExecutionTimeSummary,
+    ValgrindLeakSummary,
+    ValgrindWarningSummary,
+)
 from .format_templates import ContextRenderer, ProcessStep
 from .interfaces import (
     BuildOutputFormatterInterface,
+    ExecutionTimeSummaryFormatterInterface,
     MetadataFormatterInterface,
     PreprocessorOutputFormatterInterface,
+    RuntimeSummaryFormatterInterface,
     TestCaseFormatterInterface,
     ValgrindLeakSummaryFormatterInterface,
     ValgrindWarningSummaryFormatterInterface,
-    ExecutionTimeSummaryFormatterInterface
 )
-from ...tests.test.analytics import ValgrindLeakSummary, ValgrindWarningSummary, CallgrindSummary, ExecutionTimeSummary
 
 
 def format_timedelta(td: timedelta) -> str:
@@ -54,11 +60,11 @@ def format_timedelta(td: timedelta) -> str:
 
 
 class CLIStep(ProcessStep):
-    def __init__(self, command: List[str | bytes | PathLike]):
-        self.command = shlex.join(command)
+    def __init__(self, command: Sequence[Union[str, bytes, PathLike]]):
+        self.command = shlex.join([str(comm) for comm in command])
 
     def render(self):
-        return f"Ran `{self.command}` in CLI."
+        return f"Ran `{Fore.MAGENTA}{self.command}{Fore.RESET}` in CLI."
 
 
 class DefaultMetadataFormatter(MetadataFormatterInterface):
@@ -98,6 +104,7 @@ class DefaultSTDOUTContext(
 ):
     pass
 
+
 class DefaultExpectedSTDOUTContext(
     ContextRenderer,
     prefix=f"<{Fore.BLUE}BEGIN EXPECTED STDOUT{Fore.RESET}>\n",
@@ -105,6 +112,7 @@ class DefaultExpectedSTDOUTContext(
     empty=f"<{Fore.BLUE}EMPTY EXPECTED STDOUT{Fore.RESET}>",
 ):
     pass
+
 
 class DefaultActualSTDOUTContext(
     ContextRenderer,
@@ -114,6 +122,7 @@ class DefaultActualSTDOUTContext(
 ):
     pass
 
+
 class DefaultSTDERRContext(
     ContextRenderer,
     prefix=f"<{Fore.RED}BEGIN STDERR{Fore.RESET}>\n",
@@ -121,6 +130,7 @@ class DefaultSTDERRContext(
     empty=f"<{Fore.RED}EMPTY STDERR{Fore.RESET}>",
 ):
     pass
+
 
 class DefaultSTDINContext(
     ContextRenderer,
@@ -130,11 +140,14 @@ class DefaultSTDINContext(
 ):
     pass
 
+
 class DefaultValgrindLeakSummaryFormatter(ValgrindLeakSummaryFormatterInterface):
-    def format(self, leak_summary: ValgrindLeakSummary) -> str:
-        def_lost_color = '' if leak_summary.definitely_lost.is_safe else Fore.RED
-        ind_lost_color = '' if leak_summary.indirectly_lost.is_safe else Fore.RED
-        pos_lost_color = '' if leak_summary.possibly_lost.is_safe else Fore.RED
+    def format(self, leak_summary: Optional[ValgrindLeakSummary]) -> str:
+        if leak_summary is None:
+            return f"<{Fore.YELLOW}VALGRIND LEAK SUMMARY DISABLED{Fore.RESET}>"
+        def_lost_color = "" if leak_summary.definitely_lost.is_safe else Fore.RED
+        ind_lost_color = "" if leak_summary.indirectly_lost.is_safe else Fore.RED
+        pos_lost_color = "" if leak_summary.possibly_lost.is_safe else Fore.RED
         return (
             f"{Fore.LIGHTGREEN_EX}VALGRIND LEAK SUMMARY{Fore.RESET}:\n"
             f"* {def_lost_color}{leak_summary.definitely_lost.bytes}{Fore.RESET} bytes, {def_lost_color}{leak_summary.definitely_lost.blocks}{Fore.RESET} blocks {def_lost_color}definitely lost{Fore.RESET}.\n"
@@ -143,26 +156,32 @@ class DefaultValgrindLeakSummaryFormatter(ValgrindLeakSummaryFormatterInterface)
             f"* {leak_summary.still_reachable.bytes} bytes, {leak_summary.still_reachable.blocks} blocks still reachable."
         )
 
+
 class DefaultValgrindWarningSummaryFormatter(ValgrindWarningSummaryFormatterInterface):
-    def format(self, warning_summary: ValgrindWarningSummary) -> str:
+    def format(self, warning_summary: Optional[ValgrindWarningSummary]) -> str:
+        if warning_summary is None:
+            return f"<{Fore.YELLOW}VALGRIND WARNING SUMMARY DISABLED{Fore.RESET}>"
         warning = warning_summary.model_dump()
-        output = [
-            f"{Fore.LIGHTGREEN_EX}VALGRIND WARNING SUMMARY{Fore.RESET}:"
-        ]
+        output = [f"{Fore.LIGHTGREEN_EX}VALGRIND WARNING SUMMARY{Fore.RESET}:"]
         output += [
-            f"* {v} `{k.replace('_', ' ').upper()}` warnings encountered." for k, v in warning.items()
+            f"* {v} `{k.replace('_', ' ').upper()}` warnings encountered."
+            for k, v in warning.items()
         ]
-        return '\n'.join(output)
+        return "\n".join(output)
 
 
 class DefaultExecutionTimeSummaryFormatter(ExecutionTimeSummaryFormatterInterface):
-    def format(self,
-               callgrind_summary: List[CallgrindSummary],
-               execution_time_summary: ExecutionTimeSummary) -> str:
-        total_time = execution_time_summary.total_time
+    def format(
+        self,
+        callgrind_summary: Optional[Sequence[CallgrindSummary]],
+        execution_time_summary: Optional[ExecutionTimeSummary],
+    ) -> str:
+        if callgrind_summary is None or execution_time_summary is None:
+            return f"<{Fore.YELLOW}PERFORMANCE SUMMARY DISABLED{Fore.RESET}>"
+        total_time = execution_time_summary.total_cpu_time
         output = [
             f"{Fore.LIGHTGREEN_EX}PERFORMANCE SUMMARY{Fore.RESET}:",
-            f"Time elapsed on CPU:",
+            "Time elapsed on CPU:",
             f"  * in total: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_time))}{Fore.RESET}",
             f"  * on user-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=execution_time_summary.user_cpu_time))}{Fore.RESET}",
             f"  * on system-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=execution_time_summary.system_cpu_time))}{Fore.RESET}",
@@ -187,6 +206,7 @@ class DefaultExecutionTimeSummaryFormatter(ExecutionTimeSummaryFormatterInterfac
 
         return "\n".join(output + function_text)
 
+
 class DefaultPreprocessorOutputFormatter(PreprocessorOutputFormatterInterface):
     def format(self, preprocessor_output: PreprocessorOutput) -> str:
         output = [
@@ -206,7 +226,9 @@ class DefaultPreprocessorOutputFormatter(PreprocessorOutputFormatterInterface):
 
 class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
     def format(self, build_output: BuilderOutput) -> str:
-        output = [f"Detected build types of `{build_output.build_type}`.\n\n"]
+        output = [
+            f"Detected build types of `{Fore.MAGENTA}{build_output.build_type}{Fore.RESET}`.\n\n"
+        ]
         output += [
             (
                 f"{CLIStep(command).render()}\n"
@@ -219,14 +241,65 @@ class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
         ]
         return DefaultBuilderContext("\n\n".join(output)).render()
 
+
+class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
+    def format(self, test_cases: Sequence[TestInterface]) -> str:
+        total_cpu_time = sum(
+            (et.total_cpu_time if (et := tc.get_execution_time()) is not None else 0.0)
+            for tc in test_cases
+        )
+        user_cpu_time = sum(
+            (et.user_cpu_time if (et := tc.get_execution_time()) is not None else 0.0)
+            for tc in test_cases
+        )
+        system_cpu_time = sum(
+            (et.system_cpu_time if (et := tc.get_execution_time()) is not None else 0.0)
+            for tc in test_cases
+        )
+        call_lists: list[list[CallgrindSummary]] = [
+            calls
+            for test_case in test_cases
+            if (calls := test_case.get_calls()) is not None
+        ]
+        total_instructions: list[int] = [
+            sum(call.cost for call in calls) for calls in call_lists
+        ]
+        num_tests = len(test_cases)
+        num_successful_tests = sum(
+            [test_case.get_successful() for test_case in test_cases]
+        )
+        if num_successful_tests < 0.5 * num_tests:
+            color = Fore.RED
+        elif num_successful_tests < 0.75 * num_tests:
+            color = Fore.LIGHTRED_EX
+        elif num_successful_tests < 0.95 * num_tests:
+            color = Fore.YELLOW
+        elif num_successful_tests < num_tests:
+            color = Fore.GREEN
+        else:
+            color = Fore.CYAN
+        return (
+            f"{color}{num_successful_tests}{Fore.RESET}/{num_tests} Tests Passed.\n"
+            f"Total Time elapsed on CPU:\n"
+            f"  * in total: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_cpu_time))}{Fore.RESET}\n"
+            f"  * on user-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=user_cpu_time))}{Fore.RESET}\n"
+            f"  * on system-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=system_cpu_time))}{Fore.RESET}\n"
+            f"Total number of instructions run: {total_instructions}."
+        )
+
+
 class DefaultTestCaseFormatter(TestCaseFormatterInterface):
     def format(self, test_case: TestInterface) -> str:
         if not test_case.get_successful():
-            title_text = f"{Fore.RED}Test `{test_case.get_name()}` failed!{Fore.RESET}\n"
+            title_text = (
+                f"{Fore.RED}Test `{test_case.get_name()}` failed!{Fore.RESET}\n"
+            )
         elif test_case.get_penalty() < 1.0:
             title_text = f"{Fore.YELLOW}Test `{test_case.get_name()}` partially passed, but was penalized!{Fore.RESET}\n"
         elif test_case.get_penalty() == 1.0:
-            title_text = f"{Fore.GREEN}Test `{test_case.get_name()}` passed!{Fore.RESET}\n"
+            title_text = (
+                f"{Fore.GREEN}Test `{test_case.get_name()}` passed!{Fore.RESET}\n"
+            )
         else:
             title_text = f"{Fore.CYAN}Test `{test_case.get_name()}` passed with flying colors (bonus points)!{Fore.RESET}!\n"
         output = [
@@ -242,6 +315,8 @@ class DefaultTestCaseFormatter(TestCaseFormatterInterface):
             DefaultValgrindLeakSummaryFormatter().format(test_case.get_leaks()),
             DefaultValgrindWarningSummaryFormatter().format(test_case.get_warnings()),
             DEFAULT_TOPIC_BREAK,
-            DefaultExecutionTimeSummaryFormatter().format(test_case.get_calls(), test_case.get_execution_time()),
+            DefaultExecutionTimeSummaryFormatter().format(
+                test_case.get_calls(), test_case.get_execution_time()
+            ),
         ]
-        return '\n'.join(output)
+        return "\n".join(output)

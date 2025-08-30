@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from .analytics import CallgrindSummary, ValgrindLeakSummary, ExecutionTimeSummary, ValgrindWarningSummary
+from .analytics import (
+    CallgrindSummary,
+    ExecutionTimeSummary,
+    ValgrindLeakSummary,
+    ValgrindWarningSummary,
+)
 
 
 class TestInterface(ABC):

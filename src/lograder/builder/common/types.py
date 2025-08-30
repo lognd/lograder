@@ -20,7 +20,8 @@ class AssignmentMetadata(BaseModel):
     library_meta: metadata.PackageMetadata = Field(
         default=metadata.metadata(library_name), exclude=True
     )
-    library_authors: List[str] = Field(default=library_meta.get_all("Author"))
+    authors = library_meta.get_all("Author") or []
+    library_authors: List[str] = Field(default=authors)
     library_version: str = Field(default=metadata.version(library_name))
 
 

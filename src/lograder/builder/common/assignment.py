@@ -2,6 +2,13 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from ...output.formatters.default import (
+    DefaultBuildOutputFormatter,
+    DefaultMetadataFormatter,
+    DefaultPreprocessorOutputFormatter,
+    DefaultRuntimeSummaryFormatter,
+    DefaultTestCaseFormatter,
+)
 from ...output.formatters.interfaces import (
     BuildOutputFormatterInterface,
     MetadataFormatterInterface,
@@ -21,17 +28,21 @@ class AssignmentSummary(BaseModel):
     build_output: BuilderOutput
     test_cases: List[TestInterface]
 
-    metadata_fmt: MetadataFormatterInterface = Field(default_factory=..., exclude=True)
+    metadata_fmt: MetadataFormatterInterface = Field(
+        default_factory=DefaultMetadataFormatter, exclude=True
+    )
     preprocessor_output_fmt: PreprocessorOutputFormatterInterface = Field(
-        default_factory=..., exclude=True
+        default_factory=DefaultPreprocessorOutputFormatter, exclude=True
     )
     build_output_fmt: BuildOutputFormatterInterface = Field(
-        default_factory=..., exclude=True
+        default_factory=DefaultBuildOutputFormatter, exclude=True
     )
     runtime_summary_fmt: RuntimeSummaryFormatterInterface = Field(
-        default_factory=..., exclude=True
+        default_factory=DefaultRuntimeSummaryFormatter, exclude=True
     )
-    test_case_fmt: TestCaseFormatterInterface = Field(default_factory=..., exclude=True)
+    test_case_fmt: TestCaseFormatterInterface = Field(
+        default_factory=DefaultTestCaseFormatter, exclude=True
+    )
 
     @classmethod
     def set_formatters(
@@ -79,7 +90,6 @@ class AssignmentSummary(BaseModel):
                     * test_case.get_successful()
                     * test_case.get_penalty(),
                     max_score=self.get_score_multiplier() * test_case.get_weight(),
-                    execution_time=self.get_execution_time(),
                 )
                 for test_case in self.test_cases
             ],
