@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import List, Optional
+
+from .analytics import CallSummary, MemoryLossSummary, TimeSummary, WarningSummary
 
 
 class TestInterface(ABC):
@@ -27,5 +29,14 @@ class TestInterface(ABC):
     def get_weight(self) -> float:
         pass
 
-    def get_execution_time(self) -> Optional[float]:
+    def get_warnings(self) -> Optional[WarningSummary]:
+        return None
+
+    def get_execution_time(self) -> Optional[TimeSummary]:
+        return None
+
+    def get_calls(self) -> Optional[List[CallSummary]]:
+        return None
+
+    def get_leaks(self) -> Optional[MemoryLossSummary]:
         return None

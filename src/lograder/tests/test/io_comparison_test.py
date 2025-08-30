@@ -1,8 +1,8 @@
-from typing import Callable, Optional, List
 import subprocess
+from typing import Callable, List, Optional
 
 from ..common.exceptions import TestNotRunError
-from .analytics import MemoryLossSummary, WarningSummary, TimeSummary, CallSummary
+from .analytics import CallSummary, MemoryLossSummary, TimeSummary, WarningSummary
 from .interface import TestInterface
 
 

@@ -1,11 +1,14 @@
-from typing import Optional, List
-import re
 import os
+import re
 import subprocess
-from pydantic import BaseModel, Field
 from pathlib import Path
+from typing import List, Optional
+
+from pydantic import BaseModel, Field
+
 from ...common.types import FilePath
 from ...common.utils import random_name
+
 
 class LossEntry(BaseModel):
     bytes: int = Field(default=0)
@@ -15,6 +18,7 @@ class LossEntry(BaseModel):
     def is_safe(self) -> bool:
         return not self.bytes and not self.blocks
 
+
 class MemoryLossSummary(BaseModel):
     definitely_lost: LossEntry = Field(default_factory=LossEntry)
     indirectly_lost: LossEntry = Field(default_factory=LossEntry)
@@ -23,7 +27,12 @@ class MemoryLossSummary(BaseModel):
 
     @property
     def is_safe(self) -> bool:
-        return self.directly_lost.is_safe and self.indirectly_lost.is_safe and self.possibly_lost.is_safe
+        return (
+            self.directly_lost.is_safe
+            and self.indirectly_lost.is_safe
+            and self.possibly_lost.is_safe
+        )
+
 
 class WarningSummary(BaseModel):
     invalid_read: int = Field(default=0)
@@ -38,8 +47,18 @@ class WarningSummary(BaseModel):
 
     @property
     def is_safe(self) -> bool:
-        return not self.invalid_read and not self.invalid_write and not self.invalid_free and not self.mismatched_free \
-    and not self.uninitialized_value and not self.conditional_jump and not self.syscall_param and not self.overlap and not self.other
+        return (
+            not self.invalid_read
+            and not self.invalid_write
+            and not self.invalid_free
+            and not self.mismatched_free
+            and not self.uninitialized_value
+            and not self.conditional_jump
+            and not self.syscall_param
+            and not self.overlap
+            and not self.other
+        )
+
 
 class ValgrindOutput:
     LEAK_REGEX = re.compile(
@@ -51,7 +70,9 @@ class ValgrindOutput:
         "invalid_free": re.compile(r"Invalid free"),
         "mismatched_free": re.compile(r"Mismatched free"),
         "uninitialized_value": re.compile(r"uninitialised value"),
-        "conditional_jump": re.compile(r"Conditional jump or move depends on uninitialised value"),
+        "conditional_jump": re.compile(
+            r"Conditional jump or move depends on uninitialised value"
+        ),
         "syscall_param": re.compile(r"Syscall param"),
         "overlap": re.compile(r"overlap"),
     }
@@ -63,7 +84,9 @@ class ValgrindOutput:
         self.parse_stderr()
 
     @classmethod
-    def parse_valgrind_log(cls, path: FilePath) -> tuple[MemoryLossSummary, WarningSummary]:
+    def parse_valgrind_log(
+        cls, path: FilePath
+    ) -> tuple[MemoryLossSummary, WarningSummary]:
         # Init structures
         leaks: MemoryLossSummary = MemoryLossSummary()
         warnings: WarningSummary = WarningSummary()
@@ -76,7 +99,9 @@ class ValgrindOutput:
                 if leak_match:
                     bytes_count = int(leak_match.group(1).replace(",", ""))
                     blocks_count = int(leak_match.group(2).replace(",", ""))
-                    kind = leak_match.group(3).replace(" ", "_")  # normalize to dict key
+                    kind = leak_match.group(3).replace(
+                        " ", "_"
+                    )  # normalize to dict key
                     prev_bytes, prev_blocks = leaks[kind]
                     leaks[kind] = (prev_bytes + bytes_count, prev_blocks + blocks_count)
                     continue
@@ -104,12 +129,14 @@ class ValgrindOutput:
     def get_warnings(self) -> WarningSummary:
         return self._warnings
 
+
 class CallSummary(BaseModel):
     cost: int
     percent: float
     file: str
     function: str
     shared_object: Optional[str]
+
 
 class CallgrindOutput:
     LINE_REGEX = re.compile(
@@ -131,13 +158,15 @@ class CallgrindOutput:
                 m = cls.LINE_REGEX.match(line)
                 if not m:
                     continue
-                results.append(CallSummary(
-                    cost=int(m.group("cost").replace(",", "")),
-                    percent=float(m.group("percent")),
-                    file=m.group("file").strip(),
-                    function=m.group("function").strip(),
-                    shared_object=m.group("so"),
-                ))
+                results.append(
+                    CallSummary(
+                        cost=int(m.group("cost").replace(",", "")),
+                        percent=float(m.group("percent")),
+                        file=m.group("file").strip(),
+                        function=m.group("function").strip(),
+                        shared_object=m.group("so"),
+                    )
+                )
         return results
 
     def parse_stdout(self):
@@ -148,6 +177,7 @@ class CallgrindOutput:
 
     def get_instruction_count(self):
         return sum([call.cost for call in self.get_calls()])
+
 
 class TimeSummary(BaseModel):
     user_cpu_time: float = Field(default=0)
@@ -160,6 +190,7 @@ class TimeSummary(BaseModel):
     num_major_page_faults: int = Field(default=0)
     num_minor_page_faults: int = Field(default=0)
     num_pages_swapped_to_disk: int = Field(default=0)
+
 
 class TimeOutput:
     def __init__(self, stderr: str):
@@ -182,15 +213,25 @@ class TimeOutput:
     def get_time(self) -> TimeSummary:
         return self._time
 
-def valgrind(cmd: List[str], stdin: Optional[str] = None) -> tuple[MemoryLossSummary, WarningSummary]:
+
+def valgrind(
+    cmd: List[str], stdin: Optional[str] = None
+) -> tuple[MemoryLossSummary, WarningSummary]:
     valgrind_file = f"valgrind-{random_name()}.log"
     with open(os.devnull, "w") as devnull:
         subprocess.run(
-            ["valgrind", "--leak-check=full", "--show-leak-kinds=all", "--log-file", valgrind_file] + cmd,
+            [
+                "valgrind",
+                "--leak-check=full",
+                "--show-leak-kinds=all",
+                "--log-file",
+                valgrind_file,
+            ]
+            + cmd,
             stdin=stdin,
             stdout=devnull,
             stderr=devnull,
-            text=True
+            text=True,
         )
 
     with open(valgrind_file, "r", encoding="utf-8", errors="ignore") as f:
@@ -199,24 +240,26 @@ def valgrind(cmd: List[str], stdin: Optional[str] = None) -> tuple[MemoryLossSum
     valgrind_output = ValgrindOutput(valgrind_log)
     return valgrind_output.get_leaks(), valgrind_output.get_warnings()
 
+
 def callgrind(cmd: List[str], stdin: Optional[str] = None) -> List[CallSummary]:
     callgrind_file = f"callgrind-{random_name()}.out"
     annotate_file = f"annotate-{random_name()}.log"
 
     with open(os.devnull, "w") as devnull:
         subprocess.run(
-            ["valgrind", "--tool=callgrind", f"--callgrind-out-file={callgrind_file}"] + cmd,
+            ["valgrind", "--tool=callgrind", f"--callgrind-out-file={callgrind_file}"]
+            + cmd,
             stdin=stdin,
             stdout=devnull,
             stderr=devnull,
-            text=True
+            text=True,
         )
 
     subprocess.run(
         ["callgrind_annotate", "--auto=yes", "--threshold=0", callgrind_file],
         stdout=open(annotate_file, "w", encoding="utf-8"),
         stderr=subprocess.DEVNULL,
-        text=True
+        text=True,
     )
 
     with open(annotate_file, "r", encoding="utf-8", errors="ignore") as f:
@@ -224,18 +267,23 @@ def callgrind(cmd: List[str], stdin: Optional[str] = None) -> List[CallSummary]:
 
     return CallgrindOutput(annotate_output).get_calls()
 
+
 def usr_time(cmd: List[str], stdin: Optional[str] = None) -> TimeSummary:
     time_file = f"time-{random_name()}.log"
     with open(os.devnull, "w") as devnull:
         subprocess.run(
-            ["/usr/bin/time",
-             "-f", "user_cpu_time=%U\nsystem_cpu_time=%S\ntotal_cpu_time=%e\npercent_cpu_utilization=%P\npeak_physical_memory_usage=%M\nnum_disk_reads=%I\nnum_disk_writes=%O\nnum_major_page_faults=%F\nnum_minor_page_faults=%R\nnum_pages_swapped_to_disk=%W\n",
-             "-o", time_file]
+            [
+                "/usr/bin/time",
+                "-f",
+                "user_cpu_time=%U\nsystem_cpu_time=%S\ntotal_cpu_time=%e\npercent_cpu_utilization=%P\npeak_physical_memory_usage=%M\nnum_disk_reads=%I\nnum_disk_writes=%O\nnum_major_page_faults=%F\nnum_minor_page_faults=%R\nnum_pages_swapped_to_disk=%W\n",
+                "-o",
+                time_file,
+            ]
             + cmd,
             stdin=stdin,  # program can still read from stdin
             stdout=devnull,  # hide stdout
             stderr=devnull,
-            text=True
+            text=True,
         )
     with open(time_file) as f:
         time_stats = f.read()

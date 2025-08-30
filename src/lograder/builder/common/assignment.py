@@ -12,11 +12,7 @@ from ...output.formatters.interfaces import (
 from ...output.raw_json.assignment import AssignmentJSON
 from ...output.raw_json.test_case import TestCaseJSON
 from ...tests.test import TestInterface
-from .types import (
-    AssignmentMetadata,
-    BuilderOutput,
-    PreprocessorOutput
-)
+from .types import AssignmentMetadata, BuilderOutput, PreprocessorOutput
 
 
 class AssignmentSummary(BaseModel):

@@ -1,18 +1,21 @@
-from typing import Union
 from abc import ABC, abstractmethod
+from typing import Union
+
 
 class RendererInterface(ABC):
     @abstractmethod
     def render(self) -> str:
         pass
 
+
 class ProcessStep(RendererInterface, ABC):
     pass
 
+
 class ContextRenderer(RendererInterface):
-    _prefix: str = ''
-    _suffix: str = ''
-    _empty: str = ''
+    _prefix: str = ""
+    _suffix: str = ""
+    _empty: str = ""
 
     def __init_subclass__(cls, *, prefix: str, suffix: str, empty: str):
         cls._prefix = prefix
@@ -22,7 +25,9 @@ class ContextRenderer(RendererInterface):
         self._content: Union[RendererInterface, str] = content
 
     def get_content(self) -> str:
-        return self._content if isinstance(self._content, str) else self._content.render()
+        return (
+            self._content if isinstance(self._content, str) else self._content.render()
+        )
 
     @classmethod
     def get_prefix(cls):
@@ -38,4 +43,8 @@ class ContextRenderer(RendererInterface):
 
     def render(self) -> str:
         content = self.get_content()
-        return f"{self.get_prefix()}{content}{self.get_suffix()}" if content else self.get_empty()
+        return (
+            f"{self.get_prefix()}{content}{self.get_suffix()}"
+            if content
+            else self.get_empty()
+        )
