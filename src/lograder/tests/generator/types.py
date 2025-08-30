@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import NotRequired, Protocol, TypedDict, Union, runtime_checkable, List
 
 
@@ -9,7 +10,7 @@ class TestCaseProtocol(Protocol):
 
 @runtime_checkable
 class FlaggedTestCaseProtocol(TestCaseProtocol, Protocol):
-    def get_flags(self) -> List[str]: ...
+    def get_flags(self) -> List[str | Path]: ...
 
 @runtime_checkable
 class WeightedTestCaseProtocol(TestCaseProtocol, Protocol):
@@ -23,7 +24,7 @@ class TestCaseDict(TypedDict):
     name: str
     input: str
     expected_output: str
-    flags: List[str]
+    flags: NotRequired[List[str | Path]]
     weight: NotRequired[float]
 
 
