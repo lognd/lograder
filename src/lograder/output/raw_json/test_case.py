@@ -6,6 +6,8 @@ from ..common import Status, TextFormat, Visibility
 
 
 class TestCaseJSON(BaseModel):
+    __test__: bool = False
+
     score: Optional[float]
     max_score: Optional[float]
     execution_time: Optional[float] = Field(default=None, exclude=True)
