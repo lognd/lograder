@@ -20,7 +20,7 @@ class LossEntry(BaseModel):
         return not self.bytes and not self.blocks
 
 
-class MemoryLossSummary(BaseModel):
+class ValgrindLeakSummary(BaseModel):
     definitely_lost: LossEntry = Field(default_factory=LossEntry)
     indirectly_lost: LossEntry = Field(default_factory=LossEntry)
     possibly_lost: LossEntry = Field(default_factory=LossEntry)
@@ -35,7 +35,7 @@ class MemoryLossSummary(BaseModel):
         )
 
 
-class WarningSummary(BaseModel):
+class ValgrindWarningSummary(BaseModel):
     invalid_read: int = Field(default=0)
     invalid_write: int = Field(default=0)
     invalid_free: int = Field(default=0)
@@ -80,17 +80,17 @@ class ValgrindOutput:
 
     def __init__(self, stderr: str):
         self._stderr: str = stderr
-        self._warnings: WarningSummary = WarningSummary()
-        self._leaks: MemoryLossSummary = MemoryLossSummary()
+        self._warnings: ValgrindWarningSummary = ValgrindWarningSummary()
+        self._leaks: ValgrindLeakSummary = ValgrindLeakSummary()
         self.parse_stderr()
 
     @classmethod
     def parse_valgrind_log(
         cls, path: FilePath
-    ) -> tuple[MemoryLossSummary, WarningSummary]:
+    ) -> tuple[ValgrindLeakSummary, ValgrindWarningSummary]:
         # Init structures
-        leaks: MemoryLossSummary = MemoryLossSummary()
-        warnings: WarningSummary = WarningSummary()
+        leaks: ValgrindLeakSummary = ValgrindLeakSummary()
+        warnings: ValgrindWarningSummary = ValgrindWarningSummary()
         warnings["other"] = 0
 
         with open(Path(path), "r", encoding="utf-8", errors="ignore") as f:
@@ -124,14 +124,14 @@ class ValgrindOutput:
     def parse_stderr(self):
         self._leaks, self._warnings = self.parse_valgrind_log(self._stderr)
 
-    def get_leaks(self) -> MemoryLossSummary:
+    def get_leaks(self) -> ValgrindLeakSummary:
         return self._leaks
 
-    def get_warnings(self) -> WarningSummary:
+    def get_warnings(self) -> ValgrindWarningSummary:
         return self._warnings
 
 
-class CallSummary(BaseModel):
+class CallgrindSummary(BaseModel):
     cost: int
     percent: float
     file: str
@@ -148,19 +148,19 @@ class CallgrindOutput:
 
     def __init__(self, stdout: str):
         self._stdout: str = stdout
-        self._calls: List[CallSummary] = []
+        self._calls: List[CallgrindSummary] = []
         self.parse_stdout()
 
     @classmethod
-    def parse_callgrind_annotate(cls, path: FilePath) -> List[CallSummary]:
-        results: List[CallSummary] = []
+    def parse_callgrind_annotate(cls, path: FilePath) -> List[CallgrindSummary]:
+        results: List[CallgrindSummary] = []
         with open(Path(path), "r", encoding="utf-8", errors="ignore") as f:
             for line in f:
                 m = cls.LINE_REGEX.match(line)
                 if not m:
                     continue
                 results.append(
-                    CallSummary(
+                    CallgrindSummary(
                         cost=int(m.group("cost").replace(",", "")),
                         percent=float(m.group("percent")),
                         file=m.group("file").strip(),
@@ -180,7 +180,7 @@ class CallgrindOutput:
         return sum([call.cost for call in self.get_calls()])
 
 
-class TimeSummary(BaseModel):
+class ExecutionTimeSummary(BaseModel):
     user_cpu_time: float = Field(default=0)
     system_cpu_time: float = Field(default=0)
     total_cpu_time: float = Field(default=0)
@@ -196,28 +196,28 @@ class TimeSummary(BaseModel):
 class TimeOutput:
     def __init__(self, stderr: str):
         self._stderr: str = stderr
-        self._time: TimeSummary = TimeSummary()
+        self._time: ExecutionTimeSummary = ExecutionTimeSummary()
         self.parse_stderr()
 
     @staticmethod
-    def parse_usr_time(stderr: str) -> TimeSummary:
+    def parse_usr_time(stderr: str) -> ExecutionTimeSummary:
         stats = {}
         for line in stderr.splitlines():
             if "=" in line:
                 k, v = line.split("=", 1)
                 stats[k.strip()] = v.strip().replace("%", "")
-        return TimeSummary(**stats)
+        return ExecutionTimeSummary(**stats)
 
     def parse_stderr(self):
         self._time = self.parse_usr_time(self._stderr)
 
-    def get_time(self) -> TimeSummary:
+    def get_time(self) -> ExecutionTimeSummary:
         return self._time
 
 
 def valgrind(
     cmd: List[str], stdin: Optional[str] = None
-) -> tuple[MemoryLossSummary, WarningSummary]:
+) -> tuple[ValgrindLeakSummary, ValgrindWarningSummary]:
     valgrind_file = f"valgrind-{random_name()}.log"
     with open(os.devnull, "w") as devnull:
         subprocess.run(
@@ -243,7 +243,7 @@ def valgrind(
     return valgrind_output.get_leaks(), valgrind_output.get_warnings()
 
 
-def callgrind(cmd: List[str], stdin: Optional[str] = None) -> List[CallSummary]:
+def callgrind(cmd: List[str], stdin: Optional[str] = None) -> List[CallgrindSummary]:
     callgrind_file = f"callgrind-{random_name()}.out"
     annotate_file = f"annotate-{random_name()}.log"
 
@@ -271,7 +271,7 @@ def callgrind(cmd: List[str], stdin: Optional[str] = None) -> List[CallSummary]:
     return CallgrindOutput(annotate_output).get_calls()
 
 
-def usr_time(cmd: List[str], stdin: Optional[str] = None) -> TimeSummary:
+def usr_time(cmd: List[str], stdin: Optional[str] = None) -> ExecutionTimeSummary:
     time_file = f"time-{random_name()}.log"
     with open(os.devnull, "w") as devnull:
         subprocess.run(
