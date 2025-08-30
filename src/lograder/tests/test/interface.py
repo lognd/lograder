@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from .analytics import CallSummary, MemoryLossSummary, TimeSummary, WarningSummary
+from .analytics import CallgrindSummary, ValgrindLeakSummary, ExecutionTimeSummary, ValgrindWarningSummary
 
 
 class TestInterface(ABC):
@@ -26,17 +26,24 @@ class TestInterface(ABC):
         pass
 
     @abstractmethod
+    def get_error(self) -> str:
+        pass
+
+    @abstractmethod
     def get_weight(self) -> float:
         pass
 
-    def get_warnings(self) -> Optional[WarningSummary]:
+    def get_penalty(self) -> float:
+        return 1.0
+
+    def get_warnings(self) -> Optional[ValgrindWarningSummary]:
         return None
 
-    def get_execution_time(self) -> Optional[TimeSummary]:
+    def get_execution_time(self) -> Optional[ExecutionTimeSummary]:
         return None
 
-    def get_calls(self) -> Optional[List[CallSummary]]:
+    def get_calls(self) -> Optional[List[CallgrindSummary]]:
         return None
 
-    def get_leaks(self) -> Optional[MemoryLossSummary]:
+    def get_leaks(self) -> Optional[ValgrindLeakSummary]:
         return None

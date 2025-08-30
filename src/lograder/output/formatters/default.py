@@ -10,12 +10,19 @@ from ...builder.common.types import (
     BuilderOutput,
     PreprocessorOutput,
 )
+from ...constants import DEFAULT_TOPIC_BREAK
+from ...tests.test import TestInterface
 from .format_templates import ContextRenderer, ProcessStep
 from .interfaces import (
     BuildOutputFormatterInterface,
     MetadataFormatterInterface,
     PreprocessorOutputFormatterInterface,
+    TestCaseFormatterInterface,
+    ValgrindLeakSummaryFormatterInterface,
+    ValgrindWarningSummaryFormatterInterface,
+    ExecutionTimeSummaryFormatterInterface
 )
+from ...tests.test.analytics import ValgrindLeakSummary, ValgrindWarningSummary, CallgrindSummary, ExecutionTimeSummary
 
 
 def format_timedelta(td: timedelta) -> str:
@@ -69,7 +76,7 @@ class DefaultPreprocessorContext(
     ContextRenderer,
     prefix=f"<{Fore.CYAN}BEGIN PREPROCESSOR{Fore.RESET}>\n",
     suffix=f"\n<{Fore.CYAN}END PREPROCESSOR{Fore.RESET}>",
-    empty=f"<{Fore.CYAN}NO PREPROCESSOR PRESENT{Fore.CYAN}>",
+    empty=f"<{Fore.CYAN}NO PREPROCESSOR PRESENT{Fore.RESET}>",
 ):
     pass
 
@@ -78,7 +85,7 @@ class DefaultBuilderContext(
     ContextRenderer,
     prefix=f"<{Fore.YELLOW}BEGIN BUILDER{Fore.RESET}>\n",
     suffix=f"\n<{Fore.YELLOW}END BUILDER{Fore.RESET}>",
-    empty=f"<{Fore.YELLOW}NO BUILDER PRESENT{Fore.CYAN}>",
+    empty=f"<{Fore.YELLOW}NO BUILDER PRESENT{Fore.RESET}>",
 ):
     pass
 
@@ -87,19 +94,98 @@ class DefaultSTDOUTContext(
     ContextRenderer,
     prefix=f"<{Fore.BLUE}BEGIN STDOUT{Fore.RESET}>\n",
     suffix=f"\n<{Fore.BLUE}END STDOUT{Fore.RESET}>",
-    empty=f"<{Fore.BLUE}EMPTY STDOUT{Fore.CYAN}>",
+    empty=f"<{Fore.BLUE}EMPTY STDOUT{Fore.RESET}>",
 ):
     pass
 
+class DefaultExpectedSTDOUTContext(
+    ContextRenderer,
+    prefix=f"<{Fore.BLUE}BEGIN EXPECTED STDOUT{Fore.RESET}>\n",
+    suffix=f"\n<{Fore.BLUE}END EXPECTED STDOUT{Fore.RESET}>",
+    empty=f"<{Fore.BLUE}EMPTY EXPECTED STDOUT{Fore.RESET}>",
+):
+    pass
+
+class DefaultActualSTDOUTContext(
+    ContextRenderer,
+    prefix=f"<{Fore.BLUE}BEGIN ACTUAL STDOUT{Fore.RESET}>\n",
+    suffix=f"\n<{Fore.BLUE}END ACTUAL STDOUT{Fore.RESET}>",
+    empty=f"<{Fore.BLUE}EMPTY ACTUAL STDOUT{Fore.RESET}>",
+):
+    pass
 
 class DefaultSTDERRContext(
     ContextRenderer,
     prefix=f"<{Fore.RED}BEGIN STDERR{Fore.RESET}>\n",
     suffix=f"\n<{Fore.RED}END STDERR{Fore.RESET}>",
-    empty=f"<{Fore.RED}EMPTY STDERR{Fore.CYAN}>",
+    empty=f"<{Fore.RED}EMPTY STDERR{Fore.RESET}>",
 ):
     pass
 
+class DefaultSTDINContext(
+    ContextRenderer,
+    prefix=f"<{Fore.LIGHTBLUE_EX}BEGIN STDIN{Fore.RESET}>\n",
+    suffix=f"\n<{Fore.LIGHTBLUE_EX}END STDIN{Fore.RESET}>",
+    empty=f"<{Fore.LIGHTBLUE_EX}EMPTY STDIN{Fore.RESET}>",
+):
+    pass
+
+class DefaultValgrindLeakSummaryFormatter(ValgrindLeakSummaryFormatterInterface):
+    def format(self, leak_summary: ValgrindLeakSummary) -> str:
+        def_lost_color = '' if leak_summary.definitely_lost.is_safe else Fore.RED
+        ind_lost_color = '' if leak_summary.indirectly_lost.is_safe else Fore.RED
+        pos_lost_color = '' if leak_summary.possibly_lost.is_safe else Fore.RED
+        return (
+            f"{Fore.LIGHTGREEN_EX}VALGRIND LEAK SUMMARY{Fore.RESET}:\n"
+            f"* {def_lost_color}{leak_summary.definitely_lost.bytes}{Fore.RESET} bytes, {def_lost_color}{leak_summary.definitely_lost.blocks}{Fore.RESET} blocks {def_lost_color}definitely lost{Fore.RESET}.\n"
+            f"* {ind_lost_color}{leak_summary.indirectly_lost.bytes}{Fore.RESET} bytes, {ind_lost_color}{leak_summary.indirectly_lost.blocks}{Fore.RESET} blocks {ind_lost_color}indirectly lost{Fore.RESET}.\n"
+            f"* {pos_lost_color}{leak_summary.possibly_lost.bytes}{Fore.RESET} bytes, {pos_lost_color}{leak_summary.possibly_lost.blocks}{Fore.RESET} blocks {pos_lost_color}possibly lost{Fore.RESET}.\n"
+            f"* {leak_summary.still_reachable.bytes} bytes, {leak_summary.still_reachable.blocks} blocks still reachable."
+        )
+
+class DefaultValgrindWarningSummaryFormatter(ValgrindWarningSummaryFormatterInterface):
+    def format(self, warning_summary: ValgrindWarningSummary) -> str:
+        warning = warning_summary.model_dump()
+        output = [
+            f"{Fore.LIGHTGREEN_EX}VALGRIND WARNING SUMMARY{Fore.RESET}:"
+        ]
+        output += [
+            f"* {v} `{k.replace('_', ' ').upper()}` warnings encountered." for k, v in warning.items()
+        ]
+        return '\n'.join(output)
+
+
+class DefaultExecutionTimeSummaryFormatter(ExecutionTimeSummaryFormatterInterface):
+    def format(self,
+               callgrind_summary: List[CallgrindSummary],
+               execution_time_summary: ExecutionTimeSummary) -> str:
+        total_time = execution_time_summary.total_time
+        output = [
+            f"{Fore.LIGHTGREEN_EX}PERFORMANCE SUMMARY{Fore.RESET}:",
+            f"Time elapsed on CPU:",
+            f"  * in total: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_time))}{Fore.RESET}",
+            f"  * on user-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=execution_time_summary.user_cpu_time))}{Fore.RESET}",
+            f"  * on system-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=execution_time_summary.system_cpu_time))}{Fore.RESET}",
+            f"{Fore.LIGHTGREEN_EX}{execution_time_summary.percent_cpu_utilization:.2f}%{Fore.RESET} CPU Usage",
+            f"{Fore.LIGHTGREEN_EX}{execution_time_summary.peak_physical_memory_usage:.2f} KB{Fore.RESET} Peak Memory Usage",
+            f"Read from disk {Fore.LIGHTGREEN_EX}{execution_time_summary.num_disk_reads}{Fore.RESET} times",
+            f"Wrote to disk {Fore.LIGHTGREEN_EX}{execution_time_summary.num_disk_writes}{Fore.RESET} times",
+            f"{Fore.LIGHTGREEN_EX}{execution_time_summary.num_major_page_faults}{Fore.RESET} pages fetched from disk (major page-faults).",
+            f"{Fore.LIGHTGREEN_EX}{execution_time_summary.num_minor_page_faults}{Fore.RESET} pages mapped from RAM (minor page-faults).",
+            f"{Fore.LIGHTGREEN_EX}{execution_time_summary.num_pages_swapped_to_disk}{Fore.RESET} pages swapped to disk."
+            f"Function call breakdown:",
+        ]
+        function_text = []
+
+        total_instructions = sum([call.cost for call in callgrind_summary])
+        for call_summary in callgrind_summary:
+            function_text.append(
+                f"  * {Fore.LIGHTGREEN_EX}{call_summary.percent:.2f}%{Fore.RESET} ({Fore.LIGHTGREEN_EX}{call_summary.cost}{Fore.RESET} inst., ~{Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_time * call_summary.cost / total_instructions))}{Fore.RESET}): {Fore.LIGHTMAGENTA_EX}{call_summary.function}{Fore.RESET} from {Fore.MAGENTA}{call_summary.file}{Fore.RESET} {'in ' + Fore.BLUE + call_summary.shared_object + Fore.RESET if call_summary.shared_object is not None else ''}"
+            )
+        if not function_text:
+            function_text = [f"  * <{Fore.RED}EMPTY?{Fore.RESET}>"]
+
+        return "\n".join(output + function_text)
 
 class DefaultPreprocessorOutputFormatter(PreprocessorOutputFormatterInterface):
     def format(self, preprocessor_output: PreprocessorOutput) -> str:
@@ -132,3 +218,30 @@ class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
             )
         ]
         return DefaultBuilderContext("\n\n".join(output)).render()
+
+class DefaultTestCaseFormatter(TestCaseFormatterInterface):
+    def format(self, test_case: TestInterface) -> str:
+        if not test_case.get_successful():
+            title_text = f"{Fore.RED}Test `{test_case.get_name()}` failed!{Fore.RESET}\n"
+        elif test_case.get_penalty() < 1.0:
+            title_text = f"{Fore.YELLOW}Test `{test_case.get_name()}` partially passed, but was penalized!{Fore.RESET}\n"
+        elif test_case.get_penalty() == 1.0:
+            title_text = f"{Fore.GREEN}Test `{test_case.get_name()}` passed!{Fore.RESET}\n"
+        else:
+            title_text = f"{Fore.CYAN}Test `{test_case.get_name()}` passed with flying colors (bonus points)!{Fore.RESET}!\n"
+        output = [
+            title_text,
+            DEFAULT_TOPIC_BREAK,
+            DefaultSTDINContext(test_case.get_input()).render(),
+            DEFAULT_TOPIC_BREAK,
+            DefaultExpectedSTDOUTContext(test_case.get_expected_output()).render(),
+            DefaultActualSTDOUTContext(test_case.get_actual_output()).render(),
+            DEFAULT_TOPIC_BREAK,
+            DefaultSTDERRContext(test_case.get_error()).render(),
+            DEFAULT_TOPIC_BREAK,
+            DefaultValgrindLeakSummaryFormatter().format(test_case.get_leaks()),
+            DefaultValgrindWarningSummaryFormatter().format(test_case.get_warnings()),
+            DEFAULT_TOPIC_BREAK,
+            DefaultExecutionTimeSummaryFormatter().format(test_case.get_calls(), test_case.get_execution_time()),
+        ]
+        return '\n'.join(output)
