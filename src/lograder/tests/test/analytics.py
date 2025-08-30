@@ -6,6 +6,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from ...constants import DEFAULT_PROJECT_TIMEOUT
 from ...common.types import FilePath
 from ...common.utils import random_name
 
@@ -228,10 +229,11 @@ def valgrind(
                 valgrind_file,
             ]
             + cmd,
-            stdin=stdin,
+            input=stdin,
             stdout=devnull,
             stderr=devnull,
             text=True,
+            timeout=DEFAULT_PROJECT_TIMEOUT,
         )
 
     with open(valgrind_file, "r", encoding="utf-8", errors="ignore") as f:
@@ -249,10 +251,11 @@ def callgrind(cmd: List[str], stdin: Optional[str] = None) -> List[CallSummary]:
         subprocess.run(
             ["valgrind", "--tool=callgrind", f"--callgrind-out-file={callgrind_file}"]
             + cmd,
-            stdin=stdin,
+            input=stdin,
             stdout=devnull,
             stderr=devnull,
             text=True,
+            timeout=DEFAULT_PROJECT_TIMEOUT,
         )
 
     subprocess.run(
@@ -280,10 +283,11 @@ def usr_time(cmd: List[str], stdin: Optional[str] = None) -> TimeSummary:
                 time_file,
             ]
             + cmd,
-            stdin=stdin,  # program can still read from stdin
+            input=stdin,  # program can still read from stdin
             stdout=devnull,  # hide stdout
             stderr=devnull,
             text=True,
+            timeout=DEFAULT_PROJECT_TIMEOUT,
         )
     with open(time_file) as f:
         time_stats = f.read()

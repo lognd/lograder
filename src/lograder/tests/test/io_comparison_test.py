@@ -1,6 +1,7 @@
 import subprocess
 from typing import Callable, List, Optional
 
+from ...constants import DEFAULT_PROJECT_TIMEOUT
 from ..common.exceptions import TestNotRunError
 from .analytics import CallSummary, MemoryLossSummary, TimeSummary, WarningSummary
 from .interface import TestInterface
@@ -25,11 +26,12 @@ class ComparisonTest(TestInterface):
 
     def is_correct_cmd(self, cmd: List[str]) -> bool:
         self.set_cmd(cmd)
-        self._actual_output = subprocess.run(
+        result = subprocess.run(
             cmd,
-            stdin=self.get_input(),
+            input=self.get_input(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            timeout=DEFAULT_PROJECT_TIMEOUT
         )
 
     def is_correct_str(self, actual_output: str) -> bool:
