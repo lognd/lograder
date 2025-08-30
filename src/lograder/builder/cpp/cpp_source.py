@@ -4,13 +4,12 @@ from typing import Optional
 
 from ...constants import Constants
 from ...common.utils import random_name
-from ..common.file_operations import bfs_walk, is_cxx_source_file
+from ..common.file_operations import bfs_walk, is_cxx_source_file, run_cmd
 from ...common.types import FilePath
-from ..common.builder_interface import BuilderInterface, BuilderResults, RuntimeResults, PreprocessorResults
+from ..common.builder_interface import BuilderInterface, CxxTestRunner, BuilderResults, PreprocessorResults
 from ..common.assignment import PreprocessorOutput, BuilderOutput
-from ...tests.registry import TestRegistry
 
-class CxxSourceBuilder(BuilderInterface):
+class CxxSourceBuilder(CxxTestRunner, BuilderInterface):
     def __init__(self, project_root: FilePath):
         self._project_root: Path = Path(project_root)
         self._build_path: Path = self._project_root / "build"
@@ -45,6 +44,10 @@ class CxxSourceBuilder(BuilderInterface):
         executable_name = self.get_build_path() / random_name()
         self._executable_path = executable_name
 
+        commands = []
+        stdout = []
+        stderr = []
+
         cmd = [
             "g++",
             *Constants.DEFAULT_CXX_COMPILATION_FLAGS,
@@ -52,30 +55,14 @@ class CxxSourceBuilder(BuilderInterface):
             f"-o", executable_name,
             *source_files,
         ]
-        result = subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT
-        )
+        run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
 
         return BuilderResults(
             executable=executable_name,
             output=BuilderOutput(
-                commands=[cmd],
-                stdout=[result.stdout],
-                stderr=[result.stderr],
+                commands=commands,
+                stdout=stdout,
+                stderr=stderr,
                 build_type="cxx-source"
             ),
-        )
-
-    def run_tests(self) -> RuntimeResults:
-        finished_tests = []
-        for test in TestRegistry.iterate():
-            test.set_target(self.get_executable_path())
-            test.run()
-            finished_tests.append(test)
-        return RuntimeResults(
-            results=finished_tests,
         )

@@ -5,6 +5,7 @@ from pathlib import Path
 from ...common.types import FilePath
 from ..common.assignment import PreprocessorOutput, BuilderOutput
 from ...tests.test import TestInterface
+from ...tests.registry import TestRegistry
 
 class PreprocessorResults:
     def __init__(self, output: PreprocessorOutput):
@@ -31,6 +32,21 @@ class RuntimeResults:
 
     def get_test_cases(self) -> List[TestInterface]:
         return list(self._results)
+
+class CxxTestRunner(ABC):
+    @abstractmethod
+    def get_executable_path(self) -> Path:
+        pass
+
+    def run_tests(self) -> RuntimeResults:
+        finished_tests = []
+        for test in TestRegistry.iterate():
+            test.set_target(self.get_executable_path())
+            test.run()
+            finished_tests.append(test)
+        return RuntimeResults(
+            results=finished_tests,
+        )
 
 class BuilderInterface(ABC):
     @abstractmethod

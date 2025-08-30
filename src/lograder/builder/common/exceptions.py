@@ -1,0 +1,22 @@
+from typing import List
+from pathlib import Path
+
+from .._core_exceptions import LograderStudentBuildError
+
+class CMakeListsNotFoundError(LograderStudentBuildError):
+    def __init__(self):
+        super().__init__(
+            "Could not find a CMakeLists.txt anywhere in the project."
+        )
+
+class CMakeTargetNotFoundError(LograderStudentBuildError):
+    def __init__(self, targets: List[str], cmake_path: Path):
+        super().__init__(
+            f"Could not find a valid cmake target anywhere in `{cmake_path.resolve()}`. The targets found were: [{', '.join(targets)}]."
+        )
+
+class CMakeExecutableNotFoundError(LograderStudentBuildError):
+    def __init__(self, cmake_path: Path):
+        super().__init__(
+            f"Could not find a valid cmake executable output path anywhere in `{cmake_path.resolve()}`."
+        )
