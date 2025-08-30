@@ -1,18 +1,27 @@
-from pathlib import Path
-from typing import Optional, List
 import re
 import subprocess
+from pathlib import Path
+from typing import List, Optional
 
-from ...common.utils import random_name
 from ...common.types import FilePath
-from ..common.file_operations import bfs_walk, is_cmake_file, run_cmd, is_valid_target
-from ..common.builder_interface import BuilderInterface, CxxTestRunner, BuilderResults, PreprocessorResults
-from ..common.assignment import PreprocessorOutput, BuilderOutput
-from ..common.exceptions import CMakeListsNotFoundError, CMakeTargetNotFoundError, CMakeExecutableNotFoundError
+from ...common.utils import random_name
+from ..common.assignment import BuilderOutput, PreprocessorOutput
+from ..common.builder_interface import (
+    BuilderInterface,
+    BuilderResults,
+    CxxTestRunner,
+    PreprocessorResults,
+)
+from ..common.exceptions import (
+    CMakeExecutableNotFoundError,
+    CMakeListsNotFoundError,
+    CMakeTargetNotFoundError,
+)
+from ..common.file_operations import bfs_walk, is_cmake_file, is_valid_target, run_cmd
 
 
 class CMakeBuilder(CxxTestRunner, BuilderInterface):
-    TARGET_PATTERN = re.compile(r'^\.\.\.\s+([a-zA-Z0-9_\-.]+)', re.MULTILINE)
+    TARGET_PATTERN = re.compile(r"^\.\.\.\s+([a-zA-Z0-9_\-.]+)", re.MULTILINE)
 
     def __init__(self, project_root: FilePath):
         self._project_root: Path = Path(project_root)
@@ -37,6 +46,8 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
         return self._build_directory
 
     def get_cmake_file(self) -> Path:
+        if self._cmake_file is None:
+            raise CMakeListsNotFoundError
         return self._cmake_file
 
     def get_working_directory(self) -> Path:
@@ -44,35 +55,42 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
 
     def get_executable_path(self) -> Path:
         if self._executable_path is None:
-            raise CMakeExecutableNotFoundError(self.get_working_directory() / "CMakeLists.txt")
+            raise CMakeExecutableNotFoundError(
+                self.get_working_directory() / "CMakeLists.txt"
+            )
         return self._executable_path
 
     def preprocess(self) -> PreprocessorResults:
         return PreprocessorResults(
             PreprocessorOutput(
-                commands = [],
-                stdout = [],
-                stderr = [],
+                commands=[],
+                stdout=[],
+                stderr=[],
             )
         )
 
     def build(self) -> BuilderResults:
-        commands = []
-        stdout = []
-        stderr = []
+        commands: List[List[str | Path]] = []
+        stdout: List[str] = []
+        stderr: List[str] = []
 
-        cmd = [
+        cmd: List[str | Path] = [
             "cmake",
-            "-S", self.get_working_directory(),
-            "-B", self.get_build_directory()
+            "-S",
+            self.get_working_directory(),
+            "-B",
+            self.get_build_directory(),
         ]
         run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
 
         cmd = [
             "cmake",
-            "-S", self.get_working_directory(),
-            "-B", self.get_build_directory(),
-            "--target", "help"
+            "-S",
+            self.get_working_directory(),
+            "-B",
+            self.get_build_directory(),
+            "--target",
+            "help",
         ]
         run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
         targets = self.TARGET_PATTERN.findall(stdout[-1])
@@ -85,23 +103,31 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
         else:
             valid_targets = [target for target in targets if is_valid_target(target)]
             if not valid_targets:
-                raise CMakeTargetNotFoundError(targets, self.get_working_directory() / "CMakeLists.txt")
+                raise CMakeTargetNotFoundError(
+                    targets, self.get_working_directory() / "CMakeLists.txt"
+                )
             target = valid_targets[0]
 
         cmd = [
             "cmake",
-            "-S", self.get_working_directory(),
-            "-B", self.get_build_directory(),
-            "--target", target
+            "-S",
+            self.get_working_directory(),
+            "-B",
+            self.get_build_directory(),
+            "--target",
+            target,
         ]
         run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
 
         cmd = [
             "cmake",
-            "-P", "-",
+            "-P",
+            "-",
         ]
-        script = f"get_target_property(path {target} LOCATION)\nmessage(STATUS \"${{path}}\")\n"
-        result = subprocess.run(cmd, input=script.encode(), capture_output=True, text=True)
+        script = f'get_target_property(path {target} LOCATION)\nmessage(STATUS "${{path}}")\n'
+        result = subprocess.run(
+            cmd, input=script.encode(), capture_output=True, text=True
+        )
         commands.append(cmd)
         stdout.append(result.stdout)
         stderr.append(result.stderr)
@@ -111,11 +137,7 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
 
         return BuilderResults(
             executable=self.get_executable_path(),
-            output = BuilderOutput(
-                commands = commands,
-                stdout = stdout,
-                stderr = stderr,
-                build_type = "cmake"
-            )
+            output=BuilderOutput(
+                commands=commands, stdout=stdout, stderr=stderr, build_type="cmake"
+            ),
         )
-

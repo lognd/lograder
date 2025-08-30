@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from importlib import metadata
-from typing import List, Union
 from pathlib import Path
+from typing import List, Union
 
 from pydantic import BaseModel, Field
 
@@ -37,7 +37,7 @@ class PreprocessorOutput(BaseModel):
 
 
 class BuilderOutput(BaseModel):
-    commands: List[List[str]]
+    commands: List[List[str | Path]]
     stdout: List[str]
     stderr: List[str]
     build_type: str

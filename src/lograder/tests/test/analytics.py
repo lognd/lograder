@@ -250,7 +250,9 @@ def valgrind(
     return valgrind_output.get_leaks(), valgrind_output.get_warnings()
 
 
-def callgrind(cmd: List[Path | str], stdin: Optional[str] = None) -> List[CallgrindSummary]:
+def callgrind(
+    cmd: List[Path | str], stdin: Optional[str] = None
+) -> List[CallgrindSummary]:
     callgrind_file = f"callgrind-{random_name()}.out"
     annotate_file = f"annotate-{random_name()}.log"
 
@@ -278,7 +280,9 @@ def callgrind(cmd: List[Path | str], stdin: Optional[str] = None) -> List[Callgr
     return CallgrindOutput(annotate_output).get_calls()
 
 
-def usr_time(cmd: List[Path | str], stdin: Optional[str] = None) -> ExecutionTimeSummary:
+def usr_time(
+    cmd: List[Path | str], stdin: Optional[str] = None
+) -> ExecutionTimeSummary:
     time_file = f"time-{random_name()}.log"
     with open(os.devnull, "w") as devnull:
         subprocess.run(

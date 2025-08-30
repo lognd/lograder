@@ -1,12 +1,23 @@
-from typing import Optional
 from pathlib import Path
+from typing import List, Optional
 
-from ..common.builder_interface import BuilderInterface, BuilderResults, PreprocessorResults, RuntimeResults
-from ..common.file_operations import bfs_walk, is_makefile_file, run_cmd, is_makefile_target
-from ..common.exceptions import MakefileNotFoundError, MakefileRunNotFoundError
-from ..common.assignment import PreprocessorOutput, BuilderOutput
 from ...common.types import FilePath
 from ...tests.registry import TestRegistry
+from ..common.assignment import BuilderOutput, PreprocessorOutput
+from ..common.builder_interface import (
+    BuilderInterface,
+    BuilderResults,
+    PreprocessorResults,
+    RuntimeResults,
+)
+from ..common.exceptions import MakefileNotFoundError, MakefileRunNotFoundError
+from ..common.file_operations import (
+    bfs_walk,
+    is_makefile_file,
+    is_makefile_target,
+    run_cmd,
+)
+
 
 class MakefileBuilder(BuilderInterface):
     def __init__(self, project_root: FilePath):
@@ -21,49 +32,51 @@ class MakefileBuilder(BuilderInterface):
             raise MakefileNotFoundError
         self._working_directory: Path = self._makefile.parent
 
-    def get_project_root(self) -> FilePath:
+    def get_makefile(self):
+        if self._makefile is None:
+            raise MakefileNotFoundError
+        return self._makefile
+
+    def get_project_root(self) -> Path:
         return self._project_root
 
-    def get_working_directory(self) -> FilePath:
+    def get_working_directory(self) -> Path:
         return self._working_directory
 
     def preprocess(self) -> PreprocessorResults:
         return PreprocessorResults(
-            PreprocessorOutput(
-                commands=[],
-                stdout=[],
-                stderr=[]
-            )
+            PreprocessorOutput(commands=[], stdout=[], stderr=[])
         )
 
     def build(self) -> BuilderResults:
-        commands = []
-        stdout = []
-        stderr = []
+        commands: List[List[str | Path]] = []
+        stdout: List[str] = []
+        stderr: List[str] = []
 
-        cmd = [
-            "make"
-        ]
-        run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr, working_directory=self.get_working_directory())
+        cmd: List[str | Path] = ["make"]
+        run_cmd(
+            cmd,
+            commands=commands,
+            stdout=stdout,
+            stderr=stderr,
+            working_directory=self.get_working_directory(),
+        )
 
         return BuilderResults(
-            executable=self._makefile,
+            executable=self.get_makefile(),
             output=BuilderOutput(
-                commands=commands,
-                stdout=stdout,
-                stderr=stderr,
-                build_type="makefile"
-            )
+                commands=commands, stdout=stdout, stderr=stderr, build_type="makefile"
+            ),
         )
 
     def run_tests(self) -> RuntimeResults:
         finished_tests = []
-        if not is_makefile_target(self._makefile, target="run"):
-            raise MakefileRunNotFoundError(self._makefile)
+        if not is_makefile_target(self.get_makefile(), target="run"):
+            raise MakefileRunNotFoundError(self.get_makefile())
         for test in TestRegistry.iterate():
             test.set_target(["make", "run"])
-            test.run(wrap_args=True, working_directory=self.get_working_directory())
+            test.run(
+                wrap_args=True, working_directory=Path(self.get_working_directory())
+            )
             finished_tests.append(test)
-        return RuntimeResults(
-            results=finished_tests
-        )
+        return RuntimeResults(results=finished_tests)
