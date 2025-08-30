@@ -2,6 +2,7 @@ from pathlib import Path
 import subprocess
 from typing import Optional
 
+from ..common.exceptions import CxxSourceBuildError
 from ...constants import Constants
 from ...common.utils import random_name
 from ..common.file_operations import bfs_walk, is_cxx_source_file, run_cmd
@@ -56,6 +57,9 @@ class CxxSourceBuilder(CxxTestRunner, BuilderInterface):
             *source_files,
         ]
         run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
+
+        if not self._executable_path.exists():
+            raise CxxSourceBuildError(source_files)
 
         return BuilderResults(
             executable=executable_name,

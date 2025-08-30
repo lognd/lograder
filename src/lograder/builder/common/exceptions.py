@@ -3,6 +3,12 @@ from pathlib import Path
 
 from .._core_exceptions import LograderStudentBuildError
 
+class CxxSourceBuildError(LograderStudentBuildError):
+    def __init__(self, sources: List[Path]):
+        super().__init__(
+            f"Was unable to compile C++ sources; found source files: {', '.join([str(path.resolve()) for path in sources])}."
+        )
+
 class CMakeListsNotFoundError(LograderStudentBuildError):
     def __init__(self):
         super().__init__(
