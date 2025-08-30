@@ -21,7 +21,11 @@ def make_tests_from_strs(
         flag_sets = [[] for _ in names]
 
     validate_common_size(
-        names=names, inputs=inputs, expected_outputs=expected_outputs, weights=weights, flags=flag_sets
+        names=names,
+        inputs=inputs,
+        expected_outputs=expected_outputs,
+        weights=weights,
+        flags=flag_sets,
     )
 
     generated_tests = []
@@ -34,7 +38,7 @@ def make_tests_from_strs(
                 input=input_,
                 expected_output=expected_output,
                 weight=weight,
-                flags=flags
+                flags=flags,
             )
         )
     TestRegistry.extend(generated_tests)

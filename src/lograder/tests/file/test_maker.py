@@ -44,5 +44,5 @@ def make_tests_from_files(
         inputs=input_strs,
         expected_outputs=expected_output_strs,
         weights=weights,
-        flag_sets=flag_sets
+        flag_sets=flag_sets,
     )

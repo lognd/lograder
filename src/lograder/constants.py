@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 
+
 class Constants:
     DEFAULT_SUBMISSION_PATH: Path = Path("/autograder/submission")
     DEFAULT_CXX_STANDARD: str = "c++20"

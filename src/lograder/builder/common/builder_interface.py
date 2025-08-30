@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Sequence, List
 from pathlib import Path
+from typing import List, Sequence
 
 from ...common.types import FilePath
-from ..common.assignment import PreprocessorOutput, BuilderOutput
+from ...tests.registry import TestRegistry
 from ...tests.test import TestInterface
+from ..common.assignment import BuilderOutput, PreprocessorOutput
+
 
 class PreprocessorResults:
     def __init__(self, output: PreprocessorOutput):
@@ -13,6 +15,7 @@ class PreprocessorResults:
 
     def get_output(self) -> PreprocessorOutput:
         return self._output
+
 
 class BuilderResults:
     def __init__(self, executable: FilePath, output: BuilderOutput):
@@ -25,12 +28,30 @@ class BuilderResults:
     def get_executable(self) -> Path:
         return self._executable
 
+
 class RuntimeResults:
     def __init__(self, results: Sequence[TestInterface]):
         self._results = results
 
     def get_test_cases(self) -> List[TestInterface]:
         return list(self._results)
+
+
+class CxxTestRunner(ABC):
+    @abstractmethod
+    def get_executable_path(self) -> Path:
+        pass
+
+    def run_tests(self) -> RuntimeResults:
+        finished_tests = []
+        for test in TestRegistry.iterate():
+            test.set_target([self.get_executable_path()])
+            test.run()
+            finished_tests.append(test)
+        return RuntimeResults(
+            results=finished_tests,
+        )
+
 
 class BuilderInterface(ABC):
     @abstractmethod
@@ -48,4 +69,3 @@ class BuilderInterface(ABC):
     @abstractmethod
     def run_tests(self) -> RuntimeResults:
         pass
-

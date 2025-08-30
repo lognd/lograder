@@ -36,7 +36,6 @@ runtime_results = assignment.run_tests()
 summary = AssignmentSummary(
     preprocessor_output = preprocessor_results.get_output(),
     build_output = build_results.get_output(),
-    build_info = build_results.get_info(),
     runtime_summary = runtime_results.get_summary(),
     test_cases = runtime_results.get_test_cases()
 )
@@ -71,7 +70,6 @@ runtime_results = assignment.run_tests()
 summary = AssignmentSummary(
     preprocessor_output = preprocessor_results.get_output(),
     build_output = build_results.get_output(),
-    build_info = build_results.get_info(),
     runtime_summary = runtime_results.get_summary(),
     test_cases = runtime_results.get_test_cases()
 )
@@ -116,7 +114,6 @@ runtime_results = assignment.run_tests()
 summary = AssignmentSummary(
     preprocessor_output = preprocessor_results.get_output(),
     build_output = build_results.get_output(),
-    build_info = build_results.get_info(),
     runtime_summary = runtime_results.get_summary(),
     test_cases = runtime_results.get_test_cases()
 )
@@ -136,6 +133,7 @@ to have an over-bloated mess. You can just use:
 
 ```py
 from typing import Sequence, Optional, List
+from pathlib import Path
 from lograder.tests import make_tests_from_strs, ComparisonTest
 
 
@@ -144,6 +142,7 @@ def make_test_from_strs(
     names: Sequence[str],
     inputs: Sequence[str],
     expected_outputs: Sequence[str],
+    flag_sets: Optional[Sequence[List[str | Path]]] = None,  # Pass flags like ["--option-1", "--option-2"] to student programs
     weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
 ) -> List[ComparisonTest]: ...
 
@@ -164,6 +163,7 @@ method to do so:
 
 ```py
 from typing import Sequence, Optional, List
+from pathlib import Path
 from lograder.tests import make_tests_from_files, FilePath, ComparisonTest
 
 
@@ -175,6 +175,7 @@ def make_tests_from_files(
     input_strs: Optional[Sequence[str]] = None,
     expected_output_files: Optional[Sequence[FilePath]] = None,  # same with `expected_output_files` and `expected_output_strs`
     expected_output_strs: Optional[Sequence[str]] = None,
+    flag_sets: Optional[Sequence[List[str | Path]]] = None,  # Pass flags like ["--option-1", "--option-2"] to student programs
     weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
 ) -> List[ComparisonTest]: ...
 
@@ -194,7 +195,8 @@ very repetitive. You can use `make_tests_from_template`
 and pass a `TestCaseTemplate` object and ...
 
 ```py
-from typing import Sequence, Optional
+from typing import Sequence, Optional, List
+from pathlib import Path
 from lograder.tests import make_tests_from_template, TestCaseTemplate, FilePath
 
 
@@ -219,6 +221,7 @@ class TestCaseTemplate:
                  expected_output_template_file: Optional[FilePath] = None,
                  expected_output_template_str: Optional[str] = None,
                  expected_output_substitutions: Optional[Sequence[TemplateSubstitution]] = None,
+                 flag_sets: Optional[Sequence[List[str | Path]]] = None,  # Pass flags like ["--option-1", "--option-2"] to student programs
                  ):
         # +=====================================================================================+
         # | Validation Rules                                                                    |
@@ -258,7 +261,8 @@ of single-line files. You can create a python generator function that
 follows either the following `Protocol` or `TypedDict`.
 
 ```py
-from typing import Protocol, TypedDict, Generator, NotRequired
+from typing import Protocol, TypedDict, Generator, NotRequired, List
+from pathlib import Path
 from lograder.tests import make_tests_from_generator
 
 
@@ -270,11 +274,12 @@ class TestCaseProtocol(Protocol):
 
     def get_expected_output(self): ...
 
-
+class FlaggedTestCaseProtocol(TestCaseProtocol, Protocol):
+    def get_flags(self) -> List[str | Path]: ...
+    
 # Notice that TestCaseProtocol defaults to equal-weights
-class WeightedTestCaseProtocol(TestCaseProtocol):
+class WeightedTestCaseProtocol(TestCaseProtocol, Protocol):
     def get_weight(self): ...
-
 
 # ... or you can directly return a dict with the following keys.
 class TestCaseDict(TypedDict):
@@ -282,6 +287,7 @@ class TestCaseDict(TypedDict):
     input: str
     expected_output: str
     weight: NotRequired[float]  # Defaults to 1.0, a.k.a. equal-weight.
+    flags: NotRequired[List[str | Path]]
 
 
 # Here's an example of the syntax as well as the required 
@@ -290,7 +296,7 @@ class TestCaseDict(TypedDict):
 def test_suite_1() -> Generator[TestCaseProtocol | WeightedTestCaseProtocol | TestCaseDict, None, None]:
     pass
 
-# You'll have to query the `TestRegistry` from `lograder.tests` to access these tests, though.
+# You'll have to query the `TestRegistry` from `lograder.tests` to access these tests directly, though.
 ```
 
 

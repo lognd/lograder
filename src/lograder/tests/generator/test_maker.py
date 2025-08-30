@@ -2,8 +2,13 @@ from typing import Callable, Generator, List
 
 from ..registry import TestRegistry
 from ..test import ComparisonTest
-from .types import TestCase, TestCaseProtocol, WeightedTestCaseProtocol, FlaggedTestCaseProtocol, \
-    FlaggedWeightedTestCaseProtocol
+from .types import (
+    FlaggedTestCaseProtocol,
+    FlaggedWeightedTestCaseProtocol,
+    TestCase,
+    TestCaseProtocol,
+    WeightedTestCaseProtocol,
+)
 
 
 def make_tests_from_generator(
@@ -13,48 +18,40 @@ def make_tests_from_generator(
     for test_case in generator():
         if isinstance(test_case, WeightedTestCaseProtocol):
             test = ComparisonTest(
-                    name=test_case.get_name(),
-                    input=test_case.get_input(),
-                    expected_output=test_case.get_expected_output(),
-                    weight=test_case.get_weight(),
-                    flags=[]
+                name=test_case.get_name(),
+                input=test_case.get_input(),
+                expected_output=test_case.get_expected_output(),
+                weight=test_case.get_weight(),
+                flags=[],
             )
-            generated_tests.append(
-                test
-            )
+            generated_tests.append(test)
         elif isinstance(test_case, TestCaseProtocol):
             test = ComparisonTest(
-                    name=test_case.get_name(),
-                    input=test_case.get_input(),
-                    expected_output=test_case.get_expected_output(),
-                    weight=1.0,
-                    flags=[]
+                name=test_case.get_name(),
+                input=test_case.get_input(),
+                expected_output=test_case.get_expected_output(),
+                weight=1.0,
+                flags=[],
             )
-            generated_tests.append(
-                test
-            )
+            generated_tests.append(test)
         elif isinstance(test_case, FlaggedWeightedTestCaseProtocol):
             test = ComparisonTest(
-                    name=test_case.get_name(),
-                    input=test_case.get_input(),
-                    expected_output=test_case.get_expected_output(),
-                    weight=test_case.get_weight(),
-                    flags=test_case.get_flags()
+                name=test_case.get_name(),
+                input=test_case.get_input(),
+                expected_output=test_case.get_expected_output(),
+                weight=test_case.get_weight(),
+                flags=test_case.get_flags(),
             )
-            generated_tests.append(
-                test
-            )
+            generated_tests.append(test)
         elif isinstance(test_case, FlaggedTestCaseProtocol):
             test = ComparisonTest(
-                    name=test_case.get_name(),
-                    input=test_case.get_input(),
-                    expected_output=test_case.get_expected_output(),
-                    weight=1.0,
-                    flags=test_case.get_flags()
+                name=test_case.get_name(),
+                input=test_case.get_input(),
+                expected_output=test_case.get_expected_output(),
+                weight=1.0,
+                flags=test_case.get_flags(),
             )
-            generated_tests.append(
-                test
-            )
+            generated_tests.append(test)
         elif isinstance(test_case, dict):
             if "weight" in test_case:
                 weight = test_case["weight"]
@@ -70,11 +67,9 @@ def make_tests_from_generator(
                 input=test_case["input"],
                 expected_output=test_case["expected_output"],
                 weight=weight,
-                flags=flags
+                flags=flags,
             )
-            generated_tests.append(
-                test
-            )
+            generated_tests.append(test)
         else:
             raise ValueError(
                 f"`generator` passed to `make_tests_from_generator` produced a type, `{type(test_case)}`, which is not supported."

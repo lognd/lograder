@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import List, Optional
 
-from ...common.types import FilePath
 from .analytics import (
     CallgrindSummary,
     ExecutionTimeSummary,
@@ -13,11 +13,13 @@ from .analytics import (
 class TestInterface(ABC):
 
     @abstractmethod
-    def set_target(self, target: FilePath):
+    def set_target(self, target: List[str | Path]):
         pass
 
     @abstractmethod
-    def run(self) -> None:
+    def run(
+        self, wrap_args: bool = False, working_directory: Optional[Path] = None
+    ) -> None:
         pass
 
     @abstractmethod
