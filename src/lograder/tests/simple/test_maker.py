@@ -10,19 +10,23 @@ def make_tests_from_strs(
     names: Sequence[str],
     inputs: Sequence[str],
     expected_outputs: Sequence[str],
+    flag_sets: Optional[Sequence[List[str]]] = None,
     weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
 ) -> List[ComparisonTest]:
 
     if weights is None:
         weights = [1.0 for _ in names]
 
+    if flag_sets is None:
+        flag_sets = [[] for _ in names]
+
     validate_common_size(
-        names=names, inputs=inputs, expected_outputs=expected_outputs, weights=weights
+        names=names, inputs=inputs, expected_outputs=expected_outputs, weights=weights, flags=flag_sets
     )
 
     generated_tests = []
-    for name, input_, expected_output, weight in zip(
-        names, inputs, expected_outputs, weights, strict=True
+    for name, input_, expected_output, weight, flags in zip(
+        names, inputs, expected_outputs, weights, flag_sets, strict=True
     ):
         generated_tests.append(
             ComparisonTest(
@@ -30,6 +34,7 @@ def make_tests_from_strs(
                 input=input_,
                 expected_output=expected_output,
                 weight=weight,
+                flags=flags
             )
         )
     TestRegistry.extend(generated_tests)

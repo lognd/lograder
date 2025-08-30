@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from ...common.types import FilePath
 from ...common.utils import random_name
-from ...constants import DEFAULT_PROJECT_TIMEOUT
+from ...constants import Constants
 
 
 class LossEntry(BaseModel):
@@ -223,7 +223,7 @@ class TimeOutput:
 
 
 def valgrind(
-    cmd: List[str], stdin: Optional[str] = None
+    cmd: List[str | Path], stdin: Optional[str] = None
 ) -> tuple[ValgrindLeakSummary, ValgrindWarningSummary]:
     valgrind_file = f"valgrind-{random_name()}.log"
     with open(os.devnull, "w") as devnull:
@@ -240,7 +240,7 @@ def valgrind(
             stdout=devnull,
             stderr=devnull,
             text=True,
-            timeout=DEFAULT_PROJECT_TIMEOUT,
+            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
         )
 
     with open(valgrind_file, "r", encoding="utf-8", errors="ignore") as f:
@@ -250,7 +250,7 @@ def valgrind(
     return valgrind_output.get_leaks(), valgrind_output.get_warnings()
 
 
-def callgrind(cmd: List[str], stdin: Optional[str] = None) -> List[CallgrindSummary]:
+def callgrind(cmd: List[Path | str], stdin: Optional[str] = None) -> List[CallgrindSummary]:
     callgrind_file = f"callgrind-{random_name()}.out"
     annotate_file = f"annotate-{random_name()}.log"
 
@@ -262,7 +262,7 @@ def callgrind(cmd: List[str], stdin: Optional[str] = None) -> List[CallgrindSumm
             stdout=devnull,
             stderr=devnull,
             text=True,
-            timeout=DEFAULT_PROJECT_TIMEOUT,
+            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
         )
 
     subprocess.run(
@@ -278,7 +278,7 @@ def callgrind(cmd: List[str], stdin: Optional[str] = None) -> List[CallgrindSumm
     return CallgrindOutput(annotate_output).get_calls()
 
 
-def usr_time(cmd: List[str], stdin: Optional[str] = None) -> ExecutionTimeSummary:
+def usr_time(cmd: List[Path | str], stdin: Optional[str] = None) -> ExecutionTimeSummary:
     time_file = f"time-{random_name()}.log"
     with open(os.devnull, "w") as devnull:
         subprocess.run(
@@ -294,7 +294,7 @@ def usr_time(cmd: List[str], stdin: Optional[str] = None) -> ExecutionTimeSummar
             stdout=devnull,  # hide stdout
             stderr=devnull,
             text=True,
-            timeout=DEFAULT_PROJECT_TIMEOUT,
+            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
         )
     with open(time_file) as f:
         time_stats = f.read()

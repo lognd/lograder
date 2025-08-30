@@ -2,7 +2,8 @@ from typing import Callable, Generator, List
 
 from ..registry import TestRegistry
 from ..test import ComparisonTest
-from .types import TestCase, TestCaseProtocol, WeightedTestCaseProtocol
+from .types import TestCase, TestCaseProtocol, WeightedTestCaseProtocol, FlaggedTestCaseProtocol, \
+    FlaggedWeightedTestCaseProtocol
 
 
 def make_tests_from_generator(
@@ -11,41 +12,68 @@ def make_tests_from_generator(
     generated_tests: List[ComparisonTest] = []
     for test_case in generator():
         if isinstance(test_case, WeightedTestCaseProtocol):
-            generated_tests.append(
-                ComparisonTest(
+            test = ComparisonTest(
                     name=test_case.get_name(),
                     input=test_case.get_input(),
                     expected_output=test_case.get_expected_output(),
                     weight=test_case.get_weight(),
-                )
+                    flags=[]
+            )
+            generated_tests.append(
+                test
             )
         elif isinstance(test_case, TestCaseProtocol):
-            generated_tests.append(
-                ComparisonTest(
+            test = ComparisonTest(
                     name=test_case.get_name(),
                     input=test_case.get_input(),
                     expected_output=test_case.get_expected_output(),
                     weight=1.0,
-                )
+                    flags=[]
+            )
+            generated_tests.append(
+                test
+            )
+        elif isinstance(test_case, FlaggedWeightedTestCaseProtocol):
+            test = ComparisonTest(
+                    name=test_case.get_name(),
+                    input=test_case.get_input(),
+                    expected_output=test_case.get_expected_output(),
+                    weight=test_case.get_weight(),
+                    flags=test_case.get_flags()
+            )
+            generated_tests.append(
+                test
+            )
+        elif isinstance(test_case, FlaggedTestCaseProtocol):
+            test = ComparisonTest(
+                    name=test_case.get_name(),
+                    input=test_case.get_input(),
+                    expected_output=test_case.get_expected_output(),
+                    weight=1.0,
+                    flags=test_case.get_flags()
+            )
+            generated_tests.append(
+                test
             )
         elif isinstance(test_case, dict):
             if "weight" in test_case:
-                generated_tests.append(
-                    ComparisonTest(
-                        name=test_case["name"],
-                        input=test_case["input"],
-                        expected_output=test_case["expected_output"],
-                        weight=test_case["weight"],
-                    )
-                )
-                continue
+                weight = test_case["weight"]
+            else:
+                weight = 1.0
+            if "flags" in test_case:
+                flags = test_case["flags"]
+            else:
+                flags = []
+
+            test = ComparisonTest(
+                name=test_case["name"],
+                input=test_case["input"],
+                expected_output=test_case["expected_output"],
+                weight=weight,
+                flags=flags
+            )
             generated_tests.append(
-                ComparisonTest(
-                    name=test_case["name"],
-                    input=test_case["input"],
-                    expected_output=test_case["expected_output"],
-                    weight=1.0,
-                )
+                test
             )
         else:
             raise ValueError(

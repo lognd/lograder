@@ -10,7 +10,7 @@ from ...builder.common.types import (
     BuilderOutput,
     PreprocessorOutput,
 )
-from ...constants import DEFAULT_TOPIC_BREAK
+from ...constants import Constants
 from ...tests.test import TestInterface
 from ...tests.test.analytics import (
     CallgrindSummary,
@@ -304,17 +304,17 @@ class DefaultTestCaseFormatter(TestCaseFormatterInterface):
             title_text = f"{Fore.CYAN}Test `{test_case.get_name()}` passed with flying colors (bonus points)!{Fore.RESET}!\n"
         output = [
             title_text,
-            DEFAULT_TOPIC_BREAK,
+            Constants.DEFAULT_TOPIC_BREAK,
             DefaultSTDINContext(test_case.get_input()).render(),
-            DEFAULT_TOPIC_BREAK,
+            Constants.DEFAULT_TOPIC_BREAK,
             DefaultExpectedSTDOUTContext(test_case.get_expected_output()).render(),
             DefaultActualSTDOUTContext(test_case.get_actual_output()).render(),
-            DEFAULT_TOPIC_BREAK,
+            Constants.DEFAULT_TOPIC_BREAK,
             DefaultSTDERRContext(test_case.get_error()).render(),
-            DEFAULT_TOPIC_BREAK,
+            Constants.DEFAULT_TOPIC_BREAK,
             DefaultValgrindLeakSummaryFormatter().format(test_case.get_leaks()),
             DefaultValgrindWarningSummaryFormatter().format(test_case.get_warnings()),
-            DEFAULT_TOPIC_BREAK,
+            Constants.DEFAULT_TOPIC_BREAK,
             DefaultExecutionTimeSummaryFormatter().format(
                 test_case.get_calls(), test_case.get_execution_time()
             ),

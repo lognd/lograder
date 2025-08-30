@@ -1,8 +1,10 @@
 import subprocess
 from typing import Callable, List, Optional
+from pathlib import Path
 
-from ...constants import DEFAULT_PROJECT_TIMEOUT
-from ..common.exceptions import TestNotRunError
+from ...common.types import FilePath
+from ...constants import Constants
+from ..common.exceptions import TestNotRunError, TestTargetNotSpecifiedError
 from .analytics import (
     CallgrindSummary,
     ExecutionTimeSummary,
@@ -17,10 +19,14 @@ from .interface import TestInterface
 
 class ComparisonTest(TestInterface):
     def __init__(
-        self, name: str, input: str, expected_output: str, weight: float = 1.0
+        self, name: str, input: str, expected_output: str, flags: List[str] = None, weight: float = 1.0
     ):
+        if flags is None:
+            flags = []
+
         self._name: str = name
-        self._saved_cmd: Optional[List[str]] = None
+        self._saved_executable: Optional[Path] = None
+        self._saved_flags: List[str] = flags
 
         self._cached_warnings: Optional[ValgrindWarningSummary] = None
         self._cached_leaks: Optional[ValgrindLeakSummary] = None
@@ -34,20 +40,30 @@ class ComparisonTest(TestInterface):
 
         self._weight: float = weight
 
-    def set_cmd(self, cmd: List[str]):
-        self._saved_cmd = cmd
+    def set_target(self, executable: FilePath):
+        self._saved_executable = Path(executable)
+
+    def set_flags(self, flags: List[str]):
+        self._saved_flags = flags
 
     def is_correct(self) -> bool:
         return self.get_actual_output().strip() == self._expected_output.strip()
 
+    def run(self) -> None:
+        cmd = self.get_cmd()
+        if cmd is None:
+            raise TestTargetNotSpecifiedError(self.get_name())
+        self.is_correct_cmd(cmd)
+
     def is_correct_cmd(self, cmd: List[str]) -> bool:
-        self.set_cmd(cmd)
+        self.set_target(cmd[0])
+        self.set_flags(cmd[1:])
         result = subprocess.run(
             cmd,
             input=self.get_input(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            timeout=DEFAULT_PROJECT_TIMEOUT,
+            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
         )
         self._actual_output = result.stdout.decode()
         self._error = result.stderr.decode()
@@ -74,8 +90,10 @@ class ComparisonTest(TestInterface):
             self._cached_leaks, self._cached_warnings = valgrind(cmd, self.get_input())
         return self._cached_warnings
 
-    def get_cmd(self) -> Optional[List[str]]:
-        return self._saved_cmd
+    def get_cmd(self) -> Optional[List[Path | str]]:
+        if self._saved_executable is None:
+            return None
+        return [self._saved_executable] + self._saved_flags
 
     def get_execution_time(self) -> Optional[ExecutionTimeSummary]:
         cmd = self.get_cmd()

@@ -21,6 +21,7 @@ class TestCaseTemplate:
         expected_output_template_file: Optional[FilePath] = None,
         expected_output_template_str: Optional[str] = None,
         expected_output_substitutions: Optional[Sequence[TemplateSubstitution]] = None,
+        flag_sets: Optional[Sequence[List[str]]] = None
     ):
 
         if input_strs is not None:
@@ -81,6 +82,10 @@ class TestCaseTemplate:
 
         self._inputs = input_strs
         self._expected_outputs = expected_output_strs
+        self._flag_sets = flag_sets
+
+    def get_flag_sets(self):
+        return self._flag_sets
 
     def get_inputs(self):
         return self._inputs
@@ -99,4 +104,5 @@ def make_tests_from_template(
         inputs=template.get_inputs(),
         expected_outputs=template.get_outputs(),
         weights=weights,
+        flag_sets=template.get_flag_sets()
     )

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from importlib import metadata
-from typing import List
+from typing import List, Union
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 
@@ -26,7 +27,7 @@ class AssignmentMetadata(BaseModel):
 
 
 class PreprocessorOutput(BaseModel):
-    commands: List[List[str]]
+    commands: List[List[Union[str, Path]]]
     stdout: List[str]
     stderr: List[str]
 
