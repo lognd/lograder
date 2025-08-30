@@ -22,6 +22,9 @@ def is_cxx_source_file(path: Path) -> bool:
 def is_cmake_file(path: Path) -> bool:
     return path.exists() and path.name == "CMakeLists.txt"
 
+def is_makefile_file(path: Path) -> bool:
+    return path.exists() and path.name == "Makefile"
+
 def is_valid_target(target: str) -> bool:
     return target not in (
         "all",
@@ -40,14 +43,24 @@ def is_valid_target(target: str) -> bool:
         "PACKAGE"
     )
 
-def run_cmd(cmd: List[str | Path], commands: Optional[List[List[str | Path]]] = None, stdout: Optional[List[str]] = None, stderr: Optional[List[str]] = None) -> List[str]:
-    result = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT
-    )
+def run_cmd(cmd: List[str | Path], commands: Optional[List[List[str | Path]]] = None, stdout: Optional[List[str]] = None, stderr: Optional[List[str]] = None, working_directory: Optional[Path] = None):
+    if working_directory is None:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT
+        )
+    else:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
+            cwd=working_directory
+        )
     if commands is not None:
         commands.append(cmd)
     if stdout is not None:

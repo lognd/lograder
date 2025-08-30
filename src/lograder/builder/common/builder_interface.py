@@ -41,7 +41,7 @@ class CxxTestRunner(ABC):
     def run_tests(self) -> RuntimeResults:
         finished_tests = []
         for test in TestRegistry.iterate():
-            test.set_target(self.get_executable_path())
+            test.set_target([self.get_executable_path()])
             test.run()
             finished_tests.append(test)
         return RuntimeResults(

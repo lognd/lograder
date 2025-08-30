@@ -1,6 +1,7 @@
 import subprocess
 from typing import Callable, List, Optional
 from pathlib import Path
+import shlex
 
 from ...common.types import FilePath
 from ...constants import Constants
@@ -25,7 +26,7 @@ class ComparisonTest(TestInterface):
             flags = []
 
         self._name: str = name
-        self._saved_executable: Optional[Path] = None
+        self._saved_executable: Optional[List[str | Path]] = None
         self._saved_flags: List[str] = flags
 
         self._cached_warnings: Optional[ValgrindWarningSummary] = None
@@ -40,8 +41,8 @@ class ComparisonTest(TestInterface):
 
         self._weight: float = weight
 
-    def set_target(self, executable: FilePath):
-        self._saved_executable = Path(executable)
+    def set_target(self, executable: List[str | FilePath]):
+        self._saved_executable = executable
 
     def set_flags(self, flags: List[str]):
         self._saved_flags = flags
@@ -49,14 +50,14 @@ class ComparisonTest(TestInterface):
     def is_correct(self) -> bool:
         return self.get_actual_output().strip() == self._expected_output.strip()
 
-    def run(self) -> None:
-        cmd = self.get_cmd()
+    def run(self, wrap_args: bool = False, working_directory: Optional[Path] = None) -> None:
+        cmd = self.get_cmd(wrap_args=wrap_args, working_directory=working_directory)
         if cmd is None:
             raise TestTargetNotSpecifiedError(self.get_name())
         self.is_correct_cmd(cmd)
 
     def is_correct_cmd(self, cmd: List[str]) -> bool:
-        self.set_target(cmd[0])
+        self.set_target([cmd[0]])
         self.set_flags(cmd[1:])
         result = subprocess.run(
             cmd,
@@ -90,10 +91,18 @@ class ComparisonTest(TestInterface):
             self._cached_leaks, self._cached_warnings = valgrind(cmd, self.get_input())
         return self._cached_warnings
 
-    def get_cmd(self) -> Optional[List[Path | str]]:
+    def get_cmd(self, wrap_args: bool = False, working_directory: Optional[Path] = None) -> Optional[List[Path | str]]:
         if self._saved_executable is None:
             return None
-        return [self._saved_executable] + self._saved_flags
+        if working_directory is None:
+            cd = []
+        else:
+            cd = ["cd", working_directory, "&&"]
+        if wrap_args:
+            flags = [f'ARGS="{shlex.join(self._saved_flags)}"']
+        else:
+            flags = self._saved_flags
+        return cd + self._saved_executable + flags
 
     def get_execution_time(self) -> Optional[ExecutionTimeSummary]:
         cmd = self.get_cmd()

@@ -5,9 +5,8 @@ import subprocess
 
 from ...common.utils import random_name
 from ...common.types import FilePath
-from ...constants import Constants
 from ..common.file_operations import bfs_walk, is_cmake_file, run_cmd, is_valid_target
-from ..common.builder_interface import BuilderInterface, CxxTestRunner, BuilderResults, RuntimeResults, PreprocessorResults
+from ..common.builder_interface import BuilderInterface, CxxTestRunner, BuilderResults, PreprocessorResults
 from ..common.assignment import PreprocessorOutput, BuilderOutput
 from ..common.exceptions import CMakeListsNotFoundError, CMakeTargetNotFoundError, CMakeExecutableNotFoundError
 
@@ -18,6 +17,7 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
     def __init__(self, project_root: FilePath):
         self._project_root: Path = Path(project_root)
         self._build_directory: Path = self._project_root / f"build-{random_name()}"
+
         self._cmake_file: Optional[Path] = None
         for file in bfs_walk(self._project_root):
             if is_cmake_file(file):
@@ -25,6 +25,7 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
                 break
         if self._cmake_file is None:
             raise CMakeListsNotFoundError
+
         self._working_directory: Path = self._cmake_file.parent
         self._cmake_target: Optional[str] = None
         self._executable_path: Optional[Path] = None
@@ -107,8 +108,6 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
         for line in result.stdout.splitlines():
             if line.startswith("-- "):  # cmake -P prefixes STATUS with --
                 self._executable_path = line[3:].strip()
-        if self._executable_path is None:
-            raise CMakeExecutableNotFoundError(self.get_working_directory() / "CMakeLists.txt")
 
         return BuilderResults(
             executable=self.get_executable_path(),

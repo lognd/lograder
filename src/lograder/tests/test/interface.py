@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
+from pathlib import Path
 
 from ...common.types import FilePath
 from .analytics import (
@@ -13,11 +14,11 @@ from .analytics import (
 class TestInterface(ABC):
 
     @abstractmethod
-    def set_target(self, target: FilePath):
+    def set_target(self, target: List[str | FilePath]):
         pass
 
     @abstractmethod
-    def run(self) -> None:
+    def run(self, wrap_args: bool = False, working_directory: Optional[Path] = None) -> None:
         pass
 
     @abstractmethod

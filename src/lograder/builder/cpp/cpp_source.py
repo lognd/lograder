@@ -1,5 +1,4 @@
 from pathlib import Path
-import subprocess
 from typing import Optional
 
 from ..common.exceptions import CxxSourceBuildError
