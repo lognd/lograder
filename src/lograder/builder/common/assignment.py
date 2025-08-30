@@ -3,10 +3,8 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from ...output.formatters.interfaces import (
-    BuildInfoFormatterInterface,
     BuildOutputFormatterInterface,
     MetadataFormatterInterface,
-    PreprocessorInfoFormatterInterface,
     PreprocessorOutputFormatterInterface,
     RuntimeSummaryFormatterInterface,
     TestCaseFormatterInterface,
@@ -16,34 +14,22 @@ from ...output.raw_json.test_case import TestCaseJSON
 from ...tests.test import TestInterface
 from .types import (
     AssignmentMetadata,
-    BuildInfo,
-    BuildOutput,
-    PreprocessorInfo,
-    PreprocessorOutput,
-    RuntimeSummary,
+    BuilderOutput,
+    PreprocessorOutput
 )
 
 
 class AssignmentSummary(BaseModel):
     metadata: AssignmentMetadata
     preprocessor_output: PreprocessorOutput
-    preprocessor_info: PreprocessorInfo
-    build_output: BuildOutput
-    build_info: BuildInfo
-    runtime_summary: RuntimeSummary
+    build_output: BuilderOutput
     test_cases: List[TestInterface]
 
     metadata_fmt: MetadataFormatterInterface = Field(default_factory=..., exclude=True)
     preprocessor_output_fmt: PreprocessorOutputFormatterInterface = Field(
         default_factory=..., exclude=True
     )
-    preprocessor_info_fmt: PreprocessorInfoFormatterInterface = Field(
-        default_factory=..., exclude=True
-    )
     build_output_fmt: BuildOutputFormatterInterface = Field(
-        default_factory=..., exclude=True
-    )
-    build_info_fmt: BuildInfoFormatterInterface = Field(
         default_factory=..., exclude=True
     )
     runtime_summary_fmt: RuntimeSummaryFormatterInterface = Field(
@@ -57,9 +43,7 @@ class AssignmentSummary(BaseModel):
         *,
         metadata: Optional[MetadataFormatterInterface] = None,
         preprocessor_output: Optional[PreprocessorOutputFormatterInterface] = None,
-        preprocessor_info: Optional[PreprocessorInfoFormatterInterface] = None,
         build_output: Optional[BuildOutputFormatterInterface] = None,
-        build_info: Optional[BuildInfoFormatterInterface] = None,
         runtime_summary: Optional[RuntimeSummaryFormatterInterface] = None,
         test_case: Optional[TestCaseFormatterInterface] = None,
     ):
@@ -67,12 +51,8 @@ class AssignmentSummary(BaseModel):
             cls.metadata_fmt = metadata
         if preprocessor_output is not None:
             cls.preprocessor_output_fmt = preprocessor_output
-        if preprocessor_info is not None:
-            cls.preprocessor_info_fmt = preprocessor_info
         if build_output is not None:
             cls.build_output_fmt = build_output
-        if build_info is not None:
-            cls.build_info_fmt = build_info
         if runtime_summary is not None:
             cls.runtime_summary_fmt = runtime_summary
         if test_case is not None:
@@ -81,11 +61,9 @@ class AssignmentSummary(BaseModel):
     def get_assignment_text(self):
         return (
             f"{self.metadata_fmt.format(self.metadata)}"
-            f"{self.preprocessor_info_fmt.format(self.preprocessor_info)}"
             f"{self.preprocessor_output_fmt.format(self.preprocessor_output)}"
-            f"{self.build_info_fmt.format(self.build_info)}"
             f"{self.build_output_fmt.format(self.build_output)}"
-            f"{self.runtime_summary_fmt.format(self.runtime_summary)}"
+            f"{self.runtime_summary_fmt.format(self.test_cases)}"
         )
 
     def get_score_multiplier(self):
