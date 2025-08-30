@@ -52,7 +52,7 @@ class ComparisonTest(TestInterface):
         self._saved_flags = flags
 
     def is_correct(self) -> bool:
-        return self.get_actual_output().strip() == self._expected_output.strip()
+        return self.get_actual_output().strip() == self.get_expected_output().strip()
 
     def run(
         self, wrap_args: bool = False, working_directory: Optional[Path] = None
@@ -70,10 +70,11 @@ class ComparisonTest(TestInterface):
             input=self.get_input(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            text=True,
             timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
         )
-        self._actual_output = result.stdout.decode()
-        self._error = result.stderr.decode()
+        self._actual_output = result.stdout
+        self._error = result.stderr
         return self.is_correct()
 
     def get_error(self) -> str:

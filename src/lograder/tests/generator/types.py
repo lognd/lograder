@@ -4,6 +4,8 @@ from typing import List, NotRequired, Protocol, TypedDict, Union, runtime_checka
 
 @runtime_checkable
 class TestCaseProtocol(Protocol):
+    __test__: bool = False
+
     def get_name(self) -> str: ...
     def get_input(self) -> str: ...
     def get_expected_output(self) -> str: ...
@@ -27,6 +29,8 @@ class FlaggedWeightedTestCaseProtocol(
 
 
 class TestCaseDict(TypedDict):
+    __test__ = False  # type: ignore
+
     name: str
     input: str
     expected_output: str

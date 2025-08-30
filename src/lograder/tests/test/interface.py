@@ -11,6 +11,7 @@ from .analytics import (
 
 
 class TestInterface(ABC):
+    __test__: bool = False
 
     @abstractmethod
     def set_target(self, target: List[str | Path]):

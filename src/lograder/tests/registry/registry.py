@@ -8,6 +8,11 @@ class Registry[T]:
     _container: List[T] = []
 
     @classmethod
+    def clear(cls):
+        cls._registry = {}
+        cls._container = []
+
+    @classmethod
     def register(cls, key: str, value: T) -> None:
         cls._registry[key] = value
 

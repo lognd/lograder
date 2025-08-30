@@ -10,6 +10,8 @@ from .types import TemplateSubstitution
 
 
 class TestCaseTemplate:
+    __test__: bool = False
+
     def __init__(
         self,
         *,
