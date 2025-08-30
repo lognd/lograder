@@ -57,3 +57,17 @@ class ArgumentSpecifiedError(LograderValidationError):
             )
             + f", that should have been left blank because argument, `{conflicting_arg}`, was specified."
         )
+
+
+class TestNotRunError(LograderValidationError):
+    def __init__(self, test_name: str):
+        super().__init__(
+            f"Tried to check correctness of test, `{test_name}`, but it has not been run."
+        )
+
+
+class TestTargetNotSpecifiedError(LograderValidationError):
+    def __init__(self, test_name: str):
+        super().__init__(
+            f"Tried to run test, `{test_name}`, but a target command was not set with `.set_cmd(...)`."
+        )

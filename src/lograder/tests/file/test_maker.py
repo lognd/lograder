@@ -15,6 +15,7 @@ def make_tests_from_files(
     expected_output_files: Optional[Sequence[FilePath]] = None,
     expected_output_strs: Optional[Sequence[str]] = None,
     weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
+    flag_sets: Optional[Sequence[List[str]]] = None,
 ) -> List[ComparisonTest]:
 
     # Ensure only one input is specified, then convert files to strs.
@@ -43,4 +44,5 @@ def make_tests_from_files(
         inputs=input_strs,
         expected_outputs=expected_output_strs,
         weights=weights,
+        flag_sets=flag_sets
     )
