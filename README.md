@@ -36,7 +36,6 @@ runtime_results = assignment.run_tests()
 summary = AssignmentSummary(
     preprocessor_output = preprocessor_results.get_output(),
     build_output = build_results.get_output(),
-    build_info = build_results.get_info(),
     runtime_summary = runtime_results.get_summary(),
     test_cases = runtime_results.get_test_cases()
 )
@@ -71,7 +70,6 @@ runtime_results = assignment.run_tests()
 summary = AssignmentSummary(
     preprocessor_output = preprocessor_results.get_output(),
     build_output = build_results.get_output(),
-    build_info = build_results.get_info(),
     runtime_summary = runtime_results.get_summary(),
     test_cases = runtime_results.get_test_cases()
 )
@@ -116,7 +114,6 @@ runtime_results = assignment.run_tests()
 summary = AssignmentSummary(
     preprocessor_output = preprocessor_results.get_output(),
     build_output = build_results.get_output(),
-    build_info = build_results.get_info(),
     runtime_summary = runtime_results.get_summary(),
     test_cases = runtime_results.get_test_cases()
 )
