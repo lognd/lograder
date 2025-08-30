@@ -2,9 +2,7 @@ from abc import ABC, abstractmethod
 
 from ...builder.common.types import (
     AssignmentMetadata,
-    BuildInfo,
-    BuildOutput,
-    PreprocessorInfo,
+    BuilderOutput,
     PreprocessorOutput,
     RuntimeSummary,
 )
@@ -13,41 +11,29 @@ from ...tests.test import TestInterface
 
 class MetadataFormatterInterface(ABC):
     @abstractmethod
-    def format(self, assignment_metadata: AssignmentMetadata):
+    def format(self, assignment_metadata: AssignmentMetadata) -> str:
         pass
 
 
 class PreprocessorOutputFormatterInterface(ABC):
     @abstractmethod
-    def format(self, preprocessor_output: PreprocessorOutput):
-        pass
-
-
-class PreprocessorInfoFormatterInterface(ABC):
-    @abstractmethod
-    def format(self, preprocessor_info: PreprocessorInfo):
+    def format(self, preprocessor_output: PreprocessorOutput) -> str:
         pass
 
 
 class BuildOutputFormatterInterface(ABC):
     @abstractmethod
-    def format(self, build_output: BuildOutput):
-        pass
-
-
-class BuildInfoFormatterInterface(ABC):
-    @abstractmethod
-    def format(self, build_info: BuildInfo):
+    def format(self, build_output: BuilderOutput) -> str:
         pass
 
 
 class RuntimeSummaryFormatterInterface(ABC):
     @abstractmethod
-    def format(self, runtime_summary: RuntimeSummary):
+    def format(self, runtime_summary: RuntimeSummary) -> str:
         pass
 
 
 class TestCaseFormatterInterface(ABC):
     @abstractmethod
-    def format(self, test_case: TestInterface):
+    def format(self, test_case: TestInterface) -> str:
         pass
