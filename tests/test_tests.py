@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 from typing import Generator
+import pytest
 
 from lograder.tests import (
     TestCaseDict,
@@ -13,7 +14,7 @@ from lograder.tests import (
     make_tests_from_template,
 )
 
-
+@pytest.mark.description('Testing the successful tests constructed from basic strings (using `make_tests_from_strs`).')
 def test_basic_strs_success():
     TestRegistry.clear()
 
@@ -27,7 +28,7 @@ def test_basic_strs_success():
     for i, test in enumerate(tests):
         assert test.is_correct_str(f"{i}")
 
-
+@pytest.mark.description('Testing the unsuccessful tests constructed from basic strings (using `make_tests_from_strs`).')
 def test_basic_strs_failure():
     TestRegistry.clear()
 
@@ -40,7 +41,7 @@ def test_basic_strs_failure():
     for i, test in enumerate(tests):
         assert test.is_correct_str("-1") is False
 
-
+@pytest.mark.description('Testing to see if flags are passed correctly from tests.')
 def test_flag_strs():
     TestRegistry.clear()
 
@@ -59,7 +60,7 @@ def test_flag_strs():
         test.run()
         assert test.get_successful()
 
-
+@pytest.mark.description('Testing to see if stdin is passed correctly from tests.')
 def test_input_strs():
     TestRegistry.clear()
 
@@ -77,7 +78,7 @@ def test_input_strs():
         test.run()
         assert test.get_successful()
 
-
+@pytest.mark.description('Testing the successful tests constructed from files (using `make_tests_from_files`).')
 def test_basic_files_success():
     TestRegistry.clear()
 
@@ -96,7 +97,7 @@ def test_basic_files_success():
     for i, test in enumerate(tests):
         assert test.is_correct_str(f"{i}")
 
-
+@pytest.mark.description('Testing the unsuccessful tests constructed from files (using `make_tests_from_files`).')
 def test_basic_files_failure():
     TestRegistry.clear()
     here = Path(__file__).parent
@@ -114,7 +115,7 @@ def test_basic_files_failure():
     for i, test in enumerate(tests):
         assert test.is_correct_str("-1") is False
 
-
+@pytest.mark.description('Testing the successful tests constructed from template (using `make_tests_from_template`).')
 def test_basic_templates_success():
     TestRegistry.clear()
 
@@ -132,7 +133,7 @@ def test_basic_templates_success():
     for i, test in enumerate(tests):
         assert test.is_correct_str(f"{i}")
 
-
+@pytest.mark.description('Testing the unsuccessful tests constructed from template (using `make_tests_from_template`).')
 def test_basic_templates_failure():
     TestRegistry.clear()
 
@@ -150,7 +151,7 @@ def test_basic_templates_failure():
     for i, test in enumerate(tests):
         assert test.is_correct_str("-1") is False
 
-
+@pytest.mark.description('Testing the successful tests constructed from function generator (using `make_tests_from_generator`).')
 def test_basic_generator_success():
     TestRegistry.clear()
 
@@ -169,7 +170,7 @@ def test_basic_generator_success():
     for i, test in enumerate(TestRegistry.iterate()):
         assert test.is_correct_str(f"{i}")
 
-
+@pytest.mark.description('Testing the unsuccessful tests constructed from function generator (using `make_tests_from_generator`).')
 def test_basic_generator_failure():
     TestRegistry.clear()
 
