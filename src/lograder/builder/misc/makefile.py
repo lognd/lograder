@@ -2,7 +2,7 @@ from typing import Optional
 from pathlib import Path
 
 from ..common.builder_interface import BuilderInterface, BuilderResults, PreprocessorResults, RuntimeResults
-from ..common.file_operations import bfs_walk, is_makefile_file, run_cmd
+from ..common.file_operations import bfs_walk, is_makefile_file, run_cmd, is_makefile_target
 from ..common.exceptions import MakefileNotFoundError, MakefileRunNotFoundError
 from ..common.assignment import PreprocessorOutput, BuilderOutput
 from ...common.types import FilePath
@@ -58,6 +58,8 @@ class MakefileBuilder(BuilderInterface):
 
     def run_tests(self) -> RuntimeResults:
         finished_tests = []
+        if not is_makefile_target(self._makefile, target="run"):
+            raise MakefileRunNotFoundError(self._makefile)
         for test in TestRegistry.iterate():
             test.set_target(["make", "run"])
             test.run(wrap_args=True, working_directory=self.get_working_directory())

@@ -2,6 +2,7 @@ from typing import Optional, List
 from collections import deque
 from pathlib import Path
 import subprocess
+import subprocess
 
 from ...constants import Constants
 
@@ -24,6 +25,18 @@ def is_cmake_file(path: Path) -> bool:
 
 def is_makefile_file(path: Path) -> bool:
     return path.exists() and path.name == "Makefile"
+
+def is_makefile_target(makefile: Path, target: str) -> bool:
+    if not is_makefile_file(makefile):
+        return False
+    proc = subprocess.run(
+        ["make", "-qp"], cwd=makefile.parent,
+        capture_output=True, text=True
+    )
+    for line in proc.stdout.splitlines():
+        if line.strip().startswith(f"{target}:"):
+            return True
+    return False
 
 def is_valid_target(target: str) -> bool:
     return target not in (
