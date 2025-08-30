@@ -76,7 +76,8 @@ class AssignmentSummary(BaseModel):
                     output=self.test_case_fmt.format(test_case),
                     score=self.get_score_multiplier()
                     * test_case.get_weight()
-                    * test_case.get_successful(),
+                    * test_case.get_successful()
+                    * test_case.get_penalty(),
                     max_score=self.get_score_multiplier() * test_case.get_weight(),
                     execution_time=self.get_execution_time(),
                 )
