@@ -243,11 +243,14 @@ def valgrind(
         )
 
     if result.returncode != 0:
+        if Path(valgrind_file).is_file():
+            os.remove(valgrind_file)
         return ValgrindLeakSummary(), ValgrindWarningSummary()
 
     with open(valgrind_file, "r", encoding="utf-8", errors="ignore") as f:
         valgrind_log = f.read()
     valgrind_output = ValgrindOutput(valgrind_log)
+    os.remove(valgrind_file)
 
     return valgrind_output.get_leaks(), valgrind_output.get_warnings()
 
@@ -274,20 +277,26 @@ def callgrind(
         )
 
     if result.returncode != 0:
+        if Path(callgrind_file).is_file():
+            os.remove(callgrind_file)
         return []
 
     result = subprocess.run(
-        ["callgrind_annotate", "--auto=yes", "--threshold=0", callgrind_file],
+        ["callgrind_annotate", "--auto=yes", callgrind_file],
         stdout=open(annotate_file, "w", encoding="utf-8"),
         stderr=subprocess.DEVNULL,
         text=True,
     )
+    os.remove(callgrind_file)
 
     if result.returncode != 0:
+        if Path(annotate_file).is_file():
+            os.remove(annotate_file)
         return []
 
     with open(annotate_file, "r", encoding="utf-8", errors="ignore") as f:
         annotate_output = f.read()
+    os.remove(annotate_file)
 
     return CallgrindOutput(annotate_output).get_calls()
 
@@ -317,9 +326,12 @@ def usr_time(
         )
 
     if result.returncode != 0:
+        if Path(time_file).is_file():
+            os.remove(time_file)
         return ExecutionTimeSummary()
 
     with open(time_file) as f:
         time_stats = f.read()
+    os.remove(time_file)
 
     return TimeOutput(time_stats).get_time()

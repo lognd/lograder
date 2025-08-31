@@ -166,7 +166,9 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
             self.get_build_directory(),
             "--target",
             target,
-            "--", "-s", "--no-print-directory"
+            "--",
+            "-s",
+            "--no-print-directory",
         ]
         result = run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
         if result.returncode != 0:

@@ -1,13 +1,13 @@
 import shutil
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pytest
 
-from lograder.builder import ProjectBuilder
+from lograder.builder import AssignmentSummary, ProjectBuilder
 from lograder.output.formatters.default import (
-    DefaultBuildOutputFormatter,
-    DefaultPreprocessorOutputFormatter,
+    AssignmentMetadata,
     DefaultTestCaseFormatter,
 )
 from lograder.tests import make_tests_from_files
@@ -29,17 +29,22 @@ def test_project_1(tmp_path):
     )
 
     assignment = ProjectBuilder(tmp_path)
+    metadata = AssignmentMetadata(
+        assignment_name="Lograder Unit Testing",
+        assignment_authors=["Logan Dapp"],
+        assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
+        assignment_due_date=datetime(year=2030, month=12, day=12),
+    )
     preprocessor_results = assignment.preprocess()
     builder_results = assignment.build()
-    print(
-        DefaultPreprocessorOutputFormatter().format(preprocessor_results.get_output())
-    )
-    print(DefaultBuildOutputFormatter().format(builder_results.get_output()))
-
-    print("Files:\n  *" + "\n  *".join(str(file) for file in tmp_path.rglob("*")))
-
     runtime_results = assignment.run_tests()
-
+    summary = AssignmentSummary(
+        metadata=metadata,
+        preprocessor_output=preprocessor_results.get_output(),
+        build_output=builder_results.get_output(),
+        test_cases=runtime_results.get_test_cases(),
+    )
+    print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
         print(DefaultTestCaseFormatter().format(test))
         assert test.get_successful()
@@ -62,17 +67,23 @@ def test_project_2(tmp_path):
     )
 
     assignment = ProjectBuilder(tmp_path)
+
+    metadata = AssignmentMetadata(
+        assignment_name="Lograder Unit Testing",
+        assignment_authors=["Logan Dapp"],
+        assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
+        assignment_due_date=datetime(year=2030, month=12, day=12),
+    )
     preprocessor_results = assignment.preprocess()
     builder_results = assignment.build()
-    print(
-        DefaultPreprocessorOutputFormatter().format(preprocessor_results.get_output())
-    )
-    print(DefaultBuildOutputFormatter().format(builder_results.get_output()))
-
-    print("Files:\n  *" + "\n  *".join(str(file) for file in tmp_path.rglob("*")))
-
     runtime_results = assignment.run_tests()
-
+    summary = AssignmentSummary(
+        metadata=metadata,
+        preprocessor_output=preprocessor_results.get_output(),
+        build_output=builder_results.get_output(),
+        test_cases=runtime_results.get_test_cases(),
+    )
+    print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
         print(DefaultTestCaseFormatter().format(test))
         assert test.get_successful()
@@ -99,18 +110,22 @@ if not sys.platform.startswith("win"):
         )
 
         assignment = ProjectBuilder(tmp_path)
+        metadata = AssignmentMetadata(
+            assignment_name="Lograder Unit Testing",
+            assignment_authors=["Logan Dapp"],
+            assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
+            assignment_due_date=datetime(year=2030, month=12, day=12),
+        )
         preprocessor_results = assignment.preprocess()
         builder_results = assignment.build()
-        print(
-            DefaultPreprocessorOutputFormatter().format(
-                preprocessor_results.get_output()
-            )
-        )
-        print(DefaultBuildOutputFormatter().format(builder_results.get_output()))
-
-        print("Files:\n  *" + "\n  *".join(str(file) for file in tmp_path.rglob("*")))
-
         runtime_results = assignment.run_tests()
+        summary = AssignmentSummary(
+            metadata=metadata,
+            preprocessor_output=preprocessor_results.get_output(),
+            build_output=builder_results.get_output(),
+            test_cases=runtime_results.get_test_cases(),
+        )
+        print(summary.get_assignment_text())
         for test in runtime_results.get_test_cases():
             print(DefaultTestCaseFormatter().format(test))
             assert test.get_successful()
@@ -132,17 +147,22 @@ def test_project_4(tmp_path):
     )
 
     assignment = ProjectBuilder(tmp_path)
+    metadata = AssignmentMetadata(
+        assignment_name="Lograder Unit Testing",
+        assignment_authors=["Logan Dapp"],
+        assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
+        assignment_due_date=datetime(year=2030, month=12, day=12),
+    )
     preprocessor_results = assignment.preprocess()
     builder_results = assignment.build()
-    print(
-        DefaultPreprocessorOutputFormatter().format(preprocessor_results.get_output())
-    )
-    print(DefaultBuildOutputFormatter().format(builder_results.get_output()))
-
-    print("Files:\n  *" + "\n  *".join(str(file) for file in tmp_path.rglob("*")))
-
     runtime_results = assignment.run_tests()
-
+    summary = AssignmentSummary(
+        metadata=metadata,
+        preprocessor_output=preprocessor_results.get_output(),
+        build_output=builder_results.get_output(),
+        test_cases=runtime_results.get_test_cases(),
+    )
+    print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
         print(DefaultTestCaseFormatter().format(test))
         assert test.get_successful() is False
@@ -165,17 +185,22 @@ def test_project_5(tmp_path):
     )
 
     assignment = ProjectBuilder(tmp_path)
+    metadata = AssignmentMetadata(
+        assignment_name="Lograder Unit Testing",
+        assignment_authors=["Logan Dapp"],
+        assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
+        assignment_due_date=datetime(year=2030, month=12, day=12),
+    )
     preprocessor_results = assignment.preprocess()
     builder_results = assignment.build()
-    print(
-        DefaultPreprocessorOutputFormatter().format(preprocessor_results.get_output())
-    )
-    print(DefaultBuildOutputFormatter().format(builder_results.get_output()))
-
-    print("Files:\n  *" + "\n  *".join(str(file) for file in tmp_path.rglob("*")))
-
     runtime_results = assignment.run_tests()
-
+    summary = AssignmentSummary(
+        metadata=metadata,
+        preprocessor_output=preprocessor_results.get_output(),
+        build_output=builder_results.get_output(),
+        test_cases=runtime_results.get_test_cases(),
+    )
+    print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
         print(DefaultTestCaseFormatter().format(test))
         assert test.get_successful() is False
@@ -200,20 +225,22 @@ if not sys.platform.startswith("win"):
         )
 
         assignment = ProjectBuilder(tmp_path)
-
+        metadata = AssignmentMetadata(
+            assignment_name="Lograder Unit Testing",
+            assignment_authors=["Logan Dapp"],
+            assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
+            assignment_due_date=datetime(year=2030, month=12, day=12),
+        )
         preprocessor_results = assignment.preprocess()
         builder_results = assignment.build()
-        print(
-            DefaultPreprocessorOutputFormatter().format(
-                preprocessor_results.get_output()
-            )
-        )
-        print(DefaultBuildOutputFormatter().format(builder_results.get_output()))
-
-        print("Files:\n  *" + "\n  *".join(str(file) for file in tmp_path.rglob("*")))
-
         runtime_results = assignment.run_tests()
-
+        summary = AssignmentSummary(
+            metadata=metadata,
+            preprocessor_output=preprocessor_results.get_output(),
+            build_output=builder_results.get_output(),
+            test_cases=runtime_results.get_test_cases(),
+        )
+        print(summary.get_assignment_text())
         for test in runtime_results.get_test_cases():
             print(DefaultTestCaseFormatter().format(test))
             assert test.get_successful() is False
