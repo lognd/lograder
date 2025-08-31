@@ -71,9 +71,9 @@ class DefaultMetadataFormatter(MetadataFormatterInterface):
     def format(self, assignment_metadata: AssignmentMetadata):
         return (
             f"`{Fore.MAGENTA}{assignment_metadata.assignment_name}{Fore.RESET}` made by {Fore.MAGENTA}{f'{Fore.RESET}, {Fore.MAGENTA}'.join(assignment_metadata.assignment_authors)}{Fore.RESET}.\n"
-            f"Received submission at {Fore.MAGENTA}{assignment_metadata.assignment_submit_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n"
-            f"Assignment is due at {Fore.MAGENTA}{assignment_metadata.assignment_due_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n"
-            f"Time left for further submissions {Fore.MAGENTA}{format_timedelta(assignment_metadata.assignment_due_date - assignment_metadata.assignment_submit_date)}{Fore.RESET}.\n\n"
+            f"Submission date: {Fore.MAGENTA}{assignment_metadata.assignment_submit_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n"
+            f"Due date: {Fore.MAGENTA}{assignment_metadata.assignment_due_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n"
+            f"Time left: {Fore.MAGENTA}{format_timedelta(assignment_metadata.assignment_due_date - assignment_metadata.assignment_submit_date)}{Fore.RESET}.\n\n"
             f"Assignment graded with `{Fore.GREEN}{assignment_metadata.library_name}{Fore.RESET}` (version {Fore.GREEN}{assignment_metadata.library_version}{Fore.RESET}), made by {Fore.GREEN}{f'{Fore.RESET}, {Fore.GREEN}'.join(assignment_metadata.library_authors)}.{Fore.RESET}\n\n"
         )
 
@@ -111,8 +111,10 @@ class DefaultExpectedSTDOUTContext(
     suffix=f"\n<{Fore.BLUE}END EXPECTED STDOUT{Fore.RESET}>",
     empty=f"<{Fore.BLUE}EMPTY EXPECTED STDOUT{Fore.RESET}>",
 ):
-    pass
-
+    def render(self) -> str:
+        context = super().render()
+        comp_repr = f"({Fore.BLUE}RAW EXPECTED STDOUT{Fore.RESET}): {repr(self.get_content())}"
+        return f"{context}\n{comp_repr}"
 
 class DefaultActualSTDOUTContext(
     ContextRenderer,
@@ -126,6 +128,11 @@ class DefaultActualSTDOUTContext(
         if isinstance(content, str):
             content = content.strip()
         super().__init__(content)
+
+    def render(self) -> str:
+        context = super().render()
+        comp_repr = f"({Fore.LIGHTMAGENTA_EX}RAW ACTUAL STDOUT{Fore.RESET}): {repr(self.get_content())}"
+        return f"{context}\n{comp_repr}"
 
 
 class DefaultSTDERRContext(
@@ -150,15 +157,15 @@ class DefaultValgrindLeakSummaryFormatter(ValgrindLeakSummaryFormatterInterface)
     def format(self, leak_summary: Optional[ValgrindLeakSummary]) -> str:
         if leak_summary is None:
             return f"<{Fore.YELLOW}VALGRIND LEAK SUMMARY DISABLED{Fore.RESET}>"
-        def_lost_color = "" if leak_summary.definitely_lost.is_safe else Fore.RED
-        ind_lost_color = "" if leak_summary.indirectly_lost.is_safe else Fore.RED
-        pos_lost_color = "" if leak_summary.possibly_lost.is_safe else Fore.RED
+        def_lost_color = Fore.LIGHTGREEN_EX if leak_summary.definitely_lost.is_safe else Fore.RED
+        ind_lost_color = Fore.LIGHTGREEN_EX if leak_summary.indirectly_lost.is_safe else Fore.RED
+        pos_lost_color = Fore.LIGHTGREEN_EX if leak_summary.possibly_lost.is_safe else Fore.RED
         return (
             f"{Fore.LIGHTGREEN_EX}VALGRIND LEAK SUMMARY{Fore.RESET}:\n"
-            f"* {def_lost_color}{leak_summary.definitely_lost.bytes}{Fore.RESET} bytes, {def_lost_color}{leak_summary.definitely_lost.blocks}{Fore.RESET} blocks {def_lost_color}definitely lost{Fore.RESET}.\n"
-            f"* {ind_lost_color}{leak_summary.indirectly_lost.bytes}{Fore.RESET} bytes, {ind_lost_color}{leak_summary.indirectly_lost.blocks}{Fore.RESET} blocks {ind_lost_color}indirectly lost{Fore.RESET}.\n"
-            f"* {pos_lost_color}{leak_summary.possibly_lost.bytes}{Fore.RESET} bytes, {pos_lost_color}{leak_summary.possibly_lost.blocks}{Fore.RESET} blocks {pos_lost_color}possibly lost{Fore.RESET}.\n"
-            f"* {leak_summary.still_reachable.bytes} bytes, {leak_summary.still_reachable.blocks} blocks still reachable."
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {def_lost_color}{leak_summary.definitely_lost.bytes}{Fore.RESET} bytes, {def_lost_color}{leak_summary.definitely_lost.blocks}{Fore.RESET} blocks {def_lost_color}definitely lost{Fore.RESET}.\n"
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {ind_lost_color}{leak_summary.indirectly_lost.bytes}{Fore.RESET} bytes, {ind_lost_color}{leak_summary.indirectly_lost.blocks}{Fore.RESET} blocks {ind_lost_color}indirectly lost{Fore.RESET}.\n"
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {pos_lost_color}{leak_summary.possibly_lost.bytes}{Fore.RESET} bytes, {pos_lost_color}{leak_summary.possibly_lost.blocks}{Fore.RESET} blocks {pos_lost_color}possibly lost{Fore.RESET}.\n"
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {Fore.LIGHTGREEN_EX}{leak_summary.still_reachable.bytes}{Fore.RESET} bytes, {Fore.LIGHTGREEN_EX}{leak_summary.still_reachable.blocks}{Fore.RESET} blocks {Fore.LIGHTGREEN_EX}still reachable{Fore.RESET}."
         )
 
 
@@ -169,7 +176,7 @@ class DefaultValgrindWarningSummaryFormatter(ValgrindWarningSummaryFormatterInte
         warning = warning_summary.model_dump()
         output = [f"{Fore.LIGHTGREEN_EX}VALGRIND WARNING SUMMARY{Fore.RESET}:"]
         output += [
-            f"* {v} `{k.replace('_', ' ').upper()}` warnings encountered."
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {Fore.LIGHTGREEN_EX if v == 0 else Fore.RED}{v}{Fore.RESET} `{Fore.LIGHTRED_EX}{k.replace('_', ' ').upper()}{Fore.RESET}` warnings encountered."
             for k, v in warning.items()
         ]
         return "\n".join(output)
@@ -187,9 +194,9 @@ class DefaultExecutionTimeSummaryFormatter(ExecutionTimeSummaryFormatterInterfac
         output = [
             f"{Fore.LIGHTGREEN_EX}PERFORMANCE SUMMARY{Fore.RESET}:",
             "Time elapsed on CPU:",
-            f"  * in total: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_time))}{Fore.RESET}",
-            f"  * on user-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=execution_time_summary.user_cpu_time))}{Fore.RESET}",
-            f"  * on system-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=execution_time_summary.system_cpu_time))}{Fore.RESET}",
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} Total: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_time))}{Fore.RESET}",
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} User-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=execution_time_summary.user_cpu_time))}{Fore.RESET}",
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} System-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=execution_time_summary.system_cpu_time))}{Fore.RESET}",
             f"{Fore.LIGHTGREEN_EX}{execution_time_summary.percent_cpu_utilization:.2f}%{Fore.RESET} CPU Usage",
             f"{Fore.LIGHTGREEN_EX}{execution_time_summary.peak_physical_memory_usage:.2f} KB{Fore.RESET} Peak Memory Usage",
             f"Read from disk {Fore.LIGHTGREEN_EX}{execution_time_summary.num_disk_reads}{Fore.RESET} times",
@@ -204,10 +211,12 @@ class DefaultExecutionTimeSummaryFormatter(ExecutionTimeSummaryFormatterInterfac
         total_instructions = sum([call.cost for call in callgrind_summary])
         for call_summary in callgrind_summary:
             function_text.append(
-                f"  * {Fore.LIGHTGREEN_EX}{call_summary.percent:.2f}%{Fore.RESET} ({Fore.LIGHTGREEN_EX}{call_summary.cost}{Fore.RESET} inst., ~{Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_time * call_summary.cost / total_instructions))}{Fore.RESET}): {Fore.LIGHTMAGENTA_EX}{call_summary.function}{Fore.RESET} from {Fore.MAGENTA}{call_summary.file}{Fore.RESET} {'in ' + Fore.BLUE + call_summary.shared_object + Fore.RESET if call_summary.shared_object is not None else ''}"
+                f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {Fore.LIGHTGREEN_EX}{call_summary.percent:.2f}%{Fore.RESET} ({Fore.LIGHTGREEN_EX}{call_summary.cost}{Fore.RESET} inst., ~{Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_time * call_summary.cost / total_instructions))}{Fore.RESET}): {Fore.LIGHTMAGENTA_EX}{call_summary.function}{Fore.RESET} from {Fore.MAGENTA}{call_summary.file}{Fore.RESET} {'in ' + Fore.BLUE + call_summary.shared_object + Fore.RESET if call_summary.shared_object is not None else ''}"
             )
         if not function_text:
-            function_text = [f"  * <{Fore.RED}EMPTY?{Fore.RESET}>"]
+            function_text = [
+                f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} <{Fore.RED}EMPTY?{Fore.RESET}>"
+            ]
 
         return "\n".join(output + function_text)
 
@@ -256,7 +265,7 @@ class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
                 build_output.commands, build_output.stdout, build_output.stderr
             )
         ]
-        return DefaultBuilderContext("\n\n".join(output).strip()).render()
+        return DefaultBuilderContext("\n".join(output).strip()).render()
 
 
 class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
@@ -278,9 +287,9 @@ class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
             for test_case in test_cases
             if (calls := test_case.get_calls()) is not None
         ]
-        total_instructions: list[int] = [
-            sum(call.cost for call in calls) for calls in call_lists
-        ]
+        total_instructions: int = sum(
+            [sum(call.cost for call in calls) for calls in call_lists]
+        )
         num_tests = len(test_cases)
         num_successful_tests = sum(
             [test_case.get_successful() for test_case in test_cases]
@@ -291,17 +300,17 @@ class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
             color = Fore.LIGHTRED_EX
         elif num_successful_tests < 0.95 * num_tests:
             color = Fore.YELLOW
-        elif num_successful_tests < num_tests:
+        elif num_successful_tests <= num_tests:
             color = Fore.GREEN
         else:
             color = Fore.CYAN
         return (
             f"{color}{num_successful_tests}{Fore.RESET}/{num_tests} Tests Passed.\n"
-            f"Total Time elapsed on CPU:\n"
-            f"  * in total: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_cpu_time))}{Fore.RESET}\n"
-            f"  * on user-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=user_cpu_time))}{Fore.RESET}\n"
-            f"  * on system-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=system_cpu_time))}{Fore.RESET}\n"
-            f"Total number of instructions run: {total_instructions}."
+            f"{Fore.LIGHTMAGENTA_EX}Total Time Elapsed on CPU{Fore.RESET}:\n"
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} Total: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_cpu_time))}{Fore.RESET}\n"
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} User-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=user_cpu_time))}{Fore.RESET}\n"
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} System-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=system_cpu_time))}{Fore.RESET}\n"
+            f"{Fore.LIGHTMAGENTA_EX}Total Number of Instructions Run{Fore.RESET}: {Fore.LIGHTGREEN_EX}{total_instructions}{Fore.RESET}."
         )
 
 

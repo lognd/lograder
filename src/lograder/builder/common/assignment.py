@@ -69,10 +69,10 @@ class AssignmentSummary(BaseModel):
 
     def get_assignment_text(self):
         return (
-            f"{self.metadata_fmt.format(self.metadata)}"
-            f"{self.preprocessor_output_fmt.format(self.preprocessor_output)}"
-            f"{self.build_output_fmt.format(self.build_output)}"
-            f"{self.runtime_summary_fmt.format(self.test_cases)}"
+            f"\n{self.metadata_fmt.format(self.metadata)}"
+            f"{self.preprocessor_output_fmt.format(self.preprocessor_output)}\n\n"
+            f"{self.build_output_fmt.format(self.build_output)}\n\n"
+            f"{self.runtime_summary_fmt.format(self.test_cases)}\n\n"
         )
 
     def get_score_multiplier(self):

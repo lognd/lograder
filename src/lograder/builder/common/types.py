@@ -27,7 +27,7 @@ class AssignmentMetadata(BaseModel):
 
     @property
     def library_authors(self) -> List[str]:
-        return self.library_meta.get_all("Author") or []
+        return ["Logan Dapp"]
 
     @property
     def library_version(self) -> str:
