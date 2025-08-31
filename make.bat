@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set VENV_DIR=.venv
+set VENV_DIR=.venv-win-arm64
 set VENV_PYTHON=%VENV_DIR%\Scripts\python.exe
 set VENV_PIP=%VENV_DIR%\Scripts\pip.exe
 set VENV_PYTEST=%VENV_DIR%\Scripts\pytest.exe

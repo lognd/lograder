@@ -19,13 +19,21 @@ class AssignmentMetadata(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc)
     )
 
-    library_name: str = Field(default="lograder")
-    library_meta: metadata.PackageMetadata = Field(
-        default=metadata.metadata(library_name), exclude=True
-    )
-    authors = library_meta.get_all("Author") or []
-    library_authors: List[str] = Field(default=authors)
-    library_version: str = Field(default=metadata.version(library_name))
+    @property
+    def library_name(self) -> str:
+        return "lograder"
+
+    @property
+    def library_meta(self) -> metadata.PackageMetadata:
+        return metadata.metadata(self.library_name)
+
+    @property
+    def library_authors(self) -> List[str]:
+        return self.library_meta.get_all("Author") or []
+
+    @property
+    def library_version(self) -> str:
+        return metadata.version(self.library_name)
 
 
 class PreprocessorOutput(BaseModel):

@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence
 
+from ...builder.common.file_operations import do_process
 from ...constants import Constants
 from ..common.exceptions import TestNotRunError, TestTargetNotSpecifiedError
 from .analytics import (
@@ -52,26 +53,36 @@ class ComparisonTest(TestInterface):
         self._saved_flags = flags
 
     def is_correct(self) -> bool:
-        return self.get_actual_output().strip() == self.get_expected_output().strip()
+        actual_output = self.get_actual_output()
+        if actual_output is None:
+            return False
+        return actual_output.strip() == self.get_expected_output().strip()
+
+    def set_invalid(self):
+        self._error = "Project compilation was unsuccessful..."
+        self._actual_output = None
 
     def run(
         self, wrap_args: bool = False, working_directory: Optional[Path] = None
     ) -> None:
-        cmd = self.get_cmd(wrap_args=wrap_args, working_directory=working_directory)
+        cmd = self.get_cmd(wrap_args=wrap_args)
         if cmd is None:
             raise TestTargetNotSpecifiedError(self.get_name())
-        self.is_correct_cmd(cmd)
+        self.is_correct_cmd(cmd, working_directory=working_directory)
 
-    def is_correct_cmd(self, cmd: List[str | Path]) -> bool:
+    def is_correct_cmd(
+        self, cmd: List[str | Path], working_directory: Optional[Path] = None
+    ) -> bool:
         self.set_target([cmd[0]])
         self.set_flags(cmd[1:])
-        result = subprocess.run(
+        result = do_process(
             cmd,
             input=self.get_input(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
+            cwd=working_directory,
         )
         self._actual_output = result.stdout
         self._error = result.stderr
@@ -98,22 +109,16 @@ class ComparisonTest(TestInterface):
             self._cached_leaks, self._cached_warnings = valgrind(cmd, self.get_input())
         return self._cached_warnings
 
-    def get_cmd(
-        self, wrap_args: bool = False, working_directory: Optional[Path] = None
-    ) -> Optional[List[Path | str]]:
+    def get_cmd(self, wrap_args: bool = False) -> Optional[List[Path | str]]:
         if self._saved_executable is None:
             return None
-
-        cd: List[str | Path] = []
-        if working_directory is not None:
-            cd = ["cd", working_directory, "&&"]
 
         flags: Sequence[str | Path] = self._saved_flags
         if wrap_args:
             flags = [
                 f'ARGS="{shlex.join([str(arg.resolve()) if isinstance(arg, Path) else arg for arg in self._saved_flags])}"'
             ]
-        return cd + self._saved_executable + list(flags)
+        return self._saved_executable + list(flags)
 
     def get_execution_time(self) -> Optional[ExecutionTimeSummary]:
         cmd = self.get_cmd()
@@ -151,9 +156,7 @@ class ComparisonTest(TestInterface):
     def get_expected_output(self) -> str:
         return self._expected_output
 
-    def get_actual_output(self) -> str:
-        if self._actual_output is None:
-            raise TestNotRunError(self.get_name())
+    def get_actual_output(self) -> Optional[str]:
         return self._actual_output
 
     def get_penalty(self) -> float:

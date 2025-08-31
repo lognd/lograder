@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -11,12 +12,12 @@ from ..common.builder_interface import (
     CxxTestRunner,
     PreprocessorResults,
 )
-from ..common.exceptions import CxxSourceBuildError
 from ..common.file_operations import bfs_walk, is_cxx_source_file, run_cmd
 
 
 class CxxSourceBuilder(CxxTestRunner, BuilderInterface):
     def __init__(self, project_root: FilePath):
+        super().__init__()
         self._project_root: Path = Path(project_root)
         self._build_path: Path = self._project_root / "build"
         self._executable_path: Optional[Path] = None
@@ -31,9 +32,15 @@ class CxxSourceBuilder(CxxTestRunner, BuilderInterface):
 
     def get_executable_path(self) -> Path:
         if self._executable_path is None:
-            executable_name = self.get_build_path() / random_name()
+            executable_name = (
+                self.get_build_path() / (random_name() + ".exe")
+                if sys.platform.startswith("win")
+                else self.get_build_path() / random_name()
+            )
             if executable_name.exists():
-                raise CxxSourceBuildError(self._source_files)
+                self.set_build_code(1)
+                return Path("/")
+                # raise CxxSourceBuildError(self._source_files)
             self._executable_path = executable_name
         return self._executable_path
 
@@ -62,7 +69,15 @@ class CxxSourceBuilder(CxxTestRunner, BuilderInterface):
             self.get_executable_path(),
             *self._source_files,
         ]
-        run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
+        result = run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
+        if result.returncode != 0:
+            self.set_build_code(1)
+            return BuilderResults(
+                executable="Build failed...",
+                output=BuilderOutput(
+                    commands=commands, stdout=stdout, stderr=stderr, build_type="cmake"
+                ),
+            )
 
         return BuilderResults(
             executable=self.get_executable_path(),

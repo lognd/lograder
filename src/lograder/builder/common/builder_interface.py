@@ -38,15 +38,33 @@ class RuntimeResults:
 
 
 class CxxTestRunner(ABC):
+    def __init__(self):
+        self._built: bool = False
+        self._build_code: int = 0
+
+    def set_build_code(self, code: int):
+        self._build_code = code
+
     @abstractmethod
     def get_executable_path(self) -> Path:
         pass
 
+    @abstractmethod
+    def build(self) -> BuilderResults:
+        pass
+
     def run_tests(self) -> RuntimeResults:
+        if not self._built:
+            self.build()
+
+        self._built = True
         finished_tests = []
         for test in TestRegistry.iterate():
             test.set_target([self.get_executable_path()])
-            test.run()
+            if self._build_code != 0:
+                test.set_invalid()
+            else:
+                test.run()
             finished_tests.append(test)
         return RuntimeResults(
             results=finished_tests,

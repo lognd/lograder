@@ -1,6 +1,6 @@
 .PHONY: all venv build preinstall uninstall reinstall test type lint format check clean
 
-VENV_DIR := .venv
+VENV_DIR := .venv-linux-arm64
 VENV_PYTHON := $(VENV_DIR)/bin/python
 VENV_PIP := $(VENV_DIR)/bin/pip
 VENV_PYTEST := $(VENV_DIR)/bin/pytest
@@ -15,7 +15,7 @@ fast: build check test
 
 venv:
 	@echo "Creating virtual environment in $(VENV_DIR)..."
-	@test -x "$(VENV_PYTHON)" || python3 -m venv $(VENV_DIR)
+	@test -x "$(VENV_PYTHON)" || python3.13 -m venv $(VENV_DIR)
 	@$(VENV_PYTHON) -m pip install --upgrade pip
 	@$(VENV_PIP) install --upgrade setuptools
 
@@ -27,11 +27,11 @@ preinstall:
 	@echo "Running pre-install scripts..."
 
 uninstall:
-	@echo "Uninstalling ariad..."
-	@$(VENV_PIP) uninstall -y ariad || echo "(Already uninstalled)"
+	@echo "Uninstalling lograder..."
+	@$(VENV_PIP) uninstall -y lograder || echo "(Already uninstalled)"
 
 reinstall:
-	@echo "Installing ariad in editable mode with test extras..."
+	@echo "Installing lograder in editable mode with test extras..."
 	@$(VENV_PIP) install -e .[dev]
 
 test:

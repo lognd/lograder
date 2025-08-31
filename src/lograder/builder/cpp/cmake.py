@@ -1,5 +1,5 @@
 import re
-import subprocess
+import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -13,9 +13,7 @@ from ..common.builder_interface import (
     PreprocessorResults,
 )
 from ..common.exceptions import (
-    CMakeExecutableNotFoundError,
     CMakeListsNotFoundError,
-    CMakeTargetNotFoundError,
 )
 from ..common.file_operations import bfs_walk, is_cmake_file, is_valid_target, run_cmd
 
@@ -24,6 +22,7 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
     TARGET_PATTERN = re.compile(r"^\.\.\.\s+([a-zA-Z0-9_\-.]+)", re.MULTILINE)
 
     def __init__(self, project_root: FilePath):
+        super().__init__()
         self._project_root: Path = Path(project_root)
         self._build_directory: Path = self._project_root / f"build-{random_name()}"
 
@@ -55,9 +54,11 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
 
     def get_executable_path(self) -> Path:
         if self._executable_path is None:
-            raise CMakeExecutableNotFoundError(
-                self.get_working_directory() / "CMakeLists.txt"
-            )
+            self.set_build_code(1)
+            # raise CMakeExecutableNotFoundError(
+            #     self.get_working_directory() / "CMakeLists.txt"
+            # )
+            return Path("/")
         return self._executable_path
 
     def preprocess(self) -> PreprocessorResults:
@@ -68,6 +69,30 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
                 stderr=[],
             )
         )
+
+    def find_executable(self, target: str) -> Optional[Path]:
+        build_dir = Path(self.get_build_directory())
+        candidates = [
+            build_dir / "Debug" / f"{target}.exe",
+            build_dir / "Release" / f"{target}.exe",
+            build_dir / "Debug" / target,
+            build_dir / "Release" / target,
+            build_dir / f"{target}.exe",
+            build_dir / target,
+        ]
+
+        # 1. Check common defaults first
+        for path in candidates:
+            if path.is_file():
+                return path
+
+        # 2. Fallback: scan build dir recursively for matching file
+        for path in build_dir.rglob("*"):
+            if path.is_file():
+                if path.name == target or path.name == f"{target}.exe":
+                    return path
+
+        return None
 
     def build(self) -> BuilderResults:
         commands: List[List[str | Path]] = []
@@ -81,18 +106,35 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
             "-B",
             self.get_build_directory(),
         ]
-        run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
+        if sys.platform.startswith("win"):
+            cmd += ["-G", "MinGW Makefiles"]
+
+        result = run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
+        if result.returncode != 0:
+            self.set_build_code(1)
+            return BuilderResults(
+                executable="Build failed...",
+                output=BuilderOutput(
+                    commands=commands, stdout=stdout, stderr=stderr, build_type="cmake"
+                ),
+            )
 
         cmd = [
             "cmake",
-            "-S",
-            self.get_working_directory(),
-            "-B",
+            "--build",
             self.get_build_directory(),
             "--target",
             "help",
         ]
-        run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
+        result = run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
+        if result.returncode != 0:
+            self.set_build_code(1)
+            return BuilderResults(
+                executable="Build failed...",
+                output=BuilderOutput(
+                    commands=commands, stdout=stdout, stderr=stderr, build_type="cmake"
+                ),
+            )
         targets = self.TARGET_PATTERN.findall(stdout[-1])
         if "main" in targets:
             target = "main"
@@ -103,37 +145,48 @@ class CMakeBuilder(CxxTestRunner, BuilderInterface):
         else:
             valid_targets = [target for target in targets if is_valid_target(target)]
             if not valid_targets:
-                raise CMakeTargetNotFoundError(
-                    targets, self.get_working_directory() / "CMakeLists.txt"
+                self.set_build_code(1)
+                return BuilderResults(
+                    executable="Build failed...",
+                    output=BuilderOutput(
+                        commands=commands,
+                        stdout=stdout,
+                        stderr=stderr,
+                        build_type="cmake",
+                    ),
                 )
+                # raise CMakeTargetNotFoundError(
+                #     targets, self.get_working_directory() / "CMakeLists.txt"
+                # )
             target = valid_targets[0]
 
         cmd = [
             "cmake",
-            "-S",
-            self.get_working_directory(),
-            "-B",
+            "--build",
             self.get_build_directory(),
             "--target",
             target,
+            "--", "-s", "--no-print-directory"
         ]
-        run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
+        result = run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
+        if result.returncode != 0:
+            self.set_build_code(1)
+            return BuilderResults(
+                executable="Build failed...",
+                output=BuilderOutput(
+                    commands=commands, stdout=stdout, stderr=stderr, build_type="cmake"
+                ),
+            )
 
-        cmd = [
-            "cmake",
-            "-P",
-            "-",
-        ]
-        script = f'get_target_property(path {target} LOCATION)\nmessage(STATUS "${{path}}")\n'
-        result = subprocess.run(
-            cmd, input=script.encode(), capture_output=True, text=True
-        )
-        commands.append(cmd)
-        stdout.append(result.stdout)
-        stderr.append(result.stderr)
-        for line in result.stdout.splitlines():
-            if line.startswith("-- "):  # cmake -P prefixes STATUS with --
-                self._executable_path = line[3:].strip()
+        self._executable_path = self.find_executable(target)
+        if self._executable_path is None:
+            self.set_build_code(1)
+            return BuilderResults(
+                executable="Build failed...",
+                output=BuilderOutput(
+                    commands=commands, stdout=stdout, stderr=stderr, build_type="cmake"
+                ),
+            )
 
         return BuilderResults(
             executable=self.get_executable_path(),

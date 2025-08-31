@@ -1,12 +1,12 @@
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
-from ...common.types import FilePath
 from ...common.utils import random_name
 from ...constants import Constants
 
@@ -86,45 +86,42 @@ class ValgrindOutput:
 
     @classmethod
     def parse_valgrind_log(
-        cls, path: FilePath
+        cls, stderr: str
     ) -> tuple[ValgrindLeakSummary, ValgrindWarningSummary]:
         # Init structures
         leaks: ValgrindLeakSummary = ValgrindLeakSummary()
         warnings: ValgrindWarningSummary = ValgrindWarningSummary()
         warnings.other = 0
 
-        with open(Path(path), "r", encoding="utf-8", errors="ignore") as f:
-            for line in f:
-                # --- Leak parsing ---
-                leak_match = cls.LEAK_REGEX.search(line)
-                if leak_match:
-                    bytes_count = int(leak_match.group(1).replace(",", ""))
-                    blocks_count = int(leak_match.group(2).replace(",", ""))
-                    kind = leak_match.group(3).replace(
-                        " ", "_"
-                    )  # normalize to dict key
-                    prev_bytes, prev_blocks = getattr(leaks, kind)
-                    setattr(
-                        leaks,
-                        kind,
-                        LossEntry(
-                            bytes=prev_bytes + bytes_count,
-                            blocks=prev_blocks + blocks_count,
-                        ),
-                    )
-                    continue
+        for line in stderr.split("\n"):
+            # --- Leak parsing ---
+            leak_match = cls.LEAK_REGEX.search(line)
+            if leak_match:
+                bytes_count = int(leak_match.group(1).replace(",", ""))
+                blocks_count = int(leak_match.group(2).replace(",", ""))
+                kind = leak_match.group(3).replace(" ", "_")  # normalize to dict key
+                prev_bytes, prev_blocks = getattr(leaks, kind)
+                setattr(
+                    leaks,
+                    kind,
+                    LossEntry(
+                        bytes=prev_bytes + bytes_count,
+                        blocks=prev_blocks + blocks_count,
+                    ),
+                )
+                continue
 
-                # --- Warning parsing ---
-                matched = False
-                for key, pattern in cls.WARNING_PATTERNS.items():
-                    if pattern.search(line):
-                        setattr(warnings, key, getattr(warnings, key) + 1)
-                        matched = True
-                        break
-                if not matched and "==" in line and "==" in line.strip():
-                    # heuristic: unknown Valgrind warning line
-                    if not any(x in line for x in ["lost", "reachable"]):
-                        warnings.other += 1
+            # --- Warning parsing ---
+            matched = False
+            for key, pattern in cls.WARNING_PATTERNS.items():
+                if pattern.search(line):
+                    setattr(warnings, key, getattr(warnings, key) + 1)
+                    matched = True
+                    break
+            if not matched and "==" in line and "==" in line.strip():
+                # heuristic: unknown Valgrind warning line
+                if not any(x in line for x in ["lost", "reachable"]):
+                    warnings.other += 1
 
         return leaks, warnings
 
@@ -159,22 +156,21 @@ class CallgrindOutput:
         self.parse_stdout()
 
     @classmethod
-    def parse_callgrind_annotate(cls, path: FilePath) -> List[CallgrindSummary]:
+    def parse_callgrind_annotate(cls, stdout: str) -> List[CallgrindSummary]:
         results: List[CallgrindSummary] = []
-        with open(Path(path), "r", encoding="utf-8", errors="ignore") as f:
-            for line in f:
-                m = cls.LINE_REGEX.match(line)
-                if not m:
-                    continue
-                results.append(
-                    CallgrindSummary(
-                        cost=int(m.group("cost").replace(",", "")),
-                        percent=float(m.group("percent")),
-                        file=m.group("file").strip(),
-                        function=m.group("function").strip(),
-                        shared_object=m.group("so"),
-                    )
+        for line in stdout.split("\n"):
+            m = cls.LINE_REGEX.match(line)
+            if not m:
+                continue
+            results.append(
+                CallgrindSummary(
+                    cost=int(m.group("cost").replace(",", "")),
+                    percent=float(m.group("percent")),
+                    file=m.group("file").strip(),
+                    function=m.group("function").strip(),
+                    shared_object=m.group("so"),
                 )
+            )
         return results
 
     def parse_stdout(self):
@@ -225,15 +221,18 @@ class TimeOutput:
 def valgrind(
     cmd: List[str | Path], stdin: Optional[str] = None
 ) -> tuple[ValgrindLeakSummary, ValgrindWarningSummary]:
+
+    if sys.platform.startswith("win"):
+        return ValgrindLeakSummary(), ValgrindWarningSummary()
+
     valgrind_file = f"valgrind-{random_name()}.log"
     with open(os.devnull, "w") as devnull:
-        subprocess.run(
+        result = subprocess.run(
             [
                 "valgrind",
                 "--leak-check=full",
                 "--show-leak-kinds=all",
-                "--log-file",
-                valgrind_file,
+                f"--log-file={valgrind_file}",
             ]
             + cmd,
             input=stdin,
@@ -243,21 +242,28 @@ def valgrind(
             timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
         )
 
+    if result.returncode != 0:
+        return ValgrindLeakSummary(), ValgrindWarningSummary()
+
     with open(valgrind_file, "r", encoding="utf-8", errors="ignore") as f:
         valgrind_log = f.read()
-
     valgrind_output = ValgrindOutput(valgrind_log)
+
     return valgrind_output.get_leaks(), valgrind_output.get_warnings()
 
 
 def callgrind(
     cmd: List[Path | str], stdin: Optional[str] = None
 ) -> List[CallgrindSummary]:
+
+    if sys.platform.startswith("win"):
+        return []
+
     callgrind_file = f"callgrind-{random_name()}.out"
     annotate_file = f"annotate-{random_name()}.log"
 
     with open(os.devnull, "w") as devnull:
-        subprocess.run(
+        result = subprocess.run(
             ["valgrind", "--tool=callgrind", f"--callgrind-out-file={callgrind_file}"]
             + cmd,
             input=stdin,
@@ -267,12 +273,18 @@ def callgrind(
             timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
         )
 
-    subprocess.run(
+    if result.returncode != 0:
+        return []
+
+    result = subprocess.run(
         ["callgrind_annotate", "--auto=yes", "--threshold=0", callgrind_file],
         stdout=open(annotate_file, "w", encoding="utf-8"),
         stderr=subprocess.DEVNULL,
         text=True,
     )
+
+    if result.returncode != 0:
+        return []
 
     with open(annotate_file, "r", encoding="utf-8", errors="ignore") as f:
         annotate_output = f.read()
@@ -283,9 +295,12 @@ def callgrind(
 def usr_time(
     cmd: List[Path | str], stdin: Optional[str] = None
 ) -> ExecutionTimeSummary:
+    if sys.platform.startswith("win"):
+        return ExecutionTimeSummary()
+
     time_file = f"time-{random_name()}.log"
     with open(os.devnull, "w") as devnull:
-        subprocess.run(
+        result = subprocess.run(
             [
                 "/usr/bin/time",
                 "-f",
@@ -300,6 +315,10 @@ def usr_time(
             text=True,
             timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
         )
+
+    if result.returncode != 0:
+        return ExecutionTimeSummary()
+
     with open(time_file) as f:
         time_stats = f.read()
 

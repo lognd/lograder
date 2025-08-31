@@ -20,8 +20,11 @@ class ContextRenderer(RendererInterface):
     def __init_subclass__(cls, *, prefix: str, suffix: str, empty: str):
         cls._prefix = prefix
         cls._suffix = suffix
+        cls._empty = empty
 
-    def __init__(self, content: Union[RendererInterface, str]):
+    def __init__(self, content: Union[RendererInterface, str, None]):
+        if content is None:
+            content = ""
         self._content: Union[RendererInterface, str] = content
 
     def get_content(self) -> str:

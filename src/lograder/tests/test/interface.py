@@ -18,6 +18,10 @@ class TestInterface(ABC):
         pass
 
     @abstractmethod
+    def set_invalid(self):
+        pass
+
+    @abstractmethod
     def run(
         self, wrap_args: bool = False, working_directory: Optional[Path] = None
     ) -> None:
@@ -32,7 +36,7 @@ class TestInterface(ABC):
         pass
 
     @abstractmethod
-    def get_actual_output(self) -> str:
+    def get_actual_output(self) -> Optional[str]:
         pass
 
     @abstractmethod

@@ -18,7 +18,7 @@ from ...tests.test.analytics import (
     ValgrindLeakSummary,
     ValgrindWarningSummary,
 )
-from .format_templates import ContextRenderer, ProcessStep
+from .format_templates import ContextRenderer, ProcessStep, RendererInterface
 from .interfaces import (
     BuildOutputFormatterInterface,
     ExecutionTimeSummaryFormatterInterface,
@@ -116,11 +116,16 @@ class DefaultExpectedSTDOUTContext(
 
 class DefaultActualSTDOUTContext(
     ContextRenderer,
-    prefix=f"<{Fore.BLUE}BEGIN ACTUAL STDOUT{Fore.RESET}>\n",
-    suffix=f"\n<{Fore.BLUE}END ACTUAL STDOUT{Fore.RESET}>",
-    empty=f"<{Fore.BLUE}EMPTY ACTUAL STDOUT{Fore.RESET}>",
+    prefix=f"<{Fore.LIGHTMAGENTA_EX}BEGIN ACTUAL STDOUT{Fore.RESET}>\n",
+    suffix=f"\n<{Fore.LIGHTMAGENTA_EX}END ACTUAL STDOUT{Fore.RESET}>",
+    empty=f"<{Fore.LIGHTMAGENTA_EX}EMPTY ACTUAL STDOUT{Fore.RESET}>",
 ):
-    pass
+    def __init__(self, content: Union[RendererInterface, str, None]):
+        if content is None:
+            content = ""
+        if isinstance(content, str):
+            content = content.strip()
+        super().__init__(content)
 
 
 class DefaultSTDERRContext(
@@ -134,9 +139,9 @@ class DefaultSTDERRContext(
 
 class DefaultSTDINContext(
     ContextRenderer,
-    prefix=f"<{Fore.LIGHTBLUE_EX}BEGIN STDIN{Fore.RESET}>\n",
-    suffix=f"\n<{Fore.LIGHTBLUE_EX}END STDIN{Fore.RESET}>",
-    empty=f"<{Fore.LIGHTBLUE_EX}EMPTY STDIN{Fore.RESET}>",
+    prefix=f"<{Fore.MAGENTA}BEGIN STDIN{Fore.RESET}>\n",
+    suffix=f"\n<{Fore.MAGENTA}END STDIN{Fore.RESET}>",
+    empty=f"<{Fore.MAGENTA}EMPTY STDIN{Fore.RESET}>",
 ):
     pass
 
@@ -191,8 +196,8 @@ class DefaultExecutionTimeSummaryFormatter(ExecutionTimeSummaryFormatterInterfac
             f"Wrote to disk {Fore.LIGHTGREEN_EX}{execution_time_summary.num_disk_writes}{Fore.RESET} times",
             f"{Fore.LIGHTGREEN_EX}{execution_time_summary.num_major_page_faults}{Fore.RESET} pages fetched from disk (major page-faults).",
             f"{Fore.LIGHTGREEN_EX}{execution_time_summary.num_minor_page_faults}{Fore.RESET} pages mapped from RAM (minor page-faults).",
-            f"{Fore.LIGHTGREEN_EX}{execution_time_summary.num_pages_swapped_to_disk}{Fore.RESET} pages swapped to disk."
-            f"Function call breakdown:",
+            f"{Fore.LIGHTGREEN_EX}{execution_time_summary.num_pages_swapped_to_disk}{Fore.RESET} pages swapped to disk.\n",
+            f"{Fore.LIGHTGREEN_EX}FUNCTION CALL BREAKDOWN{Fore.RESET}:",
         ]
         function_text = []
 
@@ -210,10 +215,16 @@ class DefaultExecutionTimeSummaryFormatter(ExecutionTimeSummaryFormatterInterfac
 class DefaultPreprocessorOutputFormatter(PreprocessorOutputFormatterInterface):
     def format(self, preprocessor_output: PreprocessorOutput) -> str:
         output = [
-            (
-                f"{CLIStep(command).render()}\n"
-                f"{DefaultSTDOUTContext(cout).render()}\n"
-                f"{DefaultSTDERRContext(cerr).render()}\n"
+            "\n".join(
+                [
+                    line
+                    for line in (
+                        f"{CLIStep(command).render()}",
+                        f"{DefaultSTDOUTContext(cout.strip()).render()}",
+                        f"{DefaultSTDERRContext(cerr.strip()).render()}",
+                    )
+                    if line
+                ]
             )
             for command, cout, cerr in zip(
                 preprocessor_output.commands,
@@ -221,7 +232,7 @@ class DefaultPreprocessorOutputFormatter(PreprocessorOutputFormatterInterface):
                 preprocessor_output.stderr,
             )
         ]
-        return DefaultPreprocessorContext("\n\n".join(output)).render()
+        return DefaultPreprocessorContext("\n\n".join(output).strip()).render()
 
 
 class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
@@ -230,16 +241,22 @@ class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
             f"Detected build types of `{Fore.MAGENTA}{build_output.build_type}{Fore.RESET}`.\n\n"
         ]
         output += [
-            (
-                f"{CLIStep(command).render()}\n"
-                f"{DefaultSTDOUTContext(cout).render()}\n"
-                f"{DefaultSTDERRContext(cerr).render()}\n"
+            "\n".join(
+                [
+                    line
+                    for line in (
+                        f"{CLIStep(command).render()}",
+                        f"{DefaultSTDOUTContext(cout.strip()).render()}",
+                        f"{DefaultSTDERRContext(cerr.strip()).render()}",
+                    )
+                    if line
+                ]
             )
             for command, cout, cerr in zip(
                 build_output.commands, build_output.stdout, build_output.stderr
             )
         ]
-        return DefaultBuilderContext("\n\n".join(output)).render()
+        return DefaultBuilderContext("\n\n".join(output).strip()).render()
 
 
 class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
@@ -291,32 +308,34 @@ class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
 class DefaultTestCaseFormatter(TestCaseFormatterInterface):
     def format(self, test_case: TestInterface) -> str:
         if not test_case.get_successful():
-            title_text = (
-                f"{Fore.RED}Test `{test_case.get_name()}` failed!{Fore.RESET}\n"
-            )
+            title_text = f"{Fore.RED}Test `{test_case.get_name()}` failed!{Fore.RESET}"
         elif test_case.get_penalty() < 1.0:
-            title_text = f"{Fore.YELLOW}Test `{test_case.get_name()}` partially passed, but was penalized!{Fore.RESET}\n"
+            title_text = f"{Fore.YELLOW}Test `{test_case.get_name()}` partially passed, but was penalized!{Fore.RESET}"
         elif test_case.get_penalty() == 1.0:
             title_text = (
-                f"{Fore.GREEN}Test `{test_case.get_name()}` passed!{Fore.RESET}\n"
+                f"{Fore.GREEN}Test `{test_case.get_name()}` passed!{Fore.RESET}"
             )
         else:
-            title_text = f"{Fore.CYAN}Test `{test_case.get_name()}` passed with flying colors (bonus points)!{Fore.RESET}!\n"
+            title_text = f"{Fore.CYAN}Test `{test_case.get_name()}` passed with flying colors (bonus points)!{Fore.RESET}!"
         output = [
             title_text,
             Constants.DEFAULT_TOPIC_BREAK,
             DefaultSTDINContext(test_case.get_input()).render(),
             Constants.DEFAULT_TOPIC_BREAK,
-            DefaultExpectedSTDOUTContext(test_case.get_expected_output()).render(),
+            DefaultExpectedSTDOUTContext(
+                test_case.get_expected_output().strip()
+            ).render(),
+            Constants.DEFAULT_TOPIC_BREAK,
             DefaultActualSTDOUTContext(test_case.get_actual_output()).render(),
             Constants.DEFAULT_TOPIC_BREAK,
-            DefaultSTDERRContext(test_case.get_error()).render(),
+            DefaultSTDERRContext(test_case.get_error().strip()).render(),
             Constants.DEFAULT_TOPIC_BREAK,
             DefaultValgrindLeakSummaryFormatter().format(test_case.get_leaks()),
+            Constants.DEFAULT_TOPIC_BREAK,
             DefaultValgrindWarningSummaryFormatter().format(test_case.get_warnings()),
             Constants.DEFAULT_TOPIC_BREAK,
             DefaultExecutionTimeSummaryFormatter().format(
                 test_case.get_calls(), test_case.get_execution_time()
             ),
         ]
-        return "\n".join(output)
+        return "".join(output)

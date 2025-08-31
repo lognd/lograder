@@ -23,6 +23,8 @@ from .types import AssignmentMetadata, BuilderOutput, PreprocessorOutput
 
 
 class AssignmentSummary(BaseModel):
+    model_config = {"arbitrary_types_allowed": True}
+
     metadata: AssignmentMetadata
     preprocessor_output: PreprocessorOutput
     build_output: BuilderOutput

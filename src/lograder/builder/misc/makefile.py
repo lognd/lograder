@@ -10,7 +10,7 @@ from ..common.builder_interface import (
     PreprocessorResults,
     RuntimeResults,
 )
-from ..common.exceptions import MakefileNotFoundError, MakefileRunNotFoundError
+from ..common.exceptions import MakefileNotFoundError
 from ..common.file_operations import (
     bfs_walk,
     is_makefile_file,
@@ -22,6 +22,8 @@ from ..common.file_operations import (
 class MakefileBuilder(BuilderInterface):
     def __init__(self, project_root: FilePath):
         self._project_root: Path = Path(project_root)
+        self._built: bool = False
+        self._build_code: int = 0
 
         self._makefile: Optional[Path] = None
         for file in bfs_walk(self._project_root):
@@ -53,14 +55,22 @@ class MakefileBuilder(BuilderInterface):
         stdout: List[str] = []
         stderr: List[str] = []
 
-        cmd: List[str | Path] = ["make"]
-        run_cmd(
+        cmd: List[str | Path] = ["make", "-s"]
+        result = run_cmd(
             cmd,
             commands=commands,
             stdout=stdout,
             stderr=stderr,
             working_directory=self.get_working_directory(),
         )
+        if result.returncode != 0:
+            self._build_code = 1
+            return BuilderResults(
+                executable="Build failed...",
+                output=BuilderOutput(
+                    commands=commands, stdout=stdout, stderr=stderr, build_type="cmake"
+                ),
+            )
 
         return BuilderResults(
             executable=self.get_makefile(),
@@ -70,13 +80,21 @@ class MakefileBuilder(BuilderInterface):
         )
 
     def run_tests(self) -> RuntimeResults:
+        if not self._built:
+            self.build()
+        self._built = True
+
         finished_tests = []
         if not is_makefile_target(self.get_makefile(), target="run"):
-            raise MakefileRunNotFoundError(self.get_makefile())
+            self._build_code = 1
+            # raise MakefileRunNotFoundError(self.get_makefile())
         for test in TestRegistry.iterate():
-            test.set_target(["make", "run"])
-            test.run(
-                wrap_args=True, working_directory=Path(self.get_working_directory())
-            )
+            test.set_target(["make", "-s", "run"])
+            if self._build_code != 0:
+                test.set_invalid()
+            else:
+                test.run(
+                    wrap_args=True, working_directory=Path(self.get_working_directory())
+                )
             finished_tests.append(test)
         return RuntimeResults(results=finished_tests)

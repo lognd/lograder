@@ -8,7 +8,7 @@ class Constants:
     DEFAULT_CXX_COMPILATION_FLAGS: List[str] = ["-Wall", "-Wextra", "-Werror"]
     DEFAULT_EXECUTABLE_TIMEOUT: float = 300.0  # In seconds.
 
-    DEFAULT_TOPIC_BREAK: str = "====================================\n"
+    DEFAULT_TOPIC_BREAK: str = "\n\n"
 
     @classmethod
     def set(cls, key: str, value: str):

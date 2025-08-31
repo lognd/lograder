@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from collections import deque
 from pathlib import Path
 from typing import List, Optional
@@ -31,7 +32,7 @@ def is_cxx_source_file(path: Path) -> bool:
 
 
 def is_cmake_file(path: Path) -> bool:
-    return path.exists() and path.name == "CMakeLists.txt"
+    return path.exists() and path.name.startswith("CMakeLists.txt")
 
 
 def is_makefile_file(path: Path) -> bool:
@@ -51,9 +52,10 @@ def is_makefile_target(makefile: Path, target: str) -> bool:
 
 
 def is_valid_target(target: str) -> bool:
-    return target not in (
+    if target in (
         "all",
         "install",
+        "depend",
         "test",
         "package",
         "package_source",
@@ -66,7 +68,19 @@ def is_valid_target(target: str) -> bool:
         "INSTALL",
         "RUN_TESTS",
         "PACKAGE",
-    )
+    ):
+        return False
+    if target.endswith(".obj") or target.endswith(".i") or target.endswith(".s"):
+        return False
+    return True
+
+
+def do_process(args: List[str | Path], **kwargs) -> subprocess.CompletedProcess:
+    win_prefix: List[str | Path] = ["cmd", "/c"]
+    cmd: List[str | Path] = args
+    if sys.platform.startswith("win"):
+        cmd = win_prefix + cmd
+    return subprocess.run(cmd, **kwargs)
 
 
 def run_cmd(
@@ -76,8 +90,9 @@ def run_cmd(
     stderr: Optional[List[str]] = None,
     working_directory: Optional[Path] = None,
 ):
+
     if working_directory is None:
-        result = subprocess.run(
+        result = do_process(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -85,7 +100,7 @@ def run_cmd(
             timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
         )
     else:
-        result = subprocess.run(
+        result = do_process(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -93,9 +108,11 @@ def run_cmd(
             timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
             cwd=working_directory,
         )
+
     if commands is not None:
         commands.append(cmd)
     if stdout is not None:
         stdout.append(result.stdout)
     if stderr is not None:
         stderr.append(result.stderr)
+    return result

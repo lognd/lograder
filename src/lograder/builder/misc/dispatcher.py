@@ -11,7 +11,7 @@ from ..common.builder_interface import (
 from ..common.file_operations import bfs_walk, is_cmake_file, is_makefile_file
 from ..common.types import ProjectType
 from ..cpp import CMakeBuilder
-from . import MakefileBuilder
+from .makefile import MakefileBuilder
 
 
 def detect_project_type(project_root: Path) -> ProjectType:
@@ -33,7 +33,8 @@ class ProjectBuilder(BuilderInterface):
             self._internal_project = CMakeBuilder(project_root)
         elif project_type == "makefile":
             self._internal_project = MakefileBuilder(project_root)
-        self._internal_project = CxxSourceBuilder(project_root)
+        else:
+            self._internal_project = CxxSourceBuilder(project_root)
 
     def preprocess(self) -> PreprocessorResults:
         return self._internal_project.preprocess()
