@@ -7,7 +7,6 @@ import pytest
 
 from lograder.dispatch import AssignmentSummary, ProjectDispatcher
 from lograder.output.formatters.default import (
-    AssignmentMetadata,
     DefaultExecutableTestCaseFormatter,
 )
 from lograder.tests import make_tests_from_files
@@ -33,7 +32,7 @@ def test_project_1(tmp_path):
         assignment_authors=["Logan Dapp"],
         assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
         assignment_due_date=datetime(year=2030, month=12, day=12),
-        project_root=tmp_path
+        project_root=tmp_path,
     )
     metadata = assignment.metadata()
     preprocessor_results = assignment.preprocess()
@@ -72,7 +71,7 @@ def test_project_2(tmp_path):
         assignment_authors=["Logan Dapp"],
         assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
         assignment_due_date=datetime(year=2030, month=12, day=12),
-        project_root=tmp_path
+        project_root=tmp_path,
     )
     metadata = assignment.metadata()
     preprocessor_results = assignment.preprocess()
@@ -115,7 +114,7 @@ if not sys.platform.startswith("win"):
             assignment_authors=["Logan Dapp"],
             assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
             assignment_due_date=datetime(year=2030, month=12, day=12),
-            project_root=tmp_path
+            project_root=tmp_path,
         )
         metadata = assignment.metadata()
         preprocessor_results = assignment.preprocess()
@@ -153,7 +152,7 @@ def test_project_4(tmp_path):
         assignment_authors=["Logan Dapp"],
         assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
         assignment_due_date=datetime(year=2030, month=12, day=12),
-        project_root=tmp_path
+        project_root=tmp_path,
     )
     metadata = assignment.metadata()
     preprocessor_results = assignment.preprocess()
@@ -192,7 +191,7 @@ def test_project_5(tmp_path):
         assignment_authors=["Logan Dapp"],
         assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
         assignment_due_date=datetime(year=2030, month=12, day=12),
-        project_root=tmp_path
+        project_root=tmp_path,
     )
     metadata = assignment.metadata()
     preprocessor_results = assignment.preprocess()
@@ -233,7 +232,7 @@ if not sys.platform.startswith("win"):
             assignment_authors=["Logan Dapp"],
             assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
             assignment_due_date=datetime(year=2030, month=12, day=12),
-            project_root=tmp_path
+            project_root=tmp_path,
         )
         metadata = assignment.metadata()
         preprocessor_results = assignment.preprocess()

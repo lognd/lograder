@@ -2,9 +2,7 @@ from colorama import Fore
 
 
 class LograderMessageConfig:
-    DEFAULT_BUILD_ERROR_OVERRIDE_MESSAGE: str = (
-        f"BUILD WAS UNSUCCESSFUL."
-    )
+    DEFAULT_BUILD_ERROR_OVERRIDE_MESSAGE: str = "BUILD WAS UNSUCCESSFUL."
     DEFAULT_BUILD_ERROR_EXECUTABLE_NAME: str = (
         f"{Fore.RED}<NO EXECUTABLE GENERATED>{Fore.RESET}"
     )
