@@ -48,7 +48,7 @@ class BuilderOutput(BaseModel):
     commands: List[List[str | Path]]
     stdout: List[str]
     stderr: List[str]
-    build_type: ProjectType
+    project_type: ProjectType
 
     @property
     def is_successful(self) -> bool:

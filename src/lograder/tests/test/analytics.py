@@ -8,7 +8,7 @@ from typing import Any, List, Optional
 from pydantic import BaseModel, Field
 
 from ...common.utils import random_name
-from ...constants import Constants
+from static.basicconfig import LograderBasicConfig
 
 
 class LossEntry(BaseModel):
@@ -239,7 +239,7 @@ def valgrind(
             stdout=devnull,
             stderr=devnull,
             text=True,
-            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
+            timeout=LograderBasicConfig.DEFAULT_EXECUTABLE_TIMEOUT,
         )
 
     if result.returncode != 0:
@@ -273,7 +273,7 @@ def callgrind(
             stdout=devnull,
             stderr=devnull,
             text=True,
-            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
+            timeout=LograderBasicConfig.DEFAULT_EXECUTABLE_TIMEOUT,
         )
 
     if result.returncode != 0:
@@ -322,7 +322,7 @@ def usr_time(
             stdout=devnull,  # hide stdout
             stderr=devnull,
             text=True,
-            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
+            timeout=LograderBasicConfig.DEFAULT_EXECUTABLE_TIMEOUT,
         )
 
     if result.returncode != 0:

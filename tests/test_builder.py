@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from lograder.builder import AssignmentSummary, ProjectBuilder
+from lograder.dispatch import AssignmentSummary, ProjectDispatcher
 from lograder.output.formatters.default import (
     AssignmentMetadata,
-    DefaultTestCaseFormatter,
+    DefaultExecutableTestCaseFormatter,
 )
 from lograder.tests import make_tests_from_files
 
@@ -28,7 +28,7 @@ def test_project_1(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectBuilder(tmp_path)
+    assignment = ProjectDispatcher(tmp_path)
     metadata = AssignmentMetadata(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
@@ -46,7 +46,7 @@ def test_project_1(tmp_path):
     )
     print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
-        print(DefaultTestCaseFormatter().format(test))
+        print(DefaultExecutableTestCaseFormatter().format(test))
         assert test.get_successful()
 
 
@@ -66,7 +66,7 @@ def test_project_2(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectBuilder(tmp_path)
+    assignment = ProjectDispatcher(tmp_path)
 
     metadata = AssignmentMetadata(
         assignment_name="Lograder Unit Testing",
@@ -85,7 +85,7 @@ def test_project_2(tmp_path):
     )
     print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
-        print(DefaultTestCaseFormatter().format(test))
+        print(DefaultExecutableTestCaseFormatter().format(test))
         assert test.get_successful()
 
 
@@ -109,7 +109,7 @@ if not sys.platform.startswith("win"):
             input_strs=[""],
         )
 
-        assignment = ProjectBuilder(tmp_path)
+        assignment = ProjectDispatcher(tmp_path)
         metadata = AssignmentMetadata(
             assignment_name="Lograder Unit Testing",
             assignment_authors=["Logan Dapp"],
@@ -127,7 +127,7 @@ if not sys.platform.startswith("win"):
         )
         print(summary.get_assignment_text())
         for test in runtime_results.get_test_cases():
-            print(DefaultTestCaseFormatter().format(test))
+            print(DefaultExecutableTestCaseFormatter().format(test))
             assert test.get_successful()
 
 
@@ -146,7 +146,7 @@ def test_project_4(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectBuilder(tmp_path)
+    assignment = ProjectDispatcher(tmp_path)
     metadata = AssignmentMetadata(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
@@ -164,7 +164,7 @@ def test_project_4(tmp_path):
     )
     print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
-        print(DefaultTestCaseFormatter().format(test))
+        print(DefaultExecutableTestCaseFormatter().format(test))
         assert test.get_successful() is False
 
 
@@ -184,7 +184,7 @@ def test_project_5(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectBuilder(tmp_path)
+    assignment = ProjectDispatcher(tmp_path)
     metadata = AssignmentMetadata(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
@@ -202,7 +202,7 @@ def test_project_5(tmp_path):
     )
     print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
-        print(DefaultTestCaseFormatter().format(test))
+        print(DefaultExecutableTestCaseFormatter().format(test))
         assert test.get_successful() is False
 
 
@@ -224,7 +224,7 @@ if not sys.platform.startswith("win"):
             input_strs=[""],
         )
 
-        assignment = ProjectBuilder(tmp_path)
+        assignment = ProjectDispatcher(tmp_path)
         metadata = AssignmentMetadata(
             assignment_name="Lograder Unit Testing",
             assignment_authors=["Logan Dapp"],
@@ -242,5 +242,5 @@ if not sys.platform.startswith("win"):
         )
         print(summary.get_assignment_text())
         for test in runtime_results.get_test_cases():
-            print(DefaultTestCaseFormatter().format(test))
+            print(DefaultExecutableTestCaseFormatter().format(test))
             assert test.get_successful() is False

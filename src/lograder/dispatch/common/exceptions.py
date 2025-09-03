@@ -3,7 +3,6 @@ from typing import List
 
 from .._core_exceptions import LograderStudentBuildError
 
-
 class CxxSourceBuildError(LograderStudentBuildError):
     def __init__(self, sources: List[Path]):
         super().__init__(

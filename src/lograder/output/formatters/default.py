@@ -5,12 +5,12 @@ from typing import Optional, Sequence, Union
 
 from colorama import Fore
 
-from ...builder.common.types import (
+from ...dispatch.common.types import (
     AssignmentMetadata,
     BuilderOutput,
     PreprocessorOutput,
 )
-from ...constants import Constants
+from static.basicconfig import LograderBasicConfig
 from ...tests.test import TestInterface
 from ...tests.test.analytics import (
     CallgrindSummary,
@@ -25,9 +25,9 @@ from .interfaces import (
     MetadataFormatterInterface,
     PreprocessorOutputFormatterInterface,
     RuntimeSummaryFormatterInterface,
-    TestCaseFormatterInterface,
+    ExecutableTestInterface,
     ValgrindLeakSummaryFormatterInterface,
-    ValgrindWarningSummaryFormatterInterface,
+    ValgrindWarningSummaryFormatterInterface, ExecutableTestFormatterInterface,
 )
 
 
@@ -256,7 +256,7 @@ class DefaultPreprocessorOutputFormatter(PreprocessorOutputFormatterInterface):
 class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
     def format(self, build_output: BuilderOutput) -> str:
         output = [
-            f"Detected build types of `{Fore.MAGENTA}{build_output.build_type}{Fore.RESET}`."
+            f"Detected build types of `{Fore.MAGENTA}{build_output.project_type}{Fore.RESET}`."
         ]
         output += [
             "\n".join(
@@ -278,7 +278,7 @@ class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
 
 
 class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
-    def format(self, test_cases: Sequence[TestInterface]) -> str:
+    def format(self, test_cases: Sequence[ExecutableTestInterface]) -> str:
         total_cpu_time = sum(
             (et.total_cpu_time if (et := tc.get_execution_time()) is not None else 0.0)
             for tc in test_cases
@@ -323,8 +323,8 @@ class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
         )
 
 
-class DefaultTestCaseFormatter(TestCaseFormatterInterface):
-    def format(self, test_case: TestInterface) -> str:
+class DefaultExecutableTestCaseFormatter(ExecutableTestFormatterInterface):
+    def format(self, test_case: ExecutableTestInterface) -> str:
         if not test_case.get_successful():
             title_text = f"{Fore.RED}Test `{test_case.get_name()}` failed!{Fore.RESET}"
         elif test_case.get_penalty() < 1.0:
@@ -337,21 +337,21 @@ class DefaultTestCaseFormatter(TestCaseFormatterInterface):
             title_text = f"{Fore.CYAN}Test `{test_case.get_name()}` passed with flying colors (bonus points)!{Fore.RESET}!"
         output = [
             title_text,
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultSTDINContext(test_case.get_input()).render(),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultExpectedSTDOUTContext(
                 test_case.get_expected_output().strip()
             ).render(),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultActualSTDOUTContext(test_case.get_actual_output()).render(),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultSTDERRContext(test_case.get_error().strip()).render(),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultValgrindLeakSummaryFormatter().format(test_case.get_leaks()),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultValgrindWarningSummaryFormatter().format(test_case.get_warnings()),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultExecutionTimeSummaryFormatter().format(
                 test_case.get_calls(), test_case.get_execution_time()
             ),

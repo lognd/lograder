@@ -5,7 +5,7 @@ from ..common import FilePath
 from ..common.exceptions import ArgumentSpecifiedError
 from ..common.validation import validate_unique_argument
 from ..simple import make_tests_from_strs
-from ..test import ComparisonTest
+from ..test import ExecutableOutputComparisonTest
 from .types import TemplateSubstitution
 
 
@@ -100,7 +100,7 @@ def make_tests_from_template(
     names: Sequence[str],
     template: TestCaseTemplate,
     weights: Optional[Sequence[float]] = None,
-) -> List[ComparisonTest]:
+) -> List[ExecutableOutputComparisonTest]:
     return make_tests_from_strs(
         names=names,
         inputs=template.get_inputs(),

@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from ...builder.common.types import (
+from ...dispatch.common.types import (
     AssignmentMetadata,
     BuilderOutput,
     PreprocessorOutput,
 )
-from ...tests.test import TestInterface
+from ...tests.test import TestInterface, ExecutableTestInterface
 from ...tests.test.analytics import (
     CallgrindSummary,
     ExecutionTimeSummary,
@@ -61,7 +61,7 @@ class ExecutionTimeSummaryFormatterInterface(ABC):
         pass
 
 
-class TestCaseFormatterInterface(ABC):
+class ExecutableTestFormatterInterface(ABC):
     @abstractmethod
-    def format(self, test_case: TestInterface) -> str:
+    def format(self, test_case: ExecutableTestInterface) -> str:
         pass
