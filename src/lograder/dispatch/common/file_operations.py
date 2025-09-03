@@ -4,7 +4,7 @@ from collections import deque
 from pathlib import Path
 from typing import List, Optional
 
-from static.lograderbasicconfig import LograderBasicConfig
+from static.basicconfig import LograderBasicConfig
 
 
 def bfs_walk(root: Path):  # pathlib defaults to dfs; must implement bfs ourselves.

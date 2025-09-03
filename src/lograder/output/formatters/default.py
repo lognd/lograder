@@ -10,7 +10,7 @@ from ...dispatch.common.types import (
     BuilderOutput,
     PreprocessorOutput,
 )
-from static.lograderbasicconfig import LograderBasicConfig
+from static.basicconfig import LograderBasicConfig
 from ...tests.test import TestInterface
 from ...tests.test.analytics import (
     CallgrindSummary,

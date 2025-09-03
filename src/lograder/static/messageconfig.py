@@ -1,6 +1,6 @@
 from colorama import Fore
 
-class DefaultMessageConfig:
+class LograderMessageConfig:
     DEFAULT_BUILD_ERROR_OVERRIDE_MESSAGE: str = f"{Fore.LIGHTRED_EX}BUILD WAS UNSUCCESSFUL.{Fore.RESET}"
 
     @classmethod

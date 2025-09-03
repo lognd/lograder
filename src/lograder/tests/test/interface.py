@@ -46,6 +46,10 @@ class ExecutableTestInterface(TestInterface, ABC):
         pass
 
     @abstractmethod
+    def is_executed(self) -> bool:
+        pass
+
+    @abstractmethod
     def get_expected_output(self) -> str:
         pass
 

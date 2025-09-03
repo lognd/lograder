@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from ...common.types import FilePath
 from ...common.utils import random_name
-from static.lograderbasicconfig import LograderBasicConfig
+from static.basicconfig import LograderBasicConfig
 from ..common.assignment import BuilderOutput, PreprocessorOutput
 from ..common.interface import (
     DispatcherInterface,

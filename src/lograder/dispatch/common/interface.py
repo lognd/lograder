@@ -11,8 +11,9 @@ from .. import AssignmentSummary
 from ...common.types import FilePath
 from ...tests.registry import TestRegistry
 from ...tests.test import TestInterface
+from ...tests.common.exceptions import TestNotRunError
+from ...static import LograderMessageConfig
 from ..common.assignment import BuilderOutput, PreprocessorOutput
-from colorama import Fore
 
 class PreprocessorResults:
     def __init__(self, output: PreprocessorOutput):
@@ -35,12 +36,24 @@ class BuilderResults:
         return self._executable
 
 
-class RuntimeResults:
-    def __init__(self, results: Sequence[ExecutableTestInterface]):
-        self._results = results
+class RuntimePrepResults:  # dummy class to allow distinguishing between pre- and post-run.
+    def __init__(self, results: RuntimePrepResults | RuntimeResults | Sequence[ExecutableTestInterface]):
+        if isinstance(results, RuntimePrepResults):
+            self._results = results.get_test_cases()
+        else:
+            self._results = results
 
     def get_test_cases(self) -> List[ExecutableTestInterface]:
         return list(self._results)
+
+
+class RuntimeResults(RuntimePrepResults):
+    def get_test_cases(self) -> List[ExecutableTestInterface]:
+        for result in self._results:
+            if not result.is_executed():
+                raise TestNotRunError(result.get_name())
+        return list(self._results)
+
 
 class ProcessInterface(ABC):
     _linked_preprocessors: set[PreprocessorInterface] = set()
@@ -128,16 +141,20 @@ class RunnerInterface(ProcessInterface, ABC):
         ProcessInterface.register_runner(self)
 
     def run(self) -> RuntimeResults:
-        results = self.run_tests()
+        results: RuntimePrepResults = self.prep_tests()
         for test_case in results.get_test_cases():
             if not self.is_build_successful():
                 test_case.force_unsuccessful()
                 test_case.override_output(
-
+                    LograderMessageConfig.DEFAULT_BUILD_ERROR_OVERRIDE_MESSAGE,
+                    LograderMessageConfig.DEFAULT_BUILD_ERROR_OVERRIDE_MESSAGE,
                 )
+            else:
+                test_case.run()
+        return RuntimeResults(results)
 
     @abstractmethod
-    def run_tests(self) -> RuntimeResults:
+    def prep_tests(self) -> RuntimePrepResults:
         pass
 
 class DispatcherInterface(ABC):

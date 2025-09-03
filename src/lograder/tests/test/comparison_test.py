@@ -5,7 +5,7 @@ from typing import List, Optional, Sequence
 
 from . import ExecutableTestInterface
 from ...dispatch.common.file_operations import do_process
-from static.lograderbasicconfig import LograderBasicConfig
+from static.basicconfig import LograderBasicConfig
 from ..common.exceptions import TestNotRunError, TestTargetNotSpecifiedError
 from .analytics import (
     CallgrindSummary,
@@ -87,8 +87,13 @@ class ExecutableOutputComparisonTest(ExecutableTestInterface):
         self._actual_output = result.stdout
         self._error = result.stderr
 
-    def _assert_executed(self):
+    def is_executed(self):
         if self._error is None or self._actual_output is None:
+            return False
+        return True
+
+    def _assert_executed(self):
+        if not self.is_executed():
             raise TestNotRunError(self.get_name())
 
     def get_error(self) -> str:
