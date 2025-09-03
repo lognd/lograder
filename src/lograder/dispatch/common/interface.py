@@ -60,7 +60,7 @@ class RuntimeResults(RuntimePrepResults):
         for result in self._results:
             if not result.is_executed():
                 raise TestNotRunError(result.get_name())
-        return list(self._results)
+        return self._results
 
 
 class ProcessInterface(ABC):

@@ -17,6 +17,7 @@ class ExecutableRunner(RunnerInterface, ABC):
         for test in TestRegistry.iterate():
             if isinstance(test, ExecutableTestInterface):
                 test.set_target(self.get_executable())
+                tests.append(test)
             else:
                 raise TypeError
         return RuntimePrepResults(tests)
