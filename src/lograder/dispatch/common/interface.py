@@ -132,7 +132,9 @@ class RunnerInterface(ProcessInterface, ABC):
         for test_case in results.get_test_cases():
             if not self.is_build_successful():
                 test_case.force_unsuccessful()
+                test_case.override_output(
 
+                )
 
     @abstractmethod
     def run_tests(self) -> RuntimeResults:

@@ -4,7 +4,7 @@ from collections import deque
 from pathlib import Path
 from typing import List, Optional
 
-from ...constants import Constants
+from static.lograderbasicconfig import LograderBasicConfig
 
 
 def bfs_walk(root: Path):  # pathlib defaults to dfs; must implement bfs ourselves.
@@ -97,7 +97,7 @@ def run_cmd(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
+            timeout=LograderBasicConfig.DEFAULT_EXECUTABLE_TIMEOUT,
         )
     else:
         result = do_process(
@@ -105,7 +105,7 @@ def run_cmd(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
+            timeout=LograderBasicConfig.DEFAULT_EXECUTABLE_TIMEOUT,
             cwd=working_directory,
         )
 

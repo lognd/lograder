@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from ...common.types import FilePath
 from ...common.utils import random_name
-from ...constants import Constants
+from static.lograderbasicconfig import LograderBasicConfig
 from ..common.assignment import BuilderOutput, PreprocessorOutput
 from ..common.interface import (
     DispatcherInterface,
@@ -63,8 +63,8 @@ class CxxSourceDispatcher(CxxTestRunner, DispatcherInterface):
 
         cmd: List[str | Path] = [
             "g++",
-            *Constants.DEFAULT_CXX_COMPILATION_FLAGS,
-            f"-std={Constants.DEFAULT_CXX_STANDARD}",
+            *LograderBasicConfig.DEFAULT_CXX_COMPILATION_FLAGS,
+            f"-std={LograderBasicConfig.DEFAULT_CXX_STANDARD}",
             "-o",
             self.get_executable_path(),
             *self._source_files,

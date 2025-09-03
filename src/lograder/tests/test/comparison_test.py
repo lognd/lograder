@@ -1,11 +1,11 @@
 import shlex
 import subprocess
 from pathlib import Path
-from typing import Callable, List, Optional, Sequence
+from typing import List, Optional, Sequence
 
 from . import ExecutableTestInterface
 from ...dispatch.common.file_operations import do_process
-from ...constants import Constants
+from static.lograderbasicconfig import LograderBasicConfig
 from ..common.exceptions import TestNotRunError, TestTargetNotSpecifiedError
 from .analytics import (
     CallgrindSummary,
@@ -16,7 +16,6 @@ from .analytics import (
     usr_time,
     valgrind,
 )
-from .interface import TestInterface
 
 
 class ExecutableOutputComparisonTest(ExecutableTestInterface):
@@ -82,7 +81,7 @@ class ExecutableOutputComparisonTest(ExecutableTestInterface):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=Constants.DEFAULT_EXECUTABLE_TIMEOUT,
+            timeout=LograderBasicConfig.DEFAULT_EXECUTABLE_TIMEOUT,
             cwd=working_directory,
         )
         self._actual_output = result.stdout

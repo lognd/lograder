@@ -1,8 +1,7 @@
 from pathlib import Path
 from typing import List
 
-
-class Constants:
+class LograderBasicConfig:
     DEFAULT_SUBMISSION_PATH: Path = Path("/autograder/submission")
     DEFAULT_CXX_STANDARD: str = "c++20"
     DEFAULT_CXX_COMPILATION_FLAGS: List[str] = ["-Wall", "-Wextra", "-Werror"]

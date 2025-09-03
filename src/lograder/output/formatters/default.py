@@ -10,7 +10,7 @@ from ...dispatch.common.types import (
     BuilderOutput,
     PreprocessorOutput,
 )
-from ...constants import Constants
+from static.lograderbasicconfig import LograderBasicConfig
 from ...tests.test import TestInterface
 from ...tests.test.analytics import (
     CallgrindSummary,
@@ -337,21 +337,21 @@ class DefaultExecutableTestCaseFormatter(ExecutableTestFormatterInterface):
             title_text = f"{Fore.CYAN}Test `{test_case.get_name()}` passed with flying colors (bonus points)!{Fore.RESET}!"
         output = [
             title_text,
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultSTDINContext(test_case.get_input()).render(),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultExpectedSTDOUTContext(
                 test_case.get_expected_output().strip()
             ).render(),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultActualSTDOUTContext(test_case.get_actual_output()).render(),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultSTDERRContext(test_case.get_error().strip()).render(),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultValgrindLeakSummaryFormatter().format(test_case.get_leaks()),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultValgrindWarningSummaryFormatter().format(test_case.get_warnings()),
-            Constants.DEFAULT_TOPIC_BREAK,
+            LograderBasicConfig.DEFAULT_TOPIC_BREAK,
             DefaultExecutionTimeSummaryFormatter().format(
                 test_case.get_calls(), test_case.get_execution_time()
             ),
