@@ -19,7 +19,7 @@ from .analytics import (
 from .interface import TestInterface
 
 
-class ComparisonTest(ExecutableTestInterface):
+class ExecutableOutputComparisonTest(ExecutableTestInterface):
     def __init__(
         self,
         name: str,
@@ -143,6 +143,8 @@ class ComparisonTest(ExecutableTestInterface):
         return self._name
 
     def get_successful(self) -> bool:
+        if self._force_success is not None:
+            return self._force_success
         actual_output = self.get_actual_output()
         return actual_output.strip() == self.get_expected_output().strip()
 
