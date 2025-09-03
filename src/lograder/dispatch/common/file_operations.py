@@ -30,6 +30,19 @@ def is_cxx_source_file(path: Path) -> bool:
         ".c",
     )
 
+def is_catch2_file(path: Path) -> bool:
+    if not is_cxx_source_file(path):
+        return False
+
+    with open(path, 'r') as f:
+        lines = f.read().split('\n')
+        for line in lines:
+            for valid_catch in ('#define CATCH_CONFIG_MAIN', '#define CATCH_CONFIG_RUNNER'):
+                if line.rstrip().startswith(valid_catch):
+                    return True
+    return False
+
+
 
 def is_cmake_file(path: Path) -> bool:
     return path.exists() and path.name.startswith("CMakeLists.txt")

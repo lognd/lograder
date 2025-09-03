@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 
+from ..._core_exceptions import LograderError
 from .._core_exceptions import LograderStudentBuildError
 
 
@@ -40,3 +41,7 @@ class MakefileRunNotFoundError(LograderStudentBuildError):
         super().__init__(
             f"Could not find an `run` entrypoint in `{makefile_path.resolve()}` (i.e. the command `make run ARGS=<test-args>` is used to run the project)."
         )
+
+class Catch2MainNotFoundError(LograderError):
+    def __init__(self, catch2_root: Path):
+        super().__init__(f"Could not find a `#define CATCH_CONFIG_MAIN` anywhere in path, `{catch2_root.resolve()}`.")

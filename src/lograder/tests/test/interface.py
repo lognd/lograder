@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional
 
+from ...static import LograderMessageConfig
 from .analytics import (
     CallgrindSummary,
     ExecutionTimeSummary,
@@ -85,3 +86,12 @@ class ExecutableTestInterface(TestInterface, ABC):
 
     def get_leaks(self) -> Optional[ValgrindLeakSummary]:
         return None
+
+class UnitTestWrapperInterface(ExecutableTestInterface, ABC):
+    def get_expected_output(self) -> Optional[str]:
+        return LograderMessageConfig.DEFAULT_UNIT_TEST_EXPECTED_OUTPUT_MESSAGE
+
+    @abstractmethod
+    def get_success(self) -> bool:
+        pass
+
