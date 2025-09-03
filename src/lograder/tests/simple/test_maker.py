@@ -2,7 +2,7 @@ from typing import List, Optional, Sequence
 
 from ..common.validation import validate_common_size
 from ..registry import TestRegistry
-from ..test import ComparisonTest
+from ..test import ExecutableOutputComparisonTest
 
 
 def make_tests_from_strs(
@@ -12,7 +12,7 @@ def make_tests_from_strs(
     expected_outputs: Sequence[str],
     flag_sets: Optional[Sequence[List[str]]] = None,
     weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
-) -> List[ComparisonTest]:
+) -> List[ExecutableOutputComparisonTest]:
 
     if weights is None:
         weights = [1.0 for _ in names]
@@ -33,7 +33,7 @@ def make_tests_from_strs(
         names, inputs, expected_outputs, weights, flag_sets, strict=True
     ):
         generated_tests.append(
-            ComparisonTest(
+            ExecutableOutputComparisonTest(
                 name=name,
                 input=input_,
                 expected_output=expected_output,

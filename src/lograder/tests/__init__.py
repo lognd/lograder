@@ -16,7 +16,7 @@ from .template import (
     TSub,
     make_tests_from_template,
 )
-from .test import ComparisonTest
+from .test import ExecutableOutputComparisonTest
 
 __all__ = [
     "make_tests_from_strs",
@@ -32,6 +32,6 @@ __all__ = [
     "TSub",
     "TestCaseTemplate",
     "make_tests_from_template",
-    "ComparisonTest",
+    "ExecutableOutputComparisonTest",
     "TestRegistry",
 ]

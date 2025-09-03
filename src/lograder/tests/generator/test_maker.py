@@ -1,7 +1,7 @@
 from typing import Callable, Generator, List
 
 from ..registry import TestRegistry
-from ..test import ComparisonTest
+from ..test import ExecutableOutputComparisonTest
 from .types import (
     FlaggedTestCaseProtocol,
     FlaggedWeightedTestCaseProtocol,
@@ -14,10 +14,10 @@ from .types import (
 def make_tests_from_generator(
     generator: Callable[[], Generator[TestCase, None, None]],
 ) -> None:
-    generated_tests: List[ComparisonTest] = []
+    generated_tests: List[ExecutableOutputComparisonTest] = []
     for test_case in generator():
         if isinstance(test_case, WeightedTestCaseProtocol):
-            test = ComparisonTest(
+            test = ExecutableOutputComparisonTest(
                 name=test_case.get_name(),
                 input=test_case.get_input(),
                 expected_output=test_case.get_expected_output(),
@@ -26,7 +26,7 @@ def make_tests_from_generator(
             )
             generated_tests.append(test)
         elif isinstance(test_case, TestCaseProtocol):
-            test = ComparisonTest(
+            test = ExecutableOutputComparisonTest(
                 name=test_case.get_name(),
                 input=test_case.get_input(),
                 expected_output=test_case.get_expected_output(),
@@ -35,7 +35,7 @@ def make_tests_from_generator(
             )
             generated_tests.append(test)
         elif isinstance(test_case, FlaggedWeightedTestCaseProtocol):
-            test = ComparisonTest(
+            test = ExecutableOutputComparisonTest(
                 name=test_case.get_name(),
                 input=test_case.get_input(),
                 expected_output=test_case.get_expected_output(),
@@ -44,7 +44,7 @@ def make_tests_from_generator(
             )
             generated_tests.append(test)
         elif isinstance(test_case, FlaggedTestCaseProtocol):
-            test = ComparisonTest(
+            test = ExecutableOutputComparisonTest(
                 name=test_case.get_name(),
                 input=test_case.get_input(),
                 expected_output=test_case.get_expected_output(),
@@ -62,7 +62,7 @@ def make_tests_from_generator(
             else:
                 flags = []
 
-            test = ComparisonTest(
+            test = ExecutableOutputComparisonTest(
                 name=test_case["name"],
                 input=test_case["input"],
                 expected_output=test_case["expected_output"],

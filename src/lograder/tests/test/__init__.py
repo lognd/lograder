@@ -1,8 +1,8 @@
 from .interface import TestInterface, ExecutableTestInterface
-from .io_comparison_test import ComparisonTest
+from .io_comparison_test import ExecutableOutputComparisonTest
 
 __all__ = [
-    "ComparisonTest",
+    "ExecutableOutputComparisonTest",
     "TestInterface",
     "ExecutableTestInterface",
 ]

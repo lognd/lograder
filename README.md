@@ -135,17 +135,18 @@ to have an over-bloated mess. You can just use:
 ```py
 from typing import Sequence, Optional, List
 from pathlib import Path
-from lograder.tests import make_tests_from_strs, ComparisonTest
+from lograder.tests import make_tests_from_strs, ExecutableOutputComparisonTest
 
 
 def make_test_from_strs(
-    *,  # kwargs-only; to avoid confusion with argument sequence.
-    names: Sequence[str],
-    inputs: Sequence[str],
-    expected_outputs: Sequence[str],
-    flag_sets: Optional[Sequence[List[str | Path]]] = None,  # Pass flags like ["--option-1", "--option-2"] to student programs
-    weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
-) -> List[ComparisonTest]: ...
+        *,  # kwargs-only; to avoid confusion with argument sequence.
+        names: Sequence[str],
+        inputs: Sequence[str],
+        expected_outputs: Sequence[str],
+        flag_sets: Optional[Sequence[List[str | Path]]] = None,
+        # Pass flags like ["--option-1", "--option-2"] to student programs
+        weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
+) -> List[ExecutableOutputComparisonTest]: ...
 
 
 # Here's an example of how you'd use the above method:
@@ -165,20 +166,22 @@ method to do so:
 ```py
 from typing import Sequence, Optional, List
 from pathlib import Path
-from lograder.tests import make_tests_from_files, FilePath, ComparisonTest
+from lograder.tests import make_tests_from_files, FilePath, ExecutableOutputComparisonTest
 
 
 # `make_tests_from_files` has the following signature.
 def make_tests_from_files(
-    *,  # kwargs-only; to avoid confusion with argument sequence.
-    names: Sequence[str],
-    input_files: Optional[Sequence[FilePath]] = None,  # `input_files` and `input_strs` mutually exclusive.
-    input_strs: Optional[Sequence[str]] = None,
-    expected_output_files: Optional[Sequence[FilePath]] = None,  # same with `expected_output_files` and `expected_output_strs`
-    expected_output_strs: Optional[Sequence[str]] = None,
-    flag_sets: Optional[Sequence[List[str | Path]]] = None,  # Pass flags like ["--option-1", "--option-2"] to student programs
-    weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
-) -> List[ComparisonTest]: ...
+        *,  # kwargs-only; to avoid confusion with argument sequence.
+        names: Sequence[str],
+        input_files: Optional[Sequence[FilePath]] = None,  # `input_files` and `input_strs` mutually exclusive.
+        input_strs: Optional[Sequence[str]] = None,
+        expected_output_files: Optional[Sequence[FilePath]] = None,
+        # same with `expected_output_files` and `expected_output_strs`
+        expected_output_strs: Optional[Sequence[str]] = None,
+        flag_sets: Optional[Sequence[List[str | Path]]] = None,
+        # Pass flags like ["--option-1", "--option-2"] to student programs
+        weights: Optional[Sequence[float]] = None,  # Defaults to equal-weight.
+) -> List[ExecutableOutputComparisonTest]: ...
 
 
 # Here's an example of how you'd use the above method:

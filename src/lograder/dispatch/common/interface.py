@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List, Sequence
 import json
 
+from tests.test import ExecutableTestInterface
 from .types import AssignmentMetadata
 from .. import AssignmentSummary
 from ...common.types import FilePath
@@ -35,10 +36,10 @@ class BuilderResults:
 
 
 class RuntimeResults:
-    def __init__(self, results: Sequence[TestInterface]):
+    def __init__(self, results: Sequence[ExecutableTestInterface]):
         self._results = results
 
-    def get_test_cases(self) -> List[TestInterface]:
+    def get_test_cases(self) -> List[ExecutableTestInterface]:
         return list(self._results)
 
 class ProcessInterface(ABC):
@@ -127,6 +128,11 @@ class RunnerInterface(ProcessInterface, ABC):
         ProcessInterface.register_runner(self)
 
     def run(self) -> RuntimeResults:
+        results = self.run_tests()
+        for test_case in results.get_test_cases():
+            if not self.is_build_successful():
+                test_case.force_unsuccessful()
+
 
     @abstractmethod
     def run_tests(self) -> RuntimeResults:
