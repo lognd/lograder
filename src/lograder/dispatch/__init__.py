@@ -1,11 +1,11 @@
 from .common import AssignmentSummary
-from .cpp import CMakeBuilder, CxxSourceBuilder
-from .misc import MakefileBuilder, ProjectBuilder
+from .cpp import CMakeDispatcher, CxxSourceDispatcher
+from .misc import MakefileDispatcher, ProjectDispatcher
 
 __all__ = [
     "AssignmentSummary",
-    "CxxSourceBuilder",
-    "CMakeBuilder",
-    "MakefileBuilder",
-    "ProjectBuilder",
+    "CxxSourceDispatcher",
+    "CMakeDispatcher",
+    "MakefileDispatcher",
+    "ProjectDispatcher",
 ]

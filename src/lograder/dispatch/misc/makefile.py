@@ -4,8 +4,8 @@ from typing import List, Optional
 from ...common.types import FilePath
 from ...tests.registry import TestRegistry
 from ..common.assignment import BuilderOutput, PreprocessorOutput
-from ..common.builder_interface import (
-    BuilderInterface,
+from ..common.interface import (
+    DispatcherInterface,
     BuilderResults,
     PreprocessorResults,
     RuntimeResults,
@@ -19,7 +19,7 @@ from ..common.file_operations import (
 )
 
 
-class MakefileBuilder(BuilderInterface):
+class MakefileDispatcher(DispatcherInterface):
     def __init__(self, project_root: FilePath):
         self._project_root: Path = Path(project_root)
         self._built: bool = False

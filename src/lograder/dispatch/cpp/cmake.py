@@ -6,8 +6,8 @@ from typing import List, Optional
 from ...common.types import FilePath
 from ...common.utils import random_name
 from ..common.assignment import BuilderOutput, PreprocessorOutput
-from ..common.builder_interface import (
-    BuilderInterface,
+from ..common.interface import (
+    DispatcherInterface,
     BuilderResults,
     CxxTestRunner,
     PreprocessorResults,
@@ -18,7 +18,7 @@ from ..common.exceptions import (
 from ..common.file_operations import bfs_walk, is_cmake_file, is_valid_target, run_cmd
 
 
-class CMakeBuilder(CxxTestRunner, BuilderInterface):
+class CMakeDispatcher(CxxTestRunner, DispatcherInterface):
     TARGET_PATTERN = re.compile(r"^\.\.\.\s+([a-zA-Z0-9_\-.]+)", re.MULTILINE)
 
     def __init__(self, project_root: FilePath):

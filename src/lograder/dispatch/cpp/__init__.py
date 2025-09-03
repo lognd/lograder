@@ -1,7 +1,7 @@
-from .cmake import CMakeBuilder
-from .cpp_source import CxxSourceBuilder
+from .cmake import CMakeDispatcher
+from .cpp_source import CxxSourceDispatcher
 
 __all__ = [
-    "CMakeBuilder",
-    "CxxSourceBuilder",
+    "CMakeDispatcher",
+    "CxxSourceDispatcher",
 ]

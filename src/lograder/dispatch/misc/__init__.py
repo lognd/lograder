@@ -1,4 +1,4 @@
-from .dispatcher import ProjectBuilder
-from .makefile import MakefileBuilder
+from .dispatcher import ProjectDispatcher
+from .makefile import MakefileDispatcher
 
-__all__ = ["MakefileBuilder", "ProjectBuilder"]
+__all__ = ["MakefileDispatcher", "ProjectDispatcher"]

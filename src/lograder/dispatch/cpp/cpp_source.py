@@ -6,8 +6,8 @@ from ...common.types import FilePath
 from ...common.utils import random_name
 from ...constants import Constants
 from ..common.assignment import BuilderOutput, PreprocessorOutput
-from ..common.builder_interface import (
-    BuilderInterface,
+from ..common.interface import (
+    DispatcherInterface,
     BuilderResults,
     CxxTestRunner,
     PreprocessorResults,
@@ -15,7 +15,7 @@ from ..common.builder_interface import (
 from ..common.file_operations import bfs_walk, is_cxx_source_file, run_cmd
 
 
-class CxxSourceBuilder(CxxTestRunner, BuilderInterface):
+class CxxSourceDispatcher(CxxTestRunner, DispatcherInterface):
     def __init__(self, project_root: FilePath):
         super().__init__()
         self._project_root: Path = Path(project_root)
