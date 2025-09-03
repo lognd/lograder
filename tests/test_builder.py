@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from lograder.dispatch import AssignmentSummary, ProjectBuilder
+from lograder.dispatch import AssignmentSummary, ProjectDispatcher
 from lograder.output.formatters.default import (
     AssignmentMetadata,
     DefaultTestCaseFormatter,
@@ -28,7 +28,7 @@ def test_project_1(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectBuilder(tmp_path)
+    assignment = ProjectDispatcher(tmp_path)
     metadata = AssignmentMetadata(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
@@ -66,7 +66,7 @@ def test_project_2(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectBuilder(tmp_path)
+    assignment = ProjectDispatcher(tmp_path)
 
     metadata = AssignmentMetadata(
         assignment_name="Lograder Unit Testing",
@@ -109,7 +109,7 @@ if not sys.platform.startswith("win"):
             input_strs=[""],
         )
 
-        assignment = ProjectBuilder(tmp_path)
+        assignment = ProjectDispatcher(tmp_path)
         metadata = AssignmentMetadata(
             assignment_name="Lograder Unit Testing",
             assignment_authors=["Logan Dapp"],
@@ -146,7 +146,7 @@ def test_project_4(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectBuilder(tmp_path)
+    assignment = ProjectDispatcher(tmp_path)
     metadata = AssignmentMetadata(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
@@ -184,7 +184,7 @@ def test_project_5(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectBuilder(tmp_path)
+    assignment = ProjectDispatcher(tmp_path)
     metadata = AssignmentMetadata(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
@@ -224,7 +224,7 @@ if not sys.platform.startswith("win"):
             input_strs=[""],
         )
 
-        assignment = ProjectBuilder(tmp_path)
+        assignment = ProjectDispatcher(tmp_path)
         metadata = AssignmentMetadata(
             assignment_name="Lograder Unit Testing",
             assignment_authors=["Logan Dapp"],

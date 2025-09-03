@@ -23,13 +23,13 @@ named and put in either a build directory, if the student
 has one (`./build`) or the project root directory (`./`).
 
 ```py
-from lograder.dispatch import CxxSourceBuilder
+from lograder.dispatch import CxxSourceDispatcher
 from lograder.output import AssignmentSummary
 
 # Note that when you make a test, it's automatically
 # registered with the `lograder.tests.registry.TestRegistry`
 
-assignment = CxxSourceBuilder(project_root="/autograder/submission")
+assignment = CxxSourceDispatcher(project_root="/autograder/submission")
 preprocessor_results = assignment.preprocess()
 build_results = assignment.build()
 runtime_results = assignment.run_tests()
@@ -57,13 +57,13 @@ that doesn't match: `all`, `install`, `test`, `package`, `package_source`,
 finds. If it can't find a valid target, it will raise an error.
 
 ```py
-from lograder.dispatch import CMakeBuilder
+from lograder.dispatch import CMakeDispatcher
 from lograder.output import AssignmentSummary
 
 # Note that when you make a test, it's automatically
 # registered with the `lograder.tests.registry.TestRegistry`
 
-assignment = CMakeBuilder(project_root="/autograder/submission")
+assignment = CMakeDispatcher(project_root="/autograder/submission")
 preprocessor_results = assignment.preprocess()
 build_results = assignment.build()
 runtime_results = assignment.run_tests()
@@ -101,13 +101,13 @@ the same general idea as the `CMakeBuilder` except that it searches for
 will just run the default `make`.
 
 ```py
-from lograder.dispatch import MakefileBuilder
+from lograder.dispatch import MakefileDispatcher
 from lograder.output import AssignmentSummary
 
 # Note that when you make a test, it's automatically
 # registered with the `lograder.tests.registry.TestRegistry`
 
-assignment = MakefileBuilder(project_root="/autograder/submission")
+assignment = MakefileDispatcher(project_root="/autograder/submission")
 preprocessor_results = assignment.preprocess()
 build_results = assignment.build()
 runtime_results = assignment.run_tests()
