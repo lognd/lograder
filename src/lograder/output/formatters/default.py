@@ -113,8 +113,11 @@ class DefaultExpectedSTDOUTContext(
 ):
     def render(self) -> str:
         context = super().render()
-        comp_repr = f"({Fore.BLUE}RAW EXPECTED STDOUT{Fore.RESET}): {repr(self.get_content())}"
+        comp_repr = (
+            f"({Fore.BLUE}RAW EXPECTED STDOUT{Fore.RESET}): {repr(self.get_content())}"
+        )
         return f"{context}\n{comp_repr}"
+
 
 class DefaultActualSTDOUTContext(
     ContextRenderer,
@@ -157,9 +160,15 @@ class DefaultValgrindLeakSummaryFormatter(ValgrindLeakSummaryFormatterInterface)
     def format(self, leak_summary: Optional[ValgrindLeakSummary]) -> str:
         if leak_summary is None:
             return f"<{Fore.YELLOW}VALGRIND LEAK SUMMARY DISABLED{Fore.RESET}>"
-        def_lost_color = Fore.LIGHTGREEN_EX if leak_summary.definitely_lost.is_safe else Fore.RED
-        ind_lost_color = Fore.LIGHTGREEN_EX if leak_summary.indirectly_lost.is_safe else Fore.RED
-        pos_lost_color = Fore.LIGHTGREEN_EX if leak_summary.possibly_lost.is_safe else Fore.RED
+        def_lost_color = (
+            Fore.LIGHTGREEN_EX if leak_summary.definitely_lost.is_safe else Fore.RED
+        )
+        ind_lost_color = (
+            Fore.LIGHTGREEN_EX if leak_summary.indirectly_lost.is_safe else Fore.RED
+        )
+        pos_lost_color = (
+            Fore.LIGHTGREEN_EX if leak_summary.possibly_lost.is_safe else Fore.RED
+        )
         return (
             f"{Fore.LIGHTGREEN_EX}VALGRIND LEAK SUMMARY{Fore.RESET}:\n"
             f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {def_lost_color}{leak_summary.definitely_lost.bytes}{Fore.RESET} bytes, {def_lost_color}{leak_summary.definitely_lost.blocks}{Fore.RESET} blocks {def_lost_color}definitely lost{Fore.RESET}.\n"
@@ -211,7 +220,7 @@ class DefaultExecutionTimeSummaryFormatter(ExecutionTimeSummaryFormatterInterfac
         total_instructions = sum([call.cost for call in callgrind_summary])
         for call_summary in callgrind_summary:
             function_text.append(
-                f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {Fore.LIGHTGREEN_EX}{call_summary.percent:.2f}%{Fore.RESET} ({Fore.LIGHTGREEN_EX}{call_summary.cost}{Fore.RESET} inst., ~{Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_time * call_summary.cost / total_instructions))}{Fore.RESET}): {Fore.LIGHTMAGENTA_EX}{call_summary.function}{Fore.RESET} from {Fore.MAGENTA}{call_summary.file}{Fore.RESET} {'in ' + Fore.BLUE + call_summary.shared_object + Fore.RESET if call_summary.shared_object is not None else ''}"
+                f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {Fore.LIGHTGREEN_EX}{call_summary.percent:.2f}%{Fore.RESET} ({Fore.LIGHTGREEN_EX}{call_summary.cost}{Fore.RESET} inst., {Fore.LIGHTBLUE_EX}~{Fore.RESET}{Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_time * call_summary.cost / total_instructions))}{Fore.RESET}): {Fore.LIGHTMAGENTA_EX}{call_summary.function}{Fore.RESET} from {Fore.MAGENTA}{call_summary.file}{Fore.RESET} {'in ' + Fore.BLUE + call_summary.shared_object + Fore.RESET if call_summary.shared_object is not None else ''}"
             )
         if not function_text:
             function_text = [
@@ -247,7 +256,7 @@ class DefaultPreprocessorOutputFormatter(PreprocessorOutputFormatterInterface):
 class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
     def format(self, build_output: BuilderOutput) -> str:
         output = [
-            f"Detected build types of `{Fore.MAGENTA}{build_output.build_type}{Fore.RESET}`.\n\n"
+            f"Detected build types of `{Fore.MAGENTA}{build_output.build_type}{Fore.RESET}`."
         ]
         output += [
             "\n".join(
@@ -265,7 +274,7 @@ class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
                 build_output.commands, build_output.stdout, build_output.stderr
             )
         ]
-        return DefaultBuilderContext("\n".join(output).strip()).render()
+        return DefaultBuilderContext("\n\n".join(output).strip()).render()
 
 
 class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
