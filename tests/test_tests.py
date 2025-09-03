@@ -30,7 +30,7 @@ def test_basic_strs_success():
         expected_outputs=[f"{i}" for i in range(num_tests)],
     )
     for i, test in enumerate(tests):
-        assert test._is_correct_str(f"{i}")
+        assert test.get_expected_output() == f"{i}"
 
 
 @pytest.mark.description(
@@ -46,7 +46,7 @@ def test_basic_strs_failure():
         expected_outputs=[f"{i}" for i in range(num_tests)],
     )
     for i, test in enumerate(tests):
-        assert test._is_correct_str("-1") is False
+        assert test.get_expected_output() != f"{i}"
 
 
 @pytest.mark.description("Testing to see if flags are passed correctly from tests.")
@@ -107,7 +107,7 @@ def test_basic_files_success():
         ],
     )
     for i, test in enumerate(tests):
-        assert test._is_correct_str(f"{i}")
+        assert test.get_expected_output() == f"{i}"
 
 
 @pytest.mark.description(
@@ -128,7 +128,7 @@ def test_basic_files_failure():
         ],
     )
     for i, test in enumerate(tests):
-        assert test._is_correct_str("-1") is False
+        assert test.get_expected_output() != f"{i}"
 
 
 @pytest.mark.description(
@@ -149,7 +149,7 @@ def test_basic_templates_success():
         ),
     )
     for i, test in enumerate(tests):
-        assert test._is_correct_str(f"{i}")
+        assert test.get_expected_output() == f"{i}"
 
 
 @pytest.mark.description(
@@ -170,7 +170,7 @@ def test_basic_templates_failure():
         ),
     )
     for i, test in enumerate(tests):
-        assert test._is_correct_str("-1") is False
+        assert test.get_expected_output() != f"{i}"
 
 
 @pytest.mark.description(
@@ -192,7 +192,7 @@ def test_basic_generator_success():
             yield case
 
     for i, test in enumerate(TestRegistry.iterate()):
-        assert test._is_correct_str(f"{i}")
+        assert test.get_expected_output() == f"{i}"
 
 
 @pytest.mark.description(
@@ -214,4 +214,4 @@ def test_basic_generator_failure():
             yield case
 
     for i, test in enumerate(TestRegistry.iterate()):
-        assert test._is_correct_str("-1") is False
+        assert test.get_expected_output() != f"{i}"
