@@ -123,6 +123,7 @@ class CMakeDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
             self._target = valid_targets[0]
 
         cmd = ["cmake",
+               *LograderBasicConfig.DEFAULT_CMAKE_COMPILATION_FLAGS,
                "--build", self.get_build_directory(),
                "--target", self._target,
                "--", "-s", "--no-print-directory"]

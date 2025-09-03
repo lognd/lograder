@@ -6,6 +6,7 @@ class LograderBasicConfig:
     DEFAULT_RESULT_PATH: Path = Path('/autograder/results/results.json')
     DEFAULT_CXX_STANDARD: str = "c++20"
     DEFAULT_CXX_COMPILATION_FLAGS: List[str] = ["-Wall", "-Wextra", "-Werror"]
+    DEFAULT_CMAKE_COMPILATION_FLAGS: List[str] = []
     DEFAULT_EXECUTABLE_TIMEOUT: float = 300.0  # In seconds.
 
     DEFAULT_TOPIC_BREAK: str = "\n\n"

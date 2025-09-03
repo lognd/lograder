@@ -1,87 +1,103 @@
 import sys
 from pathlib import Path
 from typing import List, Optional
+from datetime import datetime
 
+from .. import RuntimeResults
+from ..common.interface import BuildResults
+from ..common.types import AssignmentMetadata
+from ...static import LograderBasicConfig, LograderMessageConfig
 from ...common.types import FilePath
 from ...common.utils import random_name
 from static.basicconfig import LograderBasicConfig
 from ..common.assignment import BuilderOutput, PreprocessorOutput
-from ..common.interface import (
+from ..common import (
     DispatcherInterface,
     ExecutableBuildResults,
-    CxxTestRunner,
     PreprocessorResults,
+    ExecutableRunner,
+    CLIBuilder,
+    TrivialPreprocessor,
+    PreprocessorInterface
 )
 from ..common.file_operations import bfs_walk, is_cxx_source_file, run_cmd
 
 
-class CxxSourceDispatcher(CxxTestRunner, DispatcherInterface):
-    def __init__(self, project_root: FilePath):
+
+class CxxSourceDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
+
+    def __init__(
+            self, *,
+            assignment_name: str,
+            assignment_authors: List[str],
+            assignment_description: str,
+            assignment_due_date: datetime,
+            project_root: Path = LograderBasicConfig.DEFAULT_SUBMISSION_PATH,
+            preprocessor: PreprocessorInterface = TrivialPreprocessor()
+    ):
         super().__init__()
+        self._metadata = AssignmentMetadata(
+            assignment_name=assignment_name,
+            assignment_authors=assignment_authors,
+            assignment_description=assignment_description,
+            assignment_due_date=assignment_due_date,
+        )
+
         self._project_root: Path = Path(project_root)
-        self._build_path: Path = self._project_root / "build"
+        self._build_directory: Path = self._project_root / "build"
+        if not self._build_directory.exists():
+            self._build_directory = self._project_root
+
         self._executable_path: Optional[Path] = None
+        self._preprocessor = preprocessor
 
-        if not self._build_path.exists():
-            self._build_path = self._project_root
-
-        self._source_files: List[Path] = []
+    def build(self) -> BuildResults:
+        source_files: List[Path] = []
         for file in bfs_walk(self._project_root):
             if is_cxx_source_file(file):
-                self._source_files.append(file)
+                source_files.append(file)
 
-    def get_executable_path(self) -> Path:
-        if self._executable_path is None:
-            executable_name = (
-                self.get_build_path() / (random_name() + ".exe")
-                if sys.platform.startswith("win")
-                else self.get_build_path() / random_name()
-            )
-            if executable_name.exists():
-                self.set_build_code(1)
-                return Path("/")
-                # raise CxxSourceBuildError(self._source_files)
-            self._executable_path = executable_name
-        return self._executable_path
+        cmd: List[str | Path] = ["g++",
+                                 *LograderBasicConfig.DEFAULT_CXX_COMPILATION_FLAGS,
+                                 f"-std={LograderBasicConfig.DEFAULT_CXX_STANDARD}",
+                                 "-o", self.get_executable_path(),
+                                 *source_files]
+        output = self.run_cmd(cmd)
+        if self.is_build_error():
+            return self.get_build_error_output()
 
-    def get_build_path(self) -> Path:
-        return self._build_path
+        return ExecutableBuildResults(
+            executable=self.get_executable_path(),
+            output=output
+        )
+
+    def get_build_directory(self) -> Path:
+        return self._build_directory
 
     def get_project_root(self) -> Path:
         return self._project_root
 
-    def preprocess(self) -> PreprocessorResults:
-        return PreprocessorResults(
-            PreprocessorOutput(commands=[], stdout=[], stderr=[])
-        )
-
-    def build(self) -> ExecutableBuildResults:
-
-        commands: List[List[str | Path]] = []
-        stdout: List[str] = []
-        stderr: List[str] = []
-
-        cmd: List[str | Path] = [
-            "g++",
-            *LograderBasicConfig.DEFAULT_CXX_COMPILATION_FLAGS,
-            f"-std={LograderBasicConfig.DEFAULT_CXX_STANDARD}",
-            "-o",
-            self.get_executable_path(),
-            *self._source_files,
-        ]
-        result = run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
-        if result.returncode != 0:
-            self.set_build_code(1)
-            return ExecutableBuildResults(
-                executable="Build failed...",
-                output=BuilderOutput(
-                    commands=commands, stdout=stdout, stderr=stderr, project_type="cmake"
-                ),
+    def get_executable_path(self) -> Path:
+        if self._executable_path is not None:
+            return self._executable_path
+        while True:
+            executable_name = (
+                self.get_build_directory() / (random_name() + ".exe")
+                if sys.platform.startswith("win")
+                else self.get_build_directory() / random_name()
             )
+            if not executable_name.exists():
+                self._executable_path = executable_name
+                return self._executable_path
 
-        return ExecutableBuildResults(
-            executable=self.get_executable_path(),
-            output=BuilderOutput(
-                commands=commands, stdout=stdout, stderr=stderr, project_type="cxx-source"
-            ),
-        )
+    def metadata(self) -> AssignmentMetadata:
+        return self._metadata
+
+    def preprocess(self) -> PreprocessorResults:
+        return self._preprocessor.preprocess()
+
+    def run_tests(self) -> RuntimeResults:
+        return super(ExecutableRunner, self).run()
+
+    def get_executable(self) -> List[str | Path]:
+        return[self.get_executable_path()]
