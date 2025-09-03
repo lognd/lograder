@@ -5,7 +5,7 @@ from ..interface import RunnerInterface, RuntimePrepResults
 from ....tests.test.interface import ExecutableTestInterface
 from ....tests.registry import TestRegistry
 
-class ExecutableRunner(RunnerInterface):
+class ExecutableRunner(RunnerInterface, ABC):
     @abstractmethod
     def get_executable(self) -> List[str | Path]:
         pass

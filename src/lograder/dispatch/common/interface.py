@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Sequence
+from typing import List, Sequence, Optional
 import json
 
 from tests.test import ExecutableTestInterface
@@ -156,6 +156,14 @@ class RunnerInterface(ProcessInterface, ABC):
     def __init__(self):
         super().__init__()
         ProcessInterface.register_runner(self)
+        self._wrap_args: bool = False
+        self._cwd: Optional[Path] = None
+
+    def set_cwd(self, cwd: Path):
+        self._cwd = cwd
+
+    def set_wrap_args(self, wrap_args: bool = True):
+        self._wrap_args = wrap_args
 
     def run(self) -> RuntimeResults:
         results: RuntimePrepResults = self.prep_tests()
@@ -167,7 +175,7 @@ class RunnerInterface(ProcessInterface, ABC):
                     LograderMessageConfig.DEFAULT_BUILD_ERROR_OVERRIDE_MESSAGE,
                 )
             else:
-                test_case.run()
+                test_case.run(wrap_args=self._wrap_args, working_directory=self._cwd)
         return RuntimeResults(results)
 
     @abstractmethod

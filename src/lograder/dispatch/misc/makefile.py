@@ -1,29 +1,75 @@
 from pathlib import Path
 from typing import List, Optional
 
+from datetime import datetime
+
+from ..common.interface import BuildResults
 from ...common.types import FilePath
 from ...tests.registry import TestRegistry
-from ..common.assignment import BuilderOutput, PreprocessorOutput
-from ..common.interface import (
+from ..common.assignment import BuilderOutput, PreprocessorOutput, AssignmentMetadata
+from ...static import LograderBasicConfig
+from ..common import (
     DispatcherInterface,
     ExecutableBuildResults,
     PreprocessorResults,
     RuntimeResults,
+    CLIBuilder,
+    ExecutableRunner,
+    PreprocessorInterface,
+    TrivialPreprocessor
 )
 from ..common.exceptions import MakefileNotFoundError
 from ..common.file_operations import (
     bfs_walk,
     is_makefile_file,
     is_makefile_target,
-    run_cmd,
+    run_cmd
 )
 
 
-class MakefileDispatcher(DispatcherInterface):
-    def __init__(self, project_root: FilePath):
+class MakefileDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
+    def get_executable(self) -> List[str | Path]:
+        return ["make", "-s", "run"]
+
+    def build(self) -> BuildResults:
+        cmd: List[str | Path] = ["make", "-s"]
+        output = self.run_cmd(cmd, working_directory=self.get_working_directory())
+        if self.is_build_error():
+            return self.get_build_error_output()
+
+        return ExecutableBuildResults(
+            executable=self.get_makefile(),
+            output=output
+        )
+
+    def metadata(self) -> AssignmentMetadata:
+        return self._metadata
+
+    def preprocess(self) -> PreprocessorResults:
+        return self._preprocessor.preprocess()
+
+    def run_tests(self) -> RuntimeResults:
+        return super(ExecutableRunner, self).run()
+
+    def __init__(
+            self, *,
+            assignment_name: str,
+            assignment_authors: List[str],
+            assignment_description: str,
+            assignment_due_date: datetime,
+            project_root: Path = LograderBasicConfig.DEFAULT_SUBMISSION_PATH,
+            preprocessor: PreprocessorInterface = TrivialPreprocessor()
+    ):
+        super().__init__()
+
+        self._metadata = AssignmentMetadata(
+            assignment_name=assignment_name,
+            assignment_authors=assignment_authors,
+            assignment_description=assignment_description,
+            assignment_due_date=assignment_due_date,
+        )
+
         self._project_root: Path = Path(project_root)
-        self._built: bool = False
-        self._build_code: int = 0
 
         self._makefile: Optional[Path] = None
         for file in bfs_walk(self._project_root):
@@ -33,6 +79,11 @@ class MakefileDispatcher(DispatcherInterface):
         if self._makefile is None:
             raise MakefileNotFoundError
         self._working_directory: Path = self._makefile.parent
+
+        self._preprocessor = preprocessor
+
+        self.set_wrap_args()
+        self.set_cwd(Path(self.get_working_directory()))
 
     def get_makefile(self):
         if self._makefile is None:
@@ -44,57 +95,3 @@ class MakefileDispatcher(DispatcherInterface):
 
     def get_working_directory(self) -> Path:
         return self._working_directory
-
-    def preprocess(self) -> PreprocessorResults:
-        return PreprocessorResults(
-            PreprocessorOutput(commands=[], stdout=[], stderr=[])
-        )
-
-    def build(self) -> ExecutableBuildResults:
-        commands: List[List[str | Path]] = []
-        stdout: List[str] = []
-        stderr: List[str] = []
-
-        cmd: List[str | Path] = ["make", "-s"]
-        result = run_cmd(
-            cmd,
-            commands=commands,
-            stdout=stdout,
-            stderr=stderr,
-            working_directory=self.get_working_directory(),
-        )
-        if result.returncode != 0:
-            self._build_code = 1
-            return ExecutableBuildResults(
-                executable="Build failed...",
-                output=BuilderOutput(
-                    commands=commands, stdout=stdout, stderr=stderr, project_type="cmake"
-                ),
-            )
-
-        return ExecutableBuildResults(
-            executable=self.get_makefile(),
-            output=BuilderOutput(
-                commands=commands, stdout=stdout, stderr=stderr, project_type="makefile"
-            ),
-        )
-
-    def run_tests(self) -> RuntimeResults:
-        if not self._built:
-            self.build()
-        self._built = True
-
-        finished_tests = []
-        if not is_makefile_target(self.get_makefile(), target="run"):
-            self._build_code = 1
-            # raise MakefileRunNotFoundError(self.get_makefile())
-        for test in TestRegistry.iterate():
-            test.set_target(["make", "-s", "run"])
-            if self._build_code != 0:
-                test.set_invalid()
-            else:
-                test.run(
-                    wrap_args=True, working_directory=Path(self.get_working_directory())
-                )
-            finished_tests.append(test)
-        return RuntimeResults(results=finished_tests)

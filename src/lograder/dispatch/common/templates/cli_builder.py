@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 from ....static import LograderMessageConfig
 from ..file_operations import run_cmd
@@ -37,8 +37,8 @@ class CLIBuilder(BuilderInterface, ABC):
             )
         )
 
-    def run_cmd(self, cmd: List[str | Path]) -> BuilderOutput:
-        result = run_cmd(cmd, commands=self._commands, stdout=self._stdout, stderr=self._stderr)
+    def run_cmd(self, cmd: List[str | Path], working_directory: Optional[Path] = None) -> BuilderOutput:
+        result = run_cmd(cmd, commands=self._commands, stdout=self._stdout, stderr=self._stderr, working_directory=working_directory)
         if result.returncode != 0:
             self.set_build_error(True)
         return BuilderOutput(

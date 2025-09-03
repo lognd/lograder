@@ -138,7 +138,7 @@ class CMakeDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
             return self.get_build_error_output()
 
         return ExecutableBuildResults(
-            executable=str(self._executable_path.resolve()),
+            executable=self._executable_path.resolve(),
             output=output
         )
 

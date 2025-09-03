@@ -14,7 +14,7 @@ class TestInterface(ABC):
     __test__: bool = False
 
     @abstractmethod
-    def run(self) -> None:
+    def run(self, wrap_args: bool = False, working_directory: Optional[Path] = None) -> None:
         pass
 
     @abstractmethod
