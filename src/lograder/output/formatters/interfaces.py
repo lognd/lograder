@@ -1,18 +1,22 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import List, Optional, Sequence
+from typing import TYPE_CHECKING, List, Optional, Sequence
 
 from ...dispatch.common.types import (
     AssignmentMetadata,
     BuilderOutput,
     PreprocessorOutput,
 )
-from ...tests.test import ExecutableTestInterface
 from ...tests.test.analytics import (
     CallgrindSummary,
     ExecutionTimeSummary,
     ValgrindLeakSummary,
     ValgrindWarningSummary,
 )
+
+if TYPE_CHECKING:
+    from ...tests.test.interface import ExecutableTestInterface
 
 
 class MetadataFormatterInterface(ABC):

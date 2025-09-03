@@ -1,5 +1,3 @@
-from .cpp.cmake import CMakeDispatcher
-from .cpp.cpp_source import CxxSourceDispatcher
 from .common.assignment import AssignmentSummary, BuilderOutput, PreprocessorOutput
 from .common.interface import (
     BuilderInterface,
@@ -11,7 +9,14 @@ from .common.interface import (
     RuntimePrepResults,
     RuntimeResults,
 )
-from .common.templates import CLIBuilder, ExecutableRunner, TrivialBuilder, TrivialPreprocessor
+from .common.templates import (
+    CLIBuilder,
+    ExecutableRunner,
+    TrivialBuilder,
+    TrivialPreprocessor,
+)
+from .cpp.cmake import CMakeDispatcher
+from .cpp.cpp_source import CxxSourceDispatcher
 from .misc.dispatcher import ProjectDispatcher
 from .misc.makefile import MakefileDispatcher
 

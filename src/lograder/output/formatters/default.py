@@ -17,11 +17,11 @@ from ...tests.test.analytics import (
     ValgrindLeakSummary,
     ValgrindWarningSummary,
 )
+from ...tests.test.interface import ExecutableTestInterface
 from .format_templates import ContextRenderer, ProcessStep, RendererInterface
 from .interfaces import (
     BuildOutputFormatterInterface,
     ExecutableTestFormatterInterface,
-    ExecutableTestInterface,
     ExecutionTimeSummaryFormatterInterface,
     MetadataFormatterInterface,
     PreprocessorOutputFormatterInterface,
