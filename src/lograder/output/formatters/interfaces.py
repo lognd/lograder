@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from ...builder.common.types import (
+from ...dispatch.common.types import (
     AssignmentMetadata,
     BuilderOutput,
     PreprocessorOutput,

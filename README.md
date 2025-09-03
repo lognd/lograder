@@ -21,8 +21,9 @@ To build from source, you will need to import the C++
 `CxxSourceBuilder`. The executable will be randomly
 named and put in either a build directory, if the student
 has one (`./build`) or the project root directory (`./`).
+
 ```py
-from lograder.builder import CxxSourceBuilder
+from lograder.dispatch import CxxSourceBuilder
 from lograder.output import AssignmentSummary
 
 # Note that when you make a test, it's automatically
@@ -34,10 +35,10 @@ build_results = assignment.build()
 runtime_results = assignment.run_tests()
 
 summary = AssignmentSummary(
-    preprocessor_output = preprocessor_results.get_output(),
-    build_output = build_results.get_output(),
-    runtime_summary = runtime_results.get_summary(),
-    test_cases = runtime_results.get_test_cases()
+    preprocessor_output=preprocessor_results.get_output(),
+    build_output=build_results.get_output(),
+    runtime_summary=runtime_results.get_summary(),
+    test_cases=runtime_results.get_test_cases()
 )
 ```
 
@@ -56,7 +57,7 @@ that doesn't match: `all`, `install`, `test`, `package`, `package_source`,
 finds. If it can't find a valid target, it will raise an error.
 
 ```py
-from lograder.builder import CMakeBuilder
+from lograder.dispatch import CMakeBuilder
 from lograder.output import AssignmentSummary
 
 # Note that when you make a test, it's automatically
@@ -68,10 +69,10 @@ build_results = assignment.build()
 runtime_results = assignment.run_tests()
 
 summary = AssignmentSummary(
-    preprocessor_output = preprocessor_results.get_output(),
-    build_output = build_results.get_output(),
-    runtime_summary = runtime_results.get_summary(),
-    test_cases = runtime_results.get_test_cases()
+    preprocessor_output=preprocessor_results.get_output(),
+    build_output=build_results.get_output(),
+    runtime_summary=runtime_results.get_summary(),
+    test_cases=runtime_results.get_test_cases()
 )
 ```
 ----
@@ -100,7 +101,7 @@ the same general idea as the `CMakeBuilder` except that it searches for
 will just run the default `make`.
 
 ```py
-from lograder.builder import MakefileBuilder
+from lograder.dispatch import MakefileBuilder
 from lograder.output import AssignmentSummary
 
 # Note that when you make a test, it's automatically
@@ -112,10 +113,10 @@ build_results = assignment.build()
 runtime_results = assignment.run_tests()
 
 summary = AssignmentSummary(
-    preprocessor_output = preprocessor_results.get_output(),
-    build_output = build_results.get_output(),
-    runtime_summary = runtime_results.get_summary(),
-    test_cases = runtime_results.get_test_cases()
+    preprocessor_output=preprocessor_results.get_output(),
+    build_output=build_results.get_output(),
+    runtime_summary=runtime_results.get_summary(),
+    test_cases=runtime_results.get_test_cases()
 )
 ```
 

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from lograder.builder import AssignmentSummary, ProjectBuilder
+from lograder.dispatch import AssignmentSummary, ProjectBuilder
 from lograder.output.formatters.default import (
     AssignmentMetadata,
     DefaultTestCaseFormatter,

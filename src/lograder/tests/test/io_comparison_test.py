@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence
 
-from ...builder.common.file_operations import do_process
+from ...dispatch.common.file_operations import do_process
 from ...constants import Constants
 from ..common.exceptions import TestNotRunError, TestTargetNotSpecifiedError
 from .analytics import (

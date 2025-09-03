@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Sequence
+import json
 
+from .types import AssignmentMetadata
+from .. import AssignmentSummary
 from ...common.types import FilePath
 from ...tests.registry import TestRegistry
 from ...tests.test import TestInterface
 from ..common.assignment import BuilderOutput, PreprocessorOutput
-
+from colorama import Fore
 
 class PreprocessorResults:
     def __init__(self, output: PreprocessorOutput):
@@ -37,43 +40,34 @@ class RuntimeResults:
         return list(self._results)
 
 
-class CxxTestRunner(ABC):
-    def __init__(self):
-        self._built: bool = False
-        self._build_code: int = 0
-
-    def set_build_code(self, code: int):
-        self._build_code = code
-
-    @abstractmethod
-    def get_executable_path(self) -> Path:
-        pass
-
-    @abstractmethod
-    def build(self) -> BuilderResults:
-        pass
-
-    def run_tests(self) -> RuntimeResults:
-        if not self._built:
-            self.build()
-
-        self._built = True
-        finished_tests = []
-        for test in TestRegistry.iterate():
-            test.set_target([self.get_executable_path()])
-            if self._build_code != 0:
-                test.set_invalid()
-            else:
-                test.run()
-            finished_tests.append(test)
-        return RuntimeResults(
-            results=finished_tests,
-        )
-
-
 class BuilderInterface(ABC):
+    def __init__(self):
+        self._build_fail: bool = False
+
+    def get_build_fail(self) -> bool:
+        return self._build_fail
+
+    def set_build_fail(self, fail: bool):
+        self._build_fail = fail
+
+    def run(self, out_path: Path = Path('/autograder/results/results.json')) -> AssignmentSummary:
+        metadata = self.metadata()
+        prep = self.preprocess()
+        build = self.build()
+        runtime_results = self.run_tests()
+
+        summary = AssignmentSummary(
+            metadata=metadata,
+            preprocessor_output=prep.get_output(),
+            build_output=build.get_output(),
+            test_cases=runtime_results.get_test_cases(),
+        )
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(summary.model_dump()))
+        return summary
+
     @abstractmethod
-    def __init__(self, project_root: FilePath):
+    def metadata(self) -> AssignmentMetadata:
         pass
 
     @abstractmethod

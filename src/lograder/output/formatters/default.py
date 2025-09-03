@@ -5,7 +5,7 @@ from typing import Optional, Sequence, Union
 
 from colorama import Fore
 
-from ...builder.common.types import (
+from ...dispatch.common.types import (
     AssignmentMetadata,
     BuilderOutput,
     PreprocessorOutput,
