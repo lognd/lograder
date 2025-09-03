@@ -27,7 +27,7 @@ from .interfaces import (
     RuntimeSummaryFormatterInterface,
     TestCaseFormatterInterface,
     ValgrindLeakSummaryFormatterInterface,
-    ValgrindWarningSummaryFormatterInterface,
+    ValgrindWarningSummaryFormatterInterface, ExecutableTestFormatterInterface,
 )
 
 
@@ -323,7 +323,7 @@ class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
         )
 
 
-class DefaultTestCaseFormatter(TestCaseFormatterInterface):
+class DefaultExecutableTestCaseFormatter(ExecutableTestFormatterInterface):
     def format(self, test_case: TestInterface) -> str:
         if not test_case.get_successful():
             title_text = f"{Fore.RED}Test `{test_case.get_name()}` failed!{Fore.RESET}"

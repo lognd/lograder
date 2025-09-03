@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional
@@ -10,25 +11,17 @@ from .analytics import (
 )
 
 
-class TestInterface(ABC):
-    __test__: bool = False
-
+class ExecutableTestInterface(TestInterface, ABC):
     @abstractmethod
     def set_target(self, target: List[str | Path]):
         pass
 
     @abstractmethod
-    def set_invalid(self):
+    def get_expected_output(self) -> str:
         pass
 
     @abstractmethod
-    def run(
-        self, wrap_args: bool = False, working_directory: Optional[Path] = None
-    ) -> None:
-        pass
-
-    @abstractmethod
-    def get_name(self) -> str:
+    def get_error(self) -> str:
         pass
 
     @abstractmethod
@@ -39,16 +32,19 @@ class TestInterface(ABC):
     def get_actual_output(self) -> Optional[str]:
         pass
 
+class TestInterface(ABC):
+    __test__: bool = False
+
+    @abstractmethod
+    def run(self) -> None:
+        pass
+
+    @abstractmethod
+    def get_name(self) -> str:
+        pass
+
     @abstractmethod
     def get_successful(self) -> bool:
-        pass
-
-    @abstractmethod
-    def get_expected_output(self) -> str:
-        pass
-
-    @abstractmethod
-    def get_error(self) -> str:
         pass
 
     @abstractmethod
