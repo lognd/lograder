@@ -1,6 +1,15 @@
+from .assignment import AssignmentSummary, BuilderOutput, PreprocessorOutput
+from .interface import (
+    BuilderInterface,
+    DispatcherInterface,
+    ExecutableBuildResults,
+    PreprocessorInterface,
+    PreprocessorResults,
+    RunnerInterface,
+    RuntimePrepResults,
+    RuntimeResults,
+)
 from .templates import CLIBuilder, ExecutableRunner, TrivialBuilder, TrivialPreprocessor
-from .interface import BuilderInterface, PreprocessorInterface, RunnerInterface, DispatcherInterface, RuntimePrepResults, RuntimeResults, PreprocessorResults, ExecutableBuildResults
-from .assignment import AssignmentSummary, PreprocessorOutput, BuilderOutput
 
 __all__ = [
     "TrivialBuilder",

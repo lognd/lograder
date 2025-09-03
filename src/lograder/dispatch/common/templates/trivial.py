@@ -1,6 +1,11 @@
-from ...common.types import ProjectType, PreprocessorOutput
-from ..interface import ExecutableBuildResults, BuildResults, PreprocessorInterface, BuilderInterface, BuilderOutput, \
-    PreprocessorResults
+from ...common.types import PreprocessorOutput, ProjectType
+from ..interface import (
+    BuilderInterface,
+    BuilderOutput,
+    BuildResults,
+    PreprocessorInterface,
+    PreprocessorResults,
+)
 
 
 class TrivialPreprocessor(PreprocessorInterface):
@@ -9,12 +14,9 @@ class TrivialPreprocessor(PreprocessorInterface):
 
     def preprocess(self) -> PreprocessorResults:
         return PreprocessorResults(
-            output=PreprocessorOutput(
-                commands = [],
-                stdout = [],
-                stderr = []
-            )
+            output=PreprocessorOutput(commands=[], stdout=[], stderr=[])
         )
+
 
 class TrivialBuilder(BuilderInterface):
     def __init__(self, project_type: ProjectType):
@@ -24,9 +26,9 @@ class TrivialBuilder(BuilderInterface):
     def build(self) -> BuildResults:
         return BuildResults(
             output=BuilderOutput(
-                commands = [],
-                stdout = [],
-                stderr = [],
-                project_type = self._project_type,
+                commands=[],
+                stdout=[],
+                stderr=[],
+                project_type=self._project_type,
             )
         )

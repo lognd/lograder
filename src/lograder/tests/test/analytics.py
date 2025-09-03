@@ -8,7 +8,7 @@ from typing import Any, List, Optional
 from pydantic import BaseModel, Field
 
 from ...common.utils import random_name
-from static.basicconfig import LograderBasicConfig
+from ...static import LograderBasicConfig
 
 
 class LossEntry(BaseModel):

@@ -1,38 +1,44 @@
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
-from datetime import datetime
 
-from .. import BuilderOutput
-from ..common.types import AssignmentMetadata
-from ...static import LograderBasicConfig, LograderMessageConfig
-from ...common.types import FilePath
 from ...common.utils import random_name
-from ..common import ExecutableRunner, CLIBuilder, DispatcherInterface, PreprocessorResults, PreprocessorOutput, \
-    RuntimeResults, ExecutableBuildResults, PreprocessorInterface, TrivialPreprocessor
+from ...static import LograderBasicConfig
+from ..common import (
+    CLIBuilder,
+    DispatcherInterface,
+    ExecutableBuildResults,
+    ExecutableRunner,
+    PreprocessorInterface,
+    PreprocessorResults,
+    RuntimeResults,
+    TrivialPreprocessor,
+)
 from ..common.exceptions import (
     CMakeListsNotFoundError,
 )
-from ..common.exceptions import CMakeTargetNotFoundError
-from ..common.file_operations import bfs_walk, is_cmake_file, is_valid_target, run_cmd
+from ..common.file_operations import bfs_walk, is_cmake_file, is_valid_target
+from ..common.types import AssignmentMetadata
 
 
-class CMakeDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
+class CMakeDispatcher(CLIBuilder, ExecutableRunner, DispatcherInterface):
 
     # For finding student project target in `cmake --build <...> --target help`
     TARGET_PATTERN = re.compile(r"^\.\.\.\s+([a-zA-Z0-9_\-.]+)", re.MULTILINE)
 
     def __init__(
-            self, *,
-            assignment_name: str,
-            assignment_authors: List[str],
-            assignment_description: str,
-            assignment_due_date: datetime,
-            project_root: Path = LograderBasicConfig.DEFAULT_SUBMISSION_PATH,
-            preprocessor: PreprocessorInterface = TrivialPreprocessor()
+        self,
+        *,
+        assignment_name: str,
+        assignment_authors: List[str],
+        assignment_description: str,
+        assignment_due_date: datetime,
+        project_root: Path = LograderBasicConfig.DEFAULT_SUBMISSION_PATH,
+        preprocessor: PreprocessorInterface = TrivialPreprocessor(),
     ):
-        super().__init__()
+        super().__init__(build_type="cmake")
         self._metadata = AssignmentMetadata(
             assignment_name=assignment_name,
             assignment_authors=assignment_authors,
@@ -57,7 +63,6 @@ class CMakeDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
 
         self._preprocessor = preprocessor
         self._target: Optional[str] = None
-        self._executable_path: Optional[Path] = None
 
     def get_project_root(self) -> Path:
         return self._project_root
@@ -69,7 +74,11 @@ class CMakeDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
         return self._working_directory
 
     def get_executable(self) -> List[str | Path]:
-        return [self.find_executable(self._target)]
+        assert self._target is not None  # mypy
+        try:
+            return [self.find_executable(self._target)]
+        except FileNotFoundError:
+            return []
 
     def find_executable(self, target: str) -> Path:
         build_dir = self.get_build_directory()
@@ -91,12 +100,16 @@ class CMakeDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
                 if path.name == target or path.name == f"{target}.exe":
                     return path
 
-        raise CMakeTargetNotFoundError
+        raise FileNotFoundError
 
     def build(self) -> ExecutableBuildResults:
-        cmd: List[str | Path] = ["cmake",
-                                 "-S", self.get_working_directory(),
-                                 "-B", self.get_build_directory()]
+        cmd: List[str | Path] = [
+            "cmake",
+            "-S",
+            self.get_working_directory(),
+            "-B",
+            self.get_build_directory(),
+        ]
         if sys.platform.startswith("win"):
             cmd += ["-G", "MinGW Makefiles"]
 
@@ -104,17 +117,18 @@ class CMakeDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
         if self.is_build_error():
             return self.get_build_error_output()
 
-        cmd = ["cmake",
-               "--build", self.get_build_directory(),
-               "--target", "help"]
+        cmd = ["cmake", "--build", self.get_build_directory(), "--target", "help"]
         output = self.run_cmd(cmd)
         if self.is_build_error():
             return self.get_build_error_output()
 
         targets = self.TARGET_PATTERN.findall(output.stdout[-1])
-        if "main" in targets: self._target = "main"
-        elif "build" in targets: self._target = "build"
-        elif "demo" in targets: self._target = "demo"
+        if "main" in targets:
+            self._target = "main"
+        elif "build" in targets:
+            self._target = "build"
+        elif "demo" in targets:
+            self._target = "demo"
         else:
             valid_targets = [target for target in targets if is_valid_target(target)]
             if not valid_targets:
@@ -122,24 +136,30 @@ class CMakeDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
                 return self.get_build_error_output()
             self._target = valid_targets[0]
 
-        cmd = ["cmake",
-               *LograderBasicConfig.DEFAULT_CMAKE_COMPILATION_FLAGS,
-               "--build", self.get_build_directory(),
-               "--target", self._target,
-               "--", "-s", "--no-print-directory"]
+        cmd = [
+            "cmake",
+            *LograderBasicConfig.DEFAULT_CMAKE_COMPILATION_FLAGS,
+            "--build",
+            self.get_build_directory(),
+            "--target",
+            self._target,
+            "--",
+            "-s",
+            "--no-print-directory",
+        ]
         output = self.run_cmd(cmd)
         if self.is_build_error():
             return self.get_build_error_output()
 
         try:
-            self._executable_path: Path = self.find_executable(self._target)
-        except CMakeTargetNotFoundError:
+            self._executable_path = self.find_executable(self._target)
+        except FileNotFoundError:
             self.set_build_error(True)
             return self.get_build_error_output()
 
+        assert self._executable_path is not None  # mypy
         return ExecutableBuildResults(
-            executable=self._executable_path.resolve(),
-            output=output
+            executable=self._executable_path.resolve(), output=output
         )
 
     def metadata(self) -> AssignmentMetadata:
@@ -149,4 +169,4 @@ class CMakeDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
         return self._preprocessor.preprocess()
 
     def run_tests(self) -> RuntimeResults:
-        return super(ExecutableRunner, self).run()
+        return self.run_tests_auto()

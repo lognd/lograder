@@ -3,9 +3,8 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional, Sequence
 
-from . import ExecutableTestInterface
 from ...dispatch.common.file_operations import do_process
-from static.basicconfig import LograderBasicConfig
+from ...static import LograderBasicConfig
 from ..common.exceptions import TestNotRunError, TestTargetNotSpecifiedError
 from .analytics import (
     CallgrindSummary,
@@ -16,6 +15,7 @@ from .analytics import (
     usr_time,
     valgrind,
 )
+from .interface import ExecutableTestInterface
 
 
 class ExecutableOutputComparisonTest(ExecutableTestInterface):
@@ -53,7 +53,7 @@ class ExecutableOutputComparisonTest(ExecutableTestInterface):
     def set_flags(self, flags: List[str | Path]):
         self._saved_flags = flags
 
-    def override_output(self, stderr: str, stdout: str = None):
+    def override_output(self, stdout: str, stderr: str):
         self._error = stderr
         self._actual_output = stdout
 
@@ -98,6 +98,7 @@ class ExecutableOutputComparisonTest(ExecutableTestInterface):
 
     def get_error(self) -> str:
         self._assert_executed()
+        assert self._error is not None  # mypy
         return self._error
 
     def get_warnings(self) -> Optional[ValgrindWarningSummary]:
@@ -150,6 +151,7 @@ class ExecutableOutputComparisonTest(ExecutableTestInterface):
         if self._force_success is not None:
             return self._force_success
         actual_output = self.get_actual_output()
+        assert actual_output is not None  # mypy
         return actual_output.strip() == self.get_expected_output().strip()
 
     def get_input(self) -> str:

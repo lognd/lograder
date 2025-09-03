@@ -1,20 +1,17 @@
 from __future__ import annotations
 
+import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Sequence, Optional
-import json
+from typing import List, Optional, Sequence
 
-from tests.test import ExecutableTestInterface
-from .types import AssignmentMetadata
-from .. import AssignmentSummary
-from ...static import LograderBasicConfig
 from ...common.types import FilePath
-from ...tests.registry import TestRegistry
-from ...tests.test import TestInterface
+from ...static import LograderBasicConfig, LograderMessageConfig
 from ...tests.common.exceptions import TestNotRunError
-from ...static import LograderMessageConfig
-from ..common.assignment import BuilderOutput, PreprocessorOutput
+from ...tests.test import ExecutableTestInterface
+from ..common.assignment import AssignmentSummary, BuilderOutput, PreprocessorOutput
+from .types import AssignmentMetadata
+
 
 class PreprocessorResults:
     def __init__(self, output: PreprocessorOutput):
@@ -23,6 +20,7 @@ class PreprocessorResults:
 
     def get_output(self) -> PreprocessorOutput:
         return self._output
+
 
 class BuildResults:
     def __init__(self, output: BuilderOutput):
@@ -42,14 +40,19 @@ class ExecutableBuildResults(BuildResults):
 
 
 class RuntimePrepResults:  # dummy class to allow distinguishing between pre- and post-run.
-    def __init__(self, results: RuntimePrepResults | RuntimeResults | Sequence[ExecutableTestInterface]):
+    def __init__(
+        self,
+        results: (
+            RuntimePrepResults | RuntimeResults | Sequence[ExecutableTestInterface]
+        ),
+    ):
         if isinstance(results, RuntimePrepResults):
             self._results = results.get_test_cases()
         else:
-            self._results = results
+            self._results = list(results)
 
     def get_test_cases(self) -> List[ExecutableTestInterface]:
-        return list(self._results)
+        return self._results
 
 
 class RuntimeResults(RuntimePrepResults):
@@ -97,10 +100,13 @@ class ProcessInterface(ABC):
         return score
 
     def __eq__(self, other):
-        return id(self) == id(other)  # default "is" comparison, but it's here in case it changes.
+        return id(self) == id(
+            other
+        )  # default "is" comparison, but it's here in case it changes.
 
     def __hash__(self):
         return hash(id(self))
+
 
 class PreprocessorInterface(ProcessInterface, ABC):
     def __init__(self):
@@ -114,7 +120,7 @@ class PreprocessorInterface(ProcessInterface, ABC):
     def get_validation_penalty(self) -> float:
         return self._validation_penalty
 
-    def get_validation_multiplier(self) -> float:
+    def get_individual_validation_multiplier(self) -> float:
         return 1.0 - min(max(self.get_validation_penalty(), 0.0), 1.0)
 
     def check(self):
@@ -147,10 +153,12 @@ class BuilderInterface(ProcessInterface, ABC):
     def build(self) -> BuildResults:
         pass
 
+
 class ExecutableBuilderInterface(BuilderInterface, ABC):
     @abstractmethod
     def build(self) -> ExecutableBuildResults:
         pass
+
 
 class RunnerInterface(ProcessInterface, ABC):
     def __init__(self):
@@ -165,7 +173,7 @@ class RunnerInterface(ProcessInterface, ABC):
     def set_wrap_args(self, wrap_args: bool = True):
         self._wrap_args = wrap_args
 
-    def run(self) -> RuntimeResults:
+    def run_tests_auto(self) -> RuntimeResults:
         results: RuntimePrepResults = self.prep_tests()
         for test_case in results.get_test_cases():
             if not self.is_build_successful():
@@ -182,8 +190,11 @@ class RunnerInterface(ProcessInterface, ABC):
     def prep_tests(self) -> RuntimePrepResults:
         pass
 
+
 class DispatcherInterface(ABC):
-    def run(self, out_path: Path = LograderBasicConfig.DEFAULT_RESULT_PATH) -> AssignmentSummary:
+    def run(
+        self, out_path: Path = LograderBasicConfig.DEFAULT_RESULT_PATH
+    ) -> AssignmentSummary:
         metadata = self.metadata()
         prep = self.preprocess()
         build = self.build()

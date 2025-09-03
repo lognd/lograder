@@ -4,21 +4,21 @@ from pydantic import BaseModel, Field
 
 from ...output.formatters.default import (
     DefaultBuildOutputFormatter,
+    DefaultExecutableTestCaseFormatter,
     DefaultMetadataFormatter,
     DefaultPreprocessorOutputFormatter,
     DefaultRuntimeSummaryFormatter,
-    DefaultTestCaseFormatter,
 )
 from ...output.formatters.interfaces import (
     BuildOutputFormatterInterface,
+    ExecutableTestFormatterInterface,
     MetadataFormatterInterface,
     PreprocessorOutputFormatterInterface,
     RuntimeSummaryFormatterInterface,
-    TestCaseFormatterInterface,
 )
 from ...output.raw_json.assignment import AssignmentJSON
 from ...output.raw_json.test_case import TestCaseJSON
-from ...tests.test import TestInterface
+from ...tests.test import ExecutableTestInterface
 from .types import AssignmentMetadata, BuilderOutput, PreprocessorOutput
 
 
@@ -28,7 +28,7 @@ class AssignmentSummary(BaseModel):
     metadata: AssignmentMetadata
     preprocessor_output: PreprocessorOutput
     build_output: BuilderOutput
-    test_cases: List[TestInterface]
+    test_cases: List[ExecutableTestInterface]
 
     metadata_fmt: MetadataFormatterInterface = Field(
         default_factory=DefaultMetadataFormatter, exclude=True
@@ -42,8 +42,8 @@ class AssignmentSummary(BaseModel):
     runtime_summary_fmt: RuntimeSummaryFormatterInterface = Field(
         default_factory=DefaultRuntimeSummaryFormatter, exclude=True
     )
-    test_case_fmt: TestCaseFormatterInterface = Field(
-        default_factory=DefaultTestCaseFormatter, exclude=True
+    test_case_fmt: ExecutableTestFormatterInterface = Field(
+        default_factory=DefaultExecutableTestCaseFormatter, exclude=True
     )
 
     @classmethod
@@ -54,7 +54,7 @@ class AssignmentSummary(BaseModel):
         preprocessor_output: Optional[PreprocessorOutputFormatterInterface] = None,
         build_output: Optional[BuildOutputFormatterInterface] = None,
         runtime_summary: Optional[RuntimeSummaryFormatterInterface] = None,
-        test_case: Optional[TestCaseFormatterInterface] = None,
+        test_case: Optional[ExecutableTestFormatterInterface] = None,
     ):
         if metadata is not None:
             cls.metadata_fmt = metadata

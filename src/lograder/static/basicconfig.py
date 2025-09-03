@@ -1,9 +1,10 @@
 from pathlib import Path
 from typing import List
 
+
 class LograderBasicConfig:
     DEFAULT_SUBMISSION_PATH: Path = Path("/autograder/submission")
-    DEFAULT_RESULT_PATH: Path = Path('/autograder/results/results.json')
+    DEFAULT_RESULT_PATH: Path = Path("/autograder/results/results.json")
     DEFAULT_CXX_STANDARD: str = "c++20"
     DEFAULT_CXX_COMPILATION_FLAGS: List[str] = ["-Wall", "-Wextra", "-Werror"]
     DEFAULT_CMAKE_COMPILATION_FLAGS: List[str] = []
