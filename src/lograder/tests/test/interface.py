@@ -10,6 +10,35 @@ from .analytics import (
     ValgrindWarningSummary,
 )
 
+class TestInterface(ABC):
+    __test__: bool = False
+
+    @abstractmethod
+    def run(self) -> None:
+        pass
+
+    @abstractmethod
+    def get_name(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_successful(self) -> bool:
+        pass
+
+    @abstractmethod
+    def get_weight(self) -> float:
+        pass
+
+    @abstractmethod
+    def force_successful(self) -> None:
+        pass
+
+    @abstractmethod
+    def force_unsuccessful(self) -> None:
+        pass
+
+    def get_penalty(self) -> float:
+        return 1.0
 
 class ExecutableTestInterface(TestInterface, ABC):
     @abstractmethod
@@ -32,27 +61,9 @@ class ExecutableTestInterface(TestInterface, ABC):
     def get_actual_output(self) -> Optional[str]:
         pass
 
-class TestInterface(ABC):
-    __test__: bool = False
-
     @abstractmethod
-    def run(self) -> None:
+    def override_output(self, stdout: str, stderr: str):
         pass
-
-    @abstractmethod
-    def get_name(self) -> str:
-        pass
-
-    @abstractmethod
-    def get_successful(self) -> bool:
-        pass
-
-    @abstractmethod
-    def get_weight(self) -> float:
-        pass
-
-    def get_penalty(self) -> float:
-        return 1.0
 
     def get_warnings(self) -> Optional[ValgrindWarningSummary]:
         return None

@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence
 
+from . import ExecutableTestInterface
 from ...dispatch.common.file_operations import do_process
 from ...constants import Constants
 from ..common.exceptions import TestNotRunError, TestTargetNotSpecifiedError
@@ -18,7 +19,7 @@ from .analytics import (
 from .interface import TestInterface
 
 
-class ComparisonTest(TestInterface):
+class ComparisonTest(ExecutableTestInterface):
     def __init__(
         self,
         name: str,
@@ -45,6 +46,7 @@ class ComparisonTest(TestInterface):
         self._error: Optional[str] = None
 
         self._weight: float = weight
+        self._force_success: Optional[bool] = None  # I <3 ternary "boolean"
 
     def set_target(self, executable: List[str | Path]):
         self._saved_executable = executable
@@ -52,27 +54,26 @@ class ComparisonTest(TestInterface):
     def set_flags(self, flags: List[str | Path]):
         self._saved_flags = flags
 
-    def is_correct(self) -> bool:
-        actual_output = self.get_actual_output()
-        if actual_output is None:
-            return False
-        return actual_output.strip() == self.get_expected_output().strip()
+    def override_output(self, stderr: str, stdout: str = None):
+        self._error = stderr
+        self._actual_output = stdout
 
-    def set_invalid(self):
-        self._error = "Project compilation was unsuccessful..."
-        self._actual_output = None
+    def force_successful(self) -> None:
+        self._force_success = True
+
+    def force_unsuccessful(self) -> None:
+        self._force_success = False
 
     def run(
         self, wrap_args: bool = False, working_directory: Optional[Path] = None
     ) -> None:
+        if self._force_success is not None:
+            return  # no need to run test if its been overridden.
+
         cmd = self.get_cmd(wrap_args=wrap_args)
         if cmd is None:
             raise TestTargetNotSpecifiedError(self.get_name())
-        self.is_correct_cmd(cmd, working_directory=working_directory)
 
-    def is_correct_cmd(
-        self, cmd: List[str | Path], working_directory: Optional[Path] = None
-    ) -> bool:
         self.set_target([cmd[0]])
         self.set_flags(cmd[1:])
         result = do_process(
@@ -86,20 +87,14 @@ class ComparisonTest(TestInterface):
         )
         self._actual_output = result.stdout
         self._error = result.stderr
-        return self.is_correct()
+
+    def _assert_executed(self):
+        if self._error is None or self._actual_output is None:
+            raise TestNotRunError(self.get_name())
 
     def get_error(self) -> str:
-        if self._error is None:
-            raise TestNotRunError(self.get_name())
+        self._assert_executed()
         return self._error
-
-    def is_correct_str(self, actual_output: str) -> bool:
-        self._actual_output = actual_output
-        return self.is_correct()
-
-    def is_correct_func(self, func: Callable[[str], str]):
-        self._actual_output = func(self.get_input())
-        return self.is_correct()
 
     def get_warnings(self) -> Optional[ValgrindWarningSummary]:
         cmd = self.get_cmd()
@@ -148,7 +143,8 @@ class ComparisonTest(TestInterface):
         return self._name
 
     def get_successful(self) -> bool:
-        return self.is_correct()
+        actual_output = self.get_actual_output()
+        return actual_output.strip() == self.get_expected_output().strip()
 
     def get_input(self) -> str:
         return self._input
@@ -157,6 +153,7 @@ class ComparisonTest(TestInterface):
         return self._expected_output
 
     def get_actual_output(self) -> Optional[str]:
+        self._assert_executed()
         return self._actual_output
 
     def get_penalty(self) -> float:
