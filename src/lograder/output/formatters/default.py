@@ -25,7 +25,7 @@ from .interfaces import (
     MetadataFormatterInterface,
     PreprocessorOutputFormatterInterface,
     RuntimeSummaryFormatterInterface,
-    TestCaseFormatterInterface,
+    ExecutableTestInterface,
     ValgrindLeakSummaryFormatterInterface,
     ValgrindWarningSummaryFormatterInterface, ExecutableTestFormatterInterface,
 )
@@ -256,7 +256,7 @@ class DefaultPreprocessorOutputFormatter(PreprocessorOutputFormatterInterface):
 class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
     def format(self, build_output: BuilderOutput) -> str:
         output = [
-            f"Detected build types of `{Fore.MAGENTA}{build_output.build_type}{Fore.RESET}`."
+            f"Detected build types of `{Fore.MAGENTA}{build_output.project_type}{Fore.RESET}`."
         ]
         output += [
             "\n".join(
@@ -278,7 +278,7 @@ class DefaultBuildOutputFormatter(BuildOutputFormatterInterface):
 
 
 class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
-    def format(self, test_cases: Sequence[TestInterface]) -> str:
+    def format(self, test_cases: Sequence[ExecutableTestInterface]) -> str:
         total_cpu_time = sum(
             (et.total_cpu_time if (et := tc.get_execution_time()) is not None else 0.0)
             for tc in test_cases
@@ -324,7 +324,7 @@ class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
 
 
 class DefaultExecutableTestCaseFormatter(ExecutableTestFormatterInterface):
-    def format(self, test_case: TestInterface) -> str:
+    def format(self, test_case: ExecutableTestInterface) -> str:
         if not test_case.get_successful():
             title_text = f"{Fore.RED}Test `{test_case.get_name()}` failed!{Fore.RESET}"
         elif test_case.get_penalty() < 1.0:

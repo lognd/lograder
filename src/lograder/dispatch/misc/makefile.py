@@ -6,7 +6,7 @@ from ...tests.registry import TestRegistry
 from ..common.assignment import BuilderOutput, PreprocessorOutput
 from ..common.interface import (
     DispatcherInterface,
-    BuilderResults,
+    ExecutableBuildResults,
     PreprocessorResults,
     RuntimeResults,
 )
@@ -50,7 +50,7 @@ class MakefileDispatcher(DispatcherInterface):
             PreprocessorOutput(commands=[], stdout=[], stderr=[])
         )
 
-    def build(self) -> BuilderResults:
+    def build(self) -> ExecutableBuildResults:
         commands: List[List[str | Path]] = []
         stdout: List[str] = []
         stderr: List[str] = []
@@ -65,17 +65,17 @@ class MakefileDispatcher(DispatcherInterface):
         )
         if result.returncode != 0:
             self._build_code = 1
-            return BuilderResults(
+            return ExecutableBuildResults(
                 executable="Build failed...",
                 output=BuilderOutput(
-                    commands=commands, stdout=stdout, stderr=stderr, build_type="cmake"
+                    commands=commands, stdout=stdout, stderr=stderr, project_type="cmake"
                 ),
             )
 
-        return BuilderResults(
+        return ExecutableBuildResults(
             executable=self.get_makefile(),
             output=BuilderOutput(
-                commands=commands, stdout=stdout, stderr=stderr, build_type="makefile"
+                commands=commands, stdout=stdout, stderr=stderr, project_type="makefile"
             ),
         )
 

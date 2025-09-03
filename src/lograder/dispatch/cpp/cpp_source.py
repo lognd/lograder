@@ -8,7 +8,7 @@ from static.basicconfig import LograderBasicConfig
 from ..common.assignment import BuilderOutput, PreprocessorOutput
 from ..common.interface import (
     DispatcherInterface,
-    BuilderResults,
+    ExecutableBuildResults,
     CxxTestRunner,
     PreprocessorResults,
 )
@@ -55,7 +55,7 @@ class CxxSourceDispatcher(CxxTestRunner, DispatcherInterface):
             PreprocessorOutput(commands=[], stdout=[], stderr=[])
         )
 
-    def build(self) -> BuilderResults:
+    def build(self) -> ExecutableBuildResults:
 
         commands: List[List[str | Path]] = []
         stdout: List[str] = []
@@ -72,16 +72,16 @@ class CxxSourceDispatcher(CxxTestRunner, DispatcherInterface):
         result = run_cmd(cmd, commands=commands, stdout=stdout, stderr=stderr)
         if result.returncode != 0:
             self.set_build_code(1)
-            return BuilderResults(
+            return ExecutableBuildResults(
                 executable="Build failed...",
                 output=BuilderOutput(
-                    commands=commands, stdout=stdout, stderr=stderr, build_type="cmake"
+                    commands=commands, stdout=stdout, stderr=stderr, project_type="cmake"
                 ),
             )
 
-        return BuilderResults(
+        return ExecutableBuildResults(
             executable=self.get_executable_path(),
             output=BuilderOutput(
-                commands=commands, stdout=stdout, stderr=stderr, build_type="cxx-source"
+                commands=commands, stdout=stdout, stderr=stderr, project_type="cxx-source"
             ),
         )

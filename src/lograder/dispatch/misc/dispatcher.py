@@ -4,7 +4,7 @@ from ...common.types import FilePath
 from .. import CxxSourceDispatcher
 from ..common.interface import (
     DispatcherInterface,
-    BuilderResults,
+    ExecutableBuildResults,
     PreprocessorResults,
     RuntimeResults,
 )
@@ -39,7 +39,7 @@ class ProjectDispatcher(DispatcherInterface):
     def preprocess(self) -> PreprocessorResults:
         return self._internal_project.preprocess()
 
-    def build(self) -> BuilderResults:
+    def build(self) -> ExecutableBuildResults:
         return self._internal_project.build()
 
     def run_tests(self) -> RuntimeResults:

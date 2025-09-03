@@ -8,6 +8,7 @@ import json
 from tests.test import ExecutableTestInterface
 from .types import AssignmentMetadata
 from .. import AssignmentSummary
+from ...static import LograderBasicConfig
 from ...common.types import FilePath
 from ...tests.registry import TestRegistry
 from ...tests.test import TestInterface
@@ -23,14 +24,18 @@ class PreprocessorResults:
     def get_output(self) -> PreprocessorOutput:
         return self._output
 
-
-class BuilderResults:
-    def __init__(self, executable: FilePath, output: BuilderOutput):
+class BuildResults:
+    def __init__(self, output: BuilderOutput):
         self._output = output
-        self._executable = Path(executable)
 
     def get_output(self) -> BuilderOutput:
         return self._output
+
+
+class ExecutableBuildResults(BuildResults):
+    def __init__(self, executable: FilePath, output: BuilderOutput):
+        super().__init__(output)
+        self._executable = Path(executable)
 
     def get_executable(self) -> Path:
         return self._executable
@@ -75,7 +80,7 @@ class ProcessInterface(ABC):
     @classmethod
     def is_build_successful(cls) -> bool:
         for builder in cls._linked_builders:
-            if builder.get_build_error():
+            if builder.is_build_error():
                 return False
         return True
 
@@ -112,12 +117,19 @@ class PreprocessorInterface(ProcessInterface, ABC):
     def get_validation_multiplier(self) -> float:
         return 1.0 - min(max(self.get_validation_penalty(), 0.0), 1.0)
 
-    def set_validation_error(self):
+    def check(self):
+        if self.validate():
+            return
         self.set_validation_penalty(1.0)
 
     @abstractmethod
-    def validate(self):
+    def validate(self) -> bool:
         pass
+
+    @abstractmethod
+    def preprocess(self) -> PreprocessorResults:
+        pass
+
 
 class BuilderInterface(ProcessInterface, ABC):
     def __init__(self):
@@ -128,11 +140,16 @@ class BuilderInterface(ProcessInterface, ABC):
     def set_build_error(self, build_error: bool):
         self._build_error = build_error
 
-    def get_build_error(self) -> bool:
+    def is_build_error(self) -> bool:
         return self._build_error
 
     @abstractmethod
-    def build(self) -> BuilderResults:
+    def build(self) -> BuildResults:
+        pass
+
+class ExecutableBuilderInterface(BuilderInterface, ABC):
+    @abstractmethod
+    def build(self) -> ExecutableBuildResults:
         pass
 
 class RunnerInterface(ProcessInterface, ABC):
@@ -158,7 +175,7 @@ class RunnerInterface(ProcessInterface, ABC):
         pass
 
 class DispatcherInterface(ABC):
-    def run(self, out_path: Path = Path('/autograder/results/results.json')) -> AssignmentSummary:
+    def run(self, out_path: Path = LograderBasicConfig.DEFAULT_RESULT_PATH) -> AssignmentSummary:
         metadata = self.metadata()
         prep = self.preprocess()
         build = self.build()
@@ -183,7 +200,7 @@ class DispatcherInterface(ABC):
         pass
 
     @abstractmethod
-    def build(self) -> BuilderResults:
+    def build(self) -> ExecutableBuildResults:
         pass
 
     @abstractmethod
