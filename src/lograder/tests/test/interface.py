@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional
@@ -10,11 +11,14 @@ from .analytics import (
     ValgrindWarningSummary,
 )
 
+
 class TestInterface(ABC):
     __test__: bool = False
 
     @abstractmethod
-    def run(self, wrap_args: bool = False, working_directory: Optional[Path] = None) -> None:
+    def run(
+        self, wrap_args: bool = False, working_directory: Optional[Path] = None
+    ) -> None:
         pass
 
     @abstractmethod
@@ -39,6 +43,7 @@ class TestInterface(ABC):
 
     def get_penalty(self) -> float:
         return 1.0
+
 
 class ExecutableTestInterface(TestInterface, ABC):
     @abstractmethod

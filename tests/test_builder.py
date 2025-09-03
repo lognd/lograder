@@ -28,13 +28,14 @@ def test_project_1(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectDispatcher(tmp_path)
-    metadata = AssignmentMetadata(
+    assignment = ProjectDispatcher(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
         assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
         assignment_due_date=datetime(year=2030, month=12, day=12),
+        project_root=tmp_path
     )
+    metadata = assignment.metadata()
     preprocessor_results = assignment.preprocess()
     builder_results = assignment.build()
     runtime_results = assignment.run_tests()
@@ -66,14 +67,14 @@ def test_project_2(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectDispatcher(tmp_path)
-
-    metadata = AssignmentMetadata(
+    assignment = ProjectDispatcher(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
         assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
         assignment_due_date=datetime(year=2030, month=12, day=12),
+        project_root=tmp_path
     )
+    metadata = assignment.metadata()
     preprocessor_results = assignment.preprocess()
     builder_results = assignment.build()
     runtime_results = assignment.run_tests()
@@ -109,13 +110,14 @@ if not sys.platform.startswith("win"):
             input_strs=[""],
         )
 
-        assignment = ProjectDispatcher(tmp_path)
-        metadata = AssignmentMetadata(
+        assignment = ProjectDispatcher(
             assignment_name="Lograder Unit Testing",
             assignment_authors=["Logan Dapp"],
             assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
             assignment_due_date=datetime(year=2030, month=12, day=12),
+            project_root=tmp_path
         )
+        metadata = assignment.metadata()
         preprocessor_results = assignment.preprocess()
         builder_results = assignment.build()
         runtime_results = assignment.run_tests()
@@ -146,13 +148,14 @@ def test_project_4(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectDispatcher(tmp_path)
-    metadata = AssignmentMetadata(
+    assignment = ProjectDispatcher(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
         assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
         assignment_due_date=datetime(year=2030, month=12, day=12),
+        project_root=tmp_path
     )
+    metadata = assignment.metadata()
     preprocessor_results = assignment.preprocess()
     builder_results = assignment.build()
     runtime_results = assignment.run_tests()
@@ -184,13 +187,14 @@ def test_project_5(tmp_path):
         input_strs=[""],
     )
 
-    assignment = ProjectDispatcher(tmp_path)
-    metadata = AssignmentMetadata(
+    assignment = ProjectDispatcher(
         assignment_name="Lograder Unit Testing",
         assignment_authors=["Logan Dapp"],
         assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
         assignment_due_date=datetime(year=2030, month=12, day=12),
+        project_root=tmp_path
     )
+    metadata = assignment.metadata()
     preprocessor_results = assignment.preprocess()
     builder_results = assignment.build()
     runtime_results = assignment.run_tests()
@@ -224,13 +228,14 @@ if not sys.platform.startswith("win"):
             input_strs=[""],
         )
 
-        assignment = ProjectDispatcher(tmp_path)
-        metadata = AssignmentMetadata(
+        assignment = ProjectDispatcher(
             assignment_name="Lograder Unit Testing",
             assignment_authors=["Logan Dapp"],
             assignment_description="for `pytest`-ing of the Gradescope Autograder library.",
             assignment_due_date=datetime(year=2030, month=12, day=12),
+            project_root=tmp_path
         )
+        metadata = assignment.metadata()
         preprocessor_results = assignment.preprocess()
         builder_results = assignment.build()
         runtime_results = assignment.run_tests()

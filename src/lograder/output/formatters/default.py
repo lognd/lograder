@@ -10,8 +10,7 @@ from ...dispatch.common.types import (
     BuilderOutput,
     PreprocessorOutput,
 )
-from static.basicconfig import LograderBasicConfig
-from ...tests.test import TestInterface
+from ...static import LograderBasicConfig
 from ...tests.test.analytics import (
     CallgrindSummary,
     ExecutionTimeSummary,
@@ -21,13 +20,14 @@ from ...tests.test.analytics import (
 from .format_templates import ContextRenderer, ProcessStep, RendererInterface
 from .interfaces import (
     BuildOutputFormatterInterface,
+    ExecutableTestFormatterInterface,
+    ExecutableTestInterface,
     ExecutionTimeSummaryFormatterInterface,
     MetadataFormatterInterface,
     PreprocessorOutputFormatterInterface,
     RuntimeSummaryFormatterInterface,
-    ExecutableTestInterface,
     ValgrindLeakSummaryFormatterInterface,
-    ValgrindWarningSummaryFormatterInterface, ExecutableTestFormatterInterface,
+    ValgrindWarningSummaryFormatterInterface,
 )
 
 

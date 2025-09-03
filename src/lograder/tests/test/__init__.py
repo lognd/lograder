@@ -1,5 +1,5 @@
-from .interface import TestInterface, ExecutableTestInterface
 from .comparison_test import ExecutableOutputComparisonTest
+from .interface import ExecutableTestInterface, TestInterface
 
 __all__ = [
     "ExecutableOutputComparisonTest",

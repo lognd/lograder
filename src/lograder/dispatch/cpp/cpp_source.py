@@ -1,41 +1,37 @@
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
-from datetime import datetime
 
-from .. import RuntimeResults
-from ..common.interface import BuildResults
-from ..common.types import AssignmentMetadata
-from ...static import LograderBasicConfig, LograderMessageConfig
-from ...common.types import FilePath
 from ...common.utils import random_name
-from static.basicconfig import LograderBasicConfig
-from ..common.assignment import BuilderOutput, PreprocessorOutput
+from ...static import LograderBasicConfig
 from ..common import (
+    CLIBuilder,
     DispatcherInterface,
     ExecutableBuildResults,
-    PreprocessorResults,
     ExecutableRunner,
-    CLIBuilder,
+    PreprocessorInterface,
+    PreprocessorResults,
+    RuntimeResults,
     TrivialPreprocessor,
-    PreprocessorInterface
 )
-from ..common.file_operations import bfs_walk, is_cxx_source_file, run_cmd
+from ..common.file_operations import bfs_walk, is_cxx_source_file
+from ..common.types import AssignmentMetadata
 
 
-
-class CxxSourceDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
+class CxxSourceDispatcher(CLIBuilder, ExecutableRunner, DispatcherInterface):
 
     def __init__(
-            self, *,
-            assignment_name: str,
-            assignment_authors: List[str],
-            assignment_description: str,
-            assignment_due_date: datetime,
-            project_root: Path = LograderBasicConfig.DEFAULT_SUBMISSION_PATH,
-            preprocessor: PreprocessorInterface = TrivialPreprocessor()
+        self,
+        *,
+        assignment_name: str,
+        assignment_authors: List[str],
+        assignment_description: str,
+        assignment_due_date: datetime,
+        project_root: Path = LograderBasicConfig.DEFAULT_SUBMISSION_PATH,
+        preprocessor: PreprocessorInterface = TrivialPreprocessor(),
     ):
-        super().__init__()
+        super().__init__(build_type="cmake")
         self._metadata = AssignmentMetadata(
             assignment_name=assignment_name,
             assignment_authors=assignment_authors,
@@ -51,24 +47,26 @@ class CxxSourceDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
         self._executable_path: Optional[Path] = None
         self._preprocessor = preprocessor
 
-    def build(self) -> BuildResults:
+    def build(self) -> ExecutableBuildResults:
         source_files: List[Path] = []
         for file in bfs_walk(self._project_root):
             if is_cxx_source_file(file):
                 source_files.append(file)
 
-        cmd: List[str | Path] = ["g++",
-                                 *LograderBasicConfig.DEFAULT_CXX_COMPILATION_FLAGS,
-                                 f"-std={LograderBasicConfig.DEFAULT_CXX_STANDARD}",
-                                 "-o", self.get_executable_path(),
-                                 *source_files]
+        cmd: List[str | Path] = [
+            "g++",
+            *LograderBasicConfig.DEFAULT_CXX_COMPILATION_FLAGS,
+            f"-std={LograderBasicConfig.DEFAULT_CXX_STANDARD}",
+            "-o",
+            self.get_executable_path(),
+            *source_files,
+        ]
         output = self.run_cmd(cmd)
         if self.is_build_error():
             return self.get_build_error_output()
 
         return ExecutableBuildResults(
-            executable=self.get_executable_path(),
-            output=output
+            executable=self.get_executable_path(), output=output
         )
 
     def get_build_directory(self) -> Path:
@@ -97,7 +95,7 @@ class CxxSourceDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
         return self._preprocessor.preprocess()
 
     def run_tests(self) -> RuntimeResults:
-        return super(ExecutableRunner, self).run()
+        return self.run_tests_auto()
 
     def get_executable(self) -> List[str | Path]:
-        return[self.get_executable_path()]
+        return [self.get_executable_path()]

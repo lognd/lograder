@@ -1,46 +1,37 @@
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-from datetime import datetime
-
-from ..common.interface import BuildResults
-from ...common.types import FilePath
-from ...tests.registry import TestRegistry
-from ..common.assignment import BuilderOutput, PreprocessorOutput, AssignmentMetadata
 from ...static import LograderBasicConfig
 from ..common import (
+    CLIBuilder,
     DispatcherInterface,
     ExecutableBuildResults,
-    PreprocessorResults,
-    RuntimeResults,
-    CLIBuilder,
     ExecutableRunner,
     PreprocessorInterface,
-    TrivialPreprocessor
+    PreprocessorResults,
+    RuntimeResults,
+    TrivialPreprocessor,
 )
+from ..common.assignment import AssignmentMetadata
 from ..common.exceptions import MakefileNotFoundError
 from ..common.file_operations import (
     bfs_walk,
     is_makefile_file,
-    is_makefile_target,
-    run_cmd
 )
 
 
-class MakefileDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
+class MakefileDispatcher(CLIBuilder, ExecutableRunner, DispatcherInterface):
     def get_executable(self) -> List[str | Path]:
         return ["make", "-s", "run"]
 
-    def build(self) -> BuildResults:
+    def build(self) -> ExecutableBuildResults:
         cmd: List[str | Path] = ["make", "-s"]
         output = self.run_cmd(cmd, working_directory=self.get_working_directory())
         if self.is_build_error():
             return self.get_build_error_output()
 
-        return ExecutableBuildResults(
-            executable=self.get_makefile(),
-            output=output
-        )
+        return ExecutableBuildResults(executable=self.get_makefile(), output=output)
 
     def metadata(self) -> AssignmentMetadata:
         return self._metadata
@@ -49,18 +40,19 @@ class MakefileDispatcher(ExecutableRunner, CLIBuilder, DispatcherInterface):
         return self._preprocessor.preprocess()
 
     def run_tests(self) -> RuntimeResults:
-        return super(ExecutableRunner, self).run()
+        return self.run_tests_auto()
 
     def __init__(
-            self, *,
-            assignment_name: str,
-            assignment_authors: List[str],
-            assignment_description: str,
-            assignment_due_date: datetime,
-            project_root: Path = LograderBasicConfig.DEFAULT_SUBMISSION_PATH,
-            preprocessor: PreprocessorInterface = TrivialPreprocessor()
+        self,
+        *,
+        assignment_name: str,
+        assignment_authors: List[str],
+        assignment_description: str,
+        assignment_due_date: datetime,
+        project_root: Path = LograderBasicConfig.DEFAULT_SUBMISSION_PATH,
+        preprocessor: PreprocessorInterface = TrivialPreprocessor(),
     ):
-        super().__init__()
+        super().__init__(build_type="makefile")
 
         self._metadata = AssignmentMetadata(
             assignment_name=assignment_name,

@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import List
 from pathlib import Path
-from ..interface import RunnerInterface, RuntimePrepResults
-from ....tests.test.interface import ExecutableTestInterface
+from typing import List
+
 from ....tests.registry import TestRegistry
+from ....tests.test.interface import ExecutableTestInterface
+from ..interface import RunnerInterface, RuntimePrepResults
+
 
 class ExecutableRunner(RunnerInterface, ABC):
     @abstractmethod
@@ -16,5 +18,5 @@ class ExecutableRunner(RunnerInterface, ABC):
             if isinstance(test, ExecutableTestInterface):
                 test.set_target(self.get_executable())
             else:
-                tests.append(test)
+                raise TypeError
         return RuntimePrepResults(tests)
