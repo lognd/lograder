@@ -1,4 +1,4 @@
-.PHONY: all venv build preinstall uninstall reinstall test type lint format check clean
+.PHONY: all venv build preinstall uninstall reinstall test type lint format check clean cycle-check
 
 VENV_DIR := .venv-linux-arm64
 VENV_PYTHON := $(VENV_DIR)/bin/python
@@ -8,6 +8,7 @@ VENV_MYPY := $(VENV_DIR)/bin/mypy
 VENV_BLACK := $(VENV_DIR)/bin/black
 VENV_RUFF := $(VENV_DIR)/bin/ruff
 VENV_ISORT := $(VENV_DIR)/bin/isort
+VENV_PYCYCLE := $(VENV_DIR)/bin/pycycle
 
 all: venv build check test
 
@@ -54,7 +55,11 @@ imports:
 	@echo "Checking import order with isort..."
 	@$(VENV_ISORT) src tests
 
-check: imports lint type format test
+cycle-check:
+	@echo "Checking cyclical imports with pycycle..."
+	@$(VENV_PYCYCLE) --here
+
+check: imports lint type format cycle-check test
 
 clean:
 	@echo "Cleaning build artifacts..."

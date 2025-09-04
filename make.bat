@@ -9,6 +9,7 @@ set VENV_MYPY=%VENV_DIR%\Scripts\mypy.exe
 set VENV_BLACK=%VENV_DIR%\Scripts\black.exe
 set VENV_RUFF=%VENV_DIR%\Scripts\ruff.exe
 set VENV_ISORT=%VENV_DIR%\Scripts\isort.exe
+set VENV_PYCYCLE=%VENV_DIR%\Scripts\pycycle.exe
 
 :: Entry point
 if "%1"=="" (
@@ -78,12 +79,18 @@ echo Checking import order with isort...
 call %VENV_ISORT% src tests
 goto :eof
 
+:cycle-check
+echo Checking cyclical imports with pycycle...
+call %VENV_PYCYCLE% --here
+goto :eof
+
 :check
 call :imports
 call :lint
 call :type
 call :format
 call :test
+call :cycle-check
 goto :eof
 
 :clean
