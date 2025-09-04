@@ -3,12 +3,15 @@ from __future__ import annotations
 import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import TYPE_CHECKING, List, Optional, Sequence
 
 from ...common.types import FilePath
 from ...static import LograderBasicConfig, LograderMessageConfig
 from ...tests.common.exceptions import TestNotRunError
-from ...tests.test import ExecutableTestInterface
+
+if TYPE_CHECKING:
+    from ...tests.test.interface import ExecutableTestInterface
+
 from ..common.assignment import AssignmentSummary, BuilderOutput, PreprocessorOutput
 from .types import AssignmentMetadata
 

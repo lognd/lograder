@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
@@ -18,7 +20,7 @@ from ...output.formatters.interfaces import (
 )
 from ...output.raw_json.assignment import AssignmentJSON
 from ...output.raw_json.test_case import TestCaseJSON
-from ...tests.test import ExecutableTestInterface
+from ...tests.test.interface import ExecutableTestInterface
 from .types import AssignmentMetadata, BuilderOutput, PreprocessorOutput
 
 
