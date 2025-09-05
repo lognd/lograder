@@ -1,7 +1,6 @@
-from typing import Dict, Generator, List, Sequence, TYPE_CHECKING
+from typing import Dict, Generator, List, Sequence
 
-if TYPE_CHECKING:
-    from ..test import TestInterface
+from ..test.interface import TestInterface
 
 
 class Registry[T]:
