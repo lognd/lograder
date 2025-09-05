@@ -1,8 +1,8 @@
 from typing import List, Optional, Sequence
 
 from ..common.validation import validate_common_size
-from ..registry import TestRegistry
-from ..test import ExecutableOutputComparisonTest
+from ..registry.registry import TestRegistry
+from ..test.comparison_test import ExecutableOutputComparisonTest
 
 
 def make_tests_from_strs(

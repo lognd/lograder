@@ -4,8 +4,8 @@ from typing import List, Optional, Sequence
 from ..common import FilePath
 from ..common.exceptions import ArgumentSpecifiedError
 from ..common.validation import validate_unique_argument
-from ..simple import make_tests_from_strs
-from ..test import ExecutableOutputComparisonTest
+from ..simple.test_maker import make_tests_from_strs
+from ..test.comparison_test import ExecutableOutputComparisonTest
 from .types import TemplateSubstitution
 
 

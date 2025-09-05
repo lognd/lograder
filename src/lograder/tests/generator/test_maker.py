@@ -1,7 +1,7 @@
 from typing import Callable, Generator, List
 
-from ..registry import TestRegistry
-from ..test import ExecutableOutputComparisonTest
+from ..registry.registry import TestRegistry
+from ..test.comparison_test import ExecutableOutputComparisonTest
 from .types import (
     FlaggedTestCaseProtocol,
     FlaggedWeightedTestCaseProtocol,
