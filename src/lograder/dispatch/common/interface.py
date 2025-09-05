@@ -210,7 +210,7 @@ class DispatcherInterface(ABC):
             test_cases=runtime_results.get_test_cases(),
         )
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(summary.model_dump()))
+        out_path.write_text(json.dumps(summary.get_raw().model_dump()))
         return summary
 
     @abstractmethod
