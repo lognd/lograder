@@ -1,11 +1,15 @@
-from typing import Dict, Generator, List, Sequence
+from __future__ import annotations
 
-from ..test.interface import TestInterface
+from typing import TYPE_CHECKING, Dict, Generator, List, Sequence
+
+if TYPE_CHECKING:
+    from ..test.interface import TestInterface
 
 
-class Registry[T]:
-    _registry: Dict[str, T] = {}
-    _container: List[T] = []
+class TestRegistry:
+
+    _registry: Dict[str, TestInterface] = {}
+    _container: List[TestInterface] = []
 
     @classmethod
     def clear(cls):
@@ -13,7 +17,7 @@ class Registry[T]:
         cls._container = []
 
     @classmethod
-    def register(cls, key: str, value: T) -> None:
+    def register(cls, key: str, value: TestInterface) -> None:
         cls._registry[key] = value
 
     @classmethod
@@ -21,24 +25,21 @@ class Registry[T]:
         del cls._registry[key]
 
     @classmethod
-    def get(cls, key: str) -> T:
+    def get(cls, key: str) -> TestInterface:
         return cls._registry[key]
 
     @classmethod
-    def add(cls, value: T) -> None:
+    def add(cls, value: TestInterface) -> None:
         cls._container.append(value)
 
     @classmethod
-    def extend(cls, values: Sequence[T]) -> None:
+    def extend(cls, values: Sequence[TestInterface]) -> None:
         cls._container.extend(values)
 
     @classmethod
-    def remove(cls, value: T) -> None:
+    def remove(cls, value: TestInterface) -> None:
         cls._container.remove(value)
 
     @classmethod
-    def iterate(cls) -> Generator[T, None, None]:
+    def iterate(cls) -> Generator[TestInterface, None, None]:
         yield from cls._container
-
-
-TestRegistry = Registry[TestInterface]
