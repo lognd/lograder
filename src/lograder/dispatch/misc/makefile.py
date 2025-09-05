@@ -3,22 +3,22 @@ from pathlib import Path
 from typing import List, Optional
 
 from ...static import LograderBasicConfig
-from ..common import (
-    CLIBuilder,
-    DispatcherInterface,
-    ExecutableBuildResults,
-    ExecutableRunner,
-    PreprocessorInterface,
-    PreprocessorResults,
-    RuntimeResults,
-    TrivialPreprocessor,
-)
 from ..common.assignment import AssignmentMetadata
 from ..common.exceptions import MakefileNotFoundError
 from ..common.file_operations import (
     bfs_walk,
     is_makefile_file,
 )
+from ..common.interface import (
+    DispatcherInterface,
+    ExecutableBuildResults,
+    PreprocessorInterface,
+    PreprocessorResults,
+    RuntimeResults,
+)
+from ..common.templates.cli_builder import CLIBuilder
+from ..common.templates.executable_runner import ExecutableRunner
+from ..common.templates.trivial import TrivialPreprocessor
 
 
 class MakefileDispatcher(CLIBuilder, ExecutableRunner, DispatcherInterface):

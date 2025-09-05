@@ -6,20 +6,20 @@ from typing import List, Optional
 
 from ...common.utils import random_name
 from ...static import LograderBasicConfig
-from ..common import (
-    CLIBuilder,
-    DispatcherInterface,
-    ExecutableBuildResults,
-    ExecutableRunner,
-    PreprocessorInterface,
-    PreprocessorResults,
-    RuntimeResults,
-    TrivialPreprocessor,
-)
 from ..common.exceptions import (
     CMakeListsNotFoundError,
 )
 from ..common.file_operations import bfs_walk, is_cmake_file, is_valid_target
+from ..common.interface import (
+    DispatcherInterface,
+    ExecutableBuildResults,
+    PreprocessorInterface,
+    PreprocessorResults,
+    RuntimeResults,
+)
+from ..common.templates.cli_builder import CLIBuilder
+from ..common.templates.executable_runner import ExecutableRunner
+from ..common.templates.trivial import TrivialPreprocessor
 from ..common.types import AssignmentMetadata
 
 

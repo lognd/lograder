@@ -5,17 +5,17 @@ from typing import List, Optional
 
 from ...common.utils import random_name
 from ...static import LograderBasicConfig
-from ..common import (
-    CLIBuilder,
+from ..common.file_operations import bfs_walk, is_cxx_source_file
+from ..common.interface import (
     DispatcherInterface,
     ExecutableBuildResults,
-    ExecutableRunner,
     PreprocessorInterface,
     PreprocessorResults,
     RuntimeResults,
-    TrivialPreprocessor,
 )
-from ..common.file_operations import bfs_walk, is_cxx_source_file
+from ..common.templates.cli_builder import CLIBuilder
+from ..common.templates.executable_runner import ExecutableRunner
+from ..common.templates.trivial import TrivialPreprocessor
 from ..common.types import AssignmentMetadata
 
 
