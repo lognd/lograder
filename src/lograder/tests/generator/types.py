@@ -1,5 +1,9 @@
 from pathlib import Path
-from typing import List, NotRequired, Protocol, TypedDict, Union, runtime_checkable
+from typing import List, Protocol, TypedDict, Union, runtime_checkable
+try:
+    from typing import NotRequired
+except ImportError:
+    from typing_extensions import NotRequired
 
 
 @runtime_checkable

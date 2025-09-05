@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lograder"
-version = "0.0.11"  # If this is changed, change the metadata in `lograder.dispatch.common.types.AssignmentMetadata`.
+version = "0.0.13"  # If this is changed, change the metadata in `lograder.dispatch.common.types.AssignmentMetadata`.
 description = "An API for easy Gradescope Autograder assignment creation."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -21,7 +21,8 @@ requires-python = ">=3.10"
 
 dependencies = [
   "pydantic>=2.11.7",
-  "colorama>=0.4.6"
+  "colorama>=0.4.6",
+  "typing_extensions>=4.0.0"
 ]
 
 [project.urls]
