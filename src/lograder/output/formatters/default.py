@@ -70,11 +70,11 @@ class CLIStep(ProcessStep):
 class DefaultMetadataFormatter(MetadataFormatterInterface):
     def format(self, assignment_metadata: AssignmentMetadata):
         return (
-            f"`{Fore.MAGENTA}{assignment_metadata.assignment_name}{Fore.RESET}` made by {Fore.MAGENTA}{f'{Fore.RESET}, {Fore.MAGENTA}'.join(assignment_metadata.assignment_authors)}{Fore.RESET}.\n"
-            f"Submission date: {Fore.MAGENTA}{assignment_metadata.assignment_submit_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n"
-            f"Due date: {Fore.MAGENTA}{assignment_metadata.assignment_due_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n"
-            f"Time left: {Fore.MAGENTA}{format_timedelta(assignment_metadata.assignment_due_date - assignment_metadata.assignment_submit_date)}{Fore.RESET}.\n\n"
-            f"Assignment graded with `{Fore.GREEN}{assignment_metadata.library_name}{Fore.RESET}` (version {Fore.GREEN}{assignment_metadata.library_version}{Fore.RESET}), made by {Fore.GREEN}{f'{Fore.RESET}, {Fore.GREEN}'.join(assignment_metadata.library_authors)}.{Fore.RESET}\n\n"
+            f"`{Fore.MAGENTA}{assignment_metadata.assignment_name}{Fore.RESET}` made by {Fore.MAGENTA}{f'{Fore.RESET}, {Fore.MAGENTA}'.join(assignment_metadata.assignment_authors)}{Fore.RESET}.\n" \
+            f'Submission date: {Fore.MAGENTA}{assignment_metadata.assignment_submit_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n' \
+            f'Due date: {Fore.MAGENTA}{assignment_metadata.assignment_due_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n' \
+            f"Time left: {Fore.MAGENTA}{format_timedelta(assignment_metadata.assignment_due_date - assignment_metadata.assignment_submit_date)}{Fore.RESET}.\n\n" \
+            f"Assignment graded with `{Fore.GREEN}{assignment_metadata.library_name}{Fore.RESET}` (version {Fore.GREEN}{assignment_metadata.library_version}{Fore.RESET}), made by {Fore.GREEN}{f'{Fore.RESET}, {Fore.GREEN}'.join(assignment_metadata.library_authors)}.{Fore.RESET}\n\n" \
         )
 
 
@@ -170,10 +170,10 @@ class DefaultValgrindLeakSummaryFormatter(ValgrindLeakSummaryFormatterInterface)
             Fore.LIGHTGREEN_EX if leak_summary.possibly_lost.is_safe else Fore.RED
         )
         return (
-            f"{Fore.LIGHTGREEN_EX}VALGRIND LEAK SUMMARY{Fore.RESET}:\n"
-            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {def_lost_color}{leak_summary.definitely_lost.bytes}{Fore.RESET} bytes, {def_lost_color}{leak_summary.definitely_lost.blocks}{Fore.RESET} blocks {def_lost_color}definitely lost{Fore.RESET}.\n"
-            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {ind_lost_color}{leak_summary.indirectly_lost.bytes}{Fore.RESET} bytes, {ind_lost_color}{leak_summary.indirectly_lost.blocks}{Fore.RESET} blocks {ind_lost_color}indirectly lost{Fore.RESET}.\n"
-            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {pos_lost_color}{leak_summary.possibly_lost.bytes}{Fore.RESET} bytes, {pos_lost_color}{leak_summary.possibly_lost.blocks}{Fore.RESET} blocks {pos_lost_color}possibly lost{Fore.RESET}.\n"
+            f"{Fore.LIGHTGREEN_EX}VALGRIND LEAK SUMMARY{Fore.RESET}:\n" \
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {def_lost_color}{leak_summary.definitely_lost.bytes}{Fore.RESET} bytes, {def_lost_color}{leak_summary.definitely_lost.blocks}{Fore.RESET} blocks {def_lost_color}definitely lost{Fore.RESET}.\n" \
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {ind_lost_color}{leak_summary.indirectly_lost.bytes}{Fore.RESET} bytes, {ind_lost_color}{leak_summary.indirectly_lost.blocks}{Fore.RESET} blocks {ind_lost_color}indirectly lost{Fore.RESET}.\n" \
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {pos_lost_color}{leak_summary.possibly_lost.bytes}{Fore.RESET} bytes, {pos_lost_color}{leak_summary.possibly_lost.blocks}{Fore.RESET} blocks {pos_lost_color}possibly lost{Fore.RESET}.\n" \
             f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {Fore.LIGHTGREEN_EX}{leak_summary.still_reachable.bytes}{Fore.RESET} bytes, {Fore.LIGHTGREEN_EX}{leak_summary.still_reachable.blocks}{Fore.RESET} blocks {Fore.LIGHTGREEN_EX}still reachable{Fore.RESET}."
         )
 
@@ -314,11 +314,11 @@ class DefaultRuntimeSummaryFormatter(RuntimeSummaryFormatterInterface):
         else:
             color = Fore.CYAN
         return (
-            f"{color}{num_successful_tests}{Fore.RESET}/{num_tests} Tests Passed.\n"
-            f"{Fore.LIGHTMAGENTA_EX}Total Time Elapsed on CPU{Fore.RESET}:\n"
-            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} Total: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_cpu_time))}{Fore.RESET}\n"
-            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} User-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=user_cpu_time))}{Fore.RESET}\n"
-            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} System-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=system_cpu_time))}{Fore.RESET}\n"
+            f"{color}{num_successful_tests}{Fore.RESET}/{num_tests} Tests Passed.\n" \
+            f"{Fore.LIGHTMAGENTA_EX}Total Time Elapsed on CPU{Fore.RESET}:\n" \
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} Total: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=total_cpu_time))}{Fore.RESET}\n" \
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} User-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=user_cpu_time))}{Fore.RESET}\n" \
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} System-initiated tasks: {Fore.LIGHTGREEN_EX}{format_timedelta(timedelta(seconds=system_cpu_time))}{Fore.RESET}\n" \
             f"{Fore.LIGHTMAGENTA_EX}Total Number of Instructions Run{Fore.RESET}: {Fore.LIGHTGREEN_EX}{total_instructions}{Fore.RESET}."
         )
 
