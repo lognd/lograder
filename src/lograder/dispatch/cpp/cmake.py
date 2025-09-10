@@ -122,7 +122,7 @@ class CMakeDispatcher(CLIBuilder, ExecutableRunner, DispatcherInterface):
         if self.is_build_error():
             return self.get_build_error_output()
 
-        targets = self.TARGET_PATTERN.findall(output.stdout[-1])
+        targets = self.TARGET_PATTERN.findall(output.stdout or "")
         if "main" in targets:
             self._target = "main"
         elif "build" in targets:

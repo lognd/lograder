@@ -100,7 +100,9 @@ class ValgrindOutput:
                 bytes_count = int(leak_match.group(1).replace(",", ""))
                 blocks_count = int(leak_match.group(2).replace(",", ""))
                 kind = leak_match.group(3).replace(" ", "_")  # normalize to dict key
-                prev_bytes, prev_blocks = getattr(leaks, kind)
+                loss_entry = getattr(leaks, kind)
+                prev_bytes = loss_entry.bytes
+                prev_blocks = loss_entry.blocks
                 setattr(
                     leaks,
                     kind,
