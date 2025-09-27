@@ -43,7 +43,7 @@ def make_tests_from_strs(
                 weight=weight,
                 expected_stdout=expected_output,
                 args=list(flags),
-                working_dir=builder.get_working_directory(),
+                working_dir=builder.get_build_directory(),
                 wrap_args=builder.wrap_args(),
             )
         )

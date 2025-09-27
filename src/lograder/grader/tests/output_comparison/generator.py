@@ -29,7 +29,7 @@ def make_tests_from_generator(builder: BuilderInterface):
                     expected_stdout=test_case.get_expected_output(),
                     weight=test_case.get_weight(),
                     args=[],
-                    working_dir=builder.get_working_directory(),
+                    working_dir=builder.get_build_directory(),
                     wrap_args=builder.wrap_args(),
                 )
                 generated_tests.append(test)
@@ -41,7 +41,7 @@ def make_tests_from_generator(builder: BuilderInterface):
                     expected_stdout=test_case.get_expected_output(),
                     weight=1.0,
                     args=[],
-                    working_dir=builder.get_working_directory(),
+                    working_dir=builder.get_build_directory(),
                     wrap_args=builder.wrap_args(),
                 )
                 generated_tests.append(test)
@@ -53,7 +53,7 @@ def make_tests_from_generator(builder: BuilderInterface):
                     expected_stdout=test_case.get_expected_output(),
                     weight=test_case.get_weight(),
                     args=test_case.get_flags(),
-                    working_dir=builder.get_working_directory(),
+                    working_dir=builder.get_build_directory(),
                     wrap_args=builder.wrap_args(),
                 )
                 generated_tests.append(test)
@@ -65,7 +65,7 @@ def make_tests_from_generator(builder: BuilderInterface):
                     expected_stdout=test_case.get_expected_output(),
                     weight=1.0,
                     args=test_case.get_flags(),
-                    working_dir=builder.get_working_directory(),
+                    working_dir=builder.get_build_directory(),
                     wrap_args=builder.wrap_args(),
                 )
                 generated_tests.append(test)
@@ -86,7 +86,7 @@ def make_tests_from_generator(builder: BuilderInterface):
                     expected_stdout=test_case["expected_output"],
                     weight=weight,
                     args=flags,
-                    working_dir=builder.get_working_directory(),
+                    working_dir=builder.get_build_directory(),
                     wrap_args=builder.wrap_args(),
                 )
                 generated_tests.append(test)

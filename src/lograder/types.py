@@ -3,8 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Literal, TypedDict, Union
 
-# --- GENERAL TYPES ---
+# --- BUILD TYPES ---
 Command = List[Union[str, Path]]
+ProjectType = Literal["cmake", "cxx-source", "makefile", "py-source", "pyproject"]
+TestType = Literal["catch2", "pytest"]
 
 # --- GRADESCOPE TYPES ---
 TextFormat = Literal["text", "html", "simple_format", "md", "ansi"]

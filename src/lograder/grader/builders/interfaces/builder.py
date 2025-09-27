@@ -41,7 +41,7 @@ class BuilderInterface(ABC):
         pass
 
     @abstractmethod
-    def get_working_directory(self) -> Path:
+    def get_build_directory(self) -> Path:
         pass
 
     @abstractmethod
