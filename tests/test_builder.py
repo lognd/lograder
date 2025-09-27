@@ -46,7 +46,7 @@ def test_project_1(tmp_path):
     )
     print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
-        print(DefaultExecutableTestCaseFormatter().format(test))
+        print(DefaultExecutableTestCaseFormatter().label(test))
         assert test.get_successful()
 
 
@@ -85,7 +85,7 @@ def test_project_2(tmp_path):
     )
     print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
-        print(DefaultExecutableTestCaseFormatter().format(test))
+        print(DefaultExecutableTestCaseFormatter().label(test))
         assert test.get_successful()
 
 
@@ -128,7 +128,7 @@ if not sys.platform.startswith("win"):
         )
         print(summary.get_assignment_text())
         for test in runtime_results.get_test_cases():
-            print(DefaultExecutableTestCaseFormatter().format(test))
+            print(DefaultExecutableTestCaseFormatter().label(test))
             assert test.get_successful()
 
 
@@ -166,7 +166,7 @@ def test_project_4(tmp_path):
     )
     print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
-        print(DefaultExecutableTestCaseFormatter().format(test))
+        print(DefaultExecutableTestCaseFormatter().label(test))
         assert test.get_successful() is False
 
 
@@ -205,7 +205,7 @@ def test_project_5(tmp_path):
     )
     print(summary.get_assignment_text())
     for test in runtime_results.get_test_cases():
-        print(DefaultExecutableTestCaseFormatter().format(test))
+        print(DefaultExecutableTestCaseFormatter().label(test))
         assert test.get_successful() is False
 
 
@@ -246,5 +246,5 @@ if not sys.platform.startswith("win"):
         )
         print(summary.get_assignment_text())
         for test in runtime_results.get_test_cases():
-            print(DefaultExecutableTestCaseFormatter().format(test))
+            print(DefaultExecutableTestCaseFormatter().label(test))
             assert test.get_successful() is False
