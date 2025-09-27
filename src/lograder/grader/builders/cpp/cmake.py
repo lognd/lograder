@@ -58,7 +58,8 @@ class CMakeBuilder(CLIBuilderInterface):
             if is_cmake_file(file):
                 self._cmake_file = file
                 break
-        self._cmake_file = None
+        assert self._cmake_file is not None
+        self.set_working_directory(self._cmake_file.parent)
 
         cmd: List[str | Path] = [
             "cmake",
