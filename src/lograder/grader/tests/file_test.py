@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Optional, TYPE_CHECKING
-from .interfaces.test import TestInterface
 import difflib
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional
+
+from .interfaces.test import TestInterface
 
 if TYPE_CHECKING:
     from ...types import ByteStreamComparisonOutput
+
 
 class FileTest(TestInterface):
     def __init__(self):
@@ -17,7 +19,9 @@ class FileTest(TestInterface):
         self._run: bool = False
 
     @classmethod
-    def make(cls, name: str, expected_file: Path, actual_file: Path, visible: bool = True) -> FileTest:
+    def make(
+        cls, name: str, expected_file: Path, actual_file: Path, visible: bool = True
+    ) -> FileTest:
         test = cls()
         test.set_name(name)
         test.set_base_filename(expected_file)
@@ -56,10 +60,18 @@ class FileTest(TestInterface):
     def get_score(self) -> float:
         streams: ByteStreamComparisonOutput = {
             "stream_a_bytes": self.get_expected_output(),
-            "stream_b_bytes": self.get_actual_output()
+            "stream_b_bytes": self.get_actual_output(),
         }
         if not self._run:  # stop duplicate appending
             self.add_to_output("byte-cmp", streams)
             self._run = True
 
-        return (difflib.SequenceMatcher(None, streams["stream_a_bytes"], streams["stream_b_bytes"]).ratio()) * self.get_max_score() * self.get_weight()
+        return (
+            (
+                difflib.SequenceMatcher(
+                    None, streams["stream_a_bytes"], streams["stream_b_bytes"]
+                ).ratio()
+            )
+            * self.get_max_score()
+            * self.get_weight()
+        )

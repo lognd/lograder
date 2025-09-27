@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 class PathConfig:
     DEFAULT_ROOT_PATH: Path = Path("/autograder")
     DEFAULT_SUBMISSION_PATH: Path = Path("/autograder/submission")

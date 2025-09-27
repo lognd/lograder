@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import sys
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .test import TestInterface
 
 if TYPE_CHECKING:
     from ....types import StreamOutput
+
 
 class OutputTestInterface(TestInterface, ABC):
 
@@ -47,4 +47,8 @@ class OutputTestInterface(TestInterface, ABC):
             self.add_to_output("stderr", error)
             self._run = True
 
-        return (expected["stream_contents"] == actual["stream_contents"]) * self.get_max_score() * self.get_weight()
+        return (
+            (expected["stream_contents"] == actual["stream_contents"])
+            * self.get_max_score()
+            * self.get_weight()
+        )

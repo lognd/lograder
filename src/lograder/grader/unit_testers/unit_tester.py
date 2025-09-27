@@ -1,11 +1,12 @@
+import shutil
+import weakref
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
-import weakref
-import shutil
 
-from ..builders.interfaces.builder import BuilderInterface
 from ...random_utils import random_working_directory
+from ..builders.interfaces.builder import BuilderInterface
+
 
 class UnitTesterInterface(BuilderInterface, ABC):
     def __init__(self):
@@ -17,6 +18,10 @@ class UnitTesterInterface(BuilderInterface, ABC):
 
     def set_testing_root(self, path: Path):
         self._testing_root = path
+
+    def get_testing_root(self):
+        assert self._testing_root is not None
+        return self._testing_root
 
     @staticmethod
     def _cleanup(path: Path):
@@ -33,8 +38,10 @@ class UnitTesterInterface(BuilderInterface, ABC):
         return self._instance_root
 
     def build_project(self) -> None:
-        shutil.copytree(self._testing_root, self.get_instance_root(), dirs_exist_ok=True)
-        shutil.copytree(self._project_root, self.get_instance_root(), dirs_exist_ok=True)
+        shutil.copytree(
+            self.get_testing_root(), self.get_instance_root(), dirs_exist_ok=True
+        )
+        shutil.copytree(
+            self.get_project_root(), self.get_instance_root(), dirs_exist_ok=True
+        )
         self.build_test()
-
-

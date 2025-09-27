@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, List, Optional, cast
 
 from .test import TestInterface
 
 if TYPE_CHECKING:
-    from ...unit_testers.unit_tester import UnitTesterInterface
     from ....types import UnitTestCase, UnitTestSuite
+    from ...unit_testers.unit_tester import UnitTesterInterface
+
 
 class UnitTestInterface(TestInterface, ABC):
 
@@ -30,13 +31,13 @@ class UnitTestInterface(TestInterface, ABC):
         suites: List[UnitTestSuite] = [tests]
         while suites:
             suite = suites.pop()
-            for test in suite['cases']:
-                if hasattr(test, 'success'):
-                    cases.append(test)
+            for test in suite["cases"]:
+                if hasattr(test, "success"):
+                    cases.append(cast(UnitTestCase, test))
                 else:
-                    suites.append(test)
+                    suites.append(cast(UnitTestSuite, test))
 
-        outputs: List[bool] = [test['success'] for test in cases]
+        outputs: List[bool] = [test["success"] for test in cases]
         tests_passed: int = sum(outputs)
         tests_total: int = len(outputs)
 
@@ -48,5 +49,3 @@ class UnitTestInterface(TestInterface, ABC):
 
     def set_tester(self, tester: UnitTesterInterface):
         self._tester = tester
-
-

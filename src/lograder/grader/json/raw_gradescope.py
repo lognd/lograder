@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, computed_field, model_validator, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
-from ...types import Status, TextFormat, Visibility, AscendingOrder
+from ...types import AscendingOrder, Status, TextFormat, Visibility
 
 
 # -----------------------------
@@ -12,21 +12,23 @@ class TestCaseJSON(BaseModel):
     __test__: bool = False  # Prevent pytest from treating this class as a test
 
     # Core test result data
-    score: Optional[float]                       # Score for this test
-    max_score: Optional[float]                   # Maximum possible score
-    status: Optional[Status] = None              # Pass/Fail/Other status
-    name: Optional[str]                          # Name of the test
-    name_format: Optional[TextFormat] = "text"   # Format for the test name
-    number: Optional[str] = None                 # Optional test number/index
+    score: Optional[float]  # Score for this test
+    max_score: Optional[float]  # Maximum possible score
+    status: Optional[Status] = None  # Pass/Fail/Other status
+    name: Optional[str]  # Name of the test
+    name_format: Optional[TextFormat] = "text"  # Format for the test name
+    number: Optional[str] = None  # Optional test number/index
 
     # Output-related fields
-    output: Optional[str]                        # Output of the test (raw text or ANSI)
-    output_format: Optional[TextFormat] = "ansi" # Format of output (ansi, markdown, etc.)
+    output: Optional[str]  # Output of the test (raw text or ANSI)
+    output_format: Optional[TextFormat] = (
+        "ansi"  # Format of output (ansi, markdown, etc.)
+    )
 
     # Metadata
-    tags: List[str] = Field(default_factory=list)        # Custom tags for filtering
-    visibility: Optional[Visibility] = "visible"         # Visibility on Gradescope
-    extra_data: Optional[Dict[str, Any]] = Field(        # Arbitrary extra data
+    tags: List[str] = Field(default_factory=list)  # Custom tags for filtering
+    visibility: Optional[Visibility] = "visible"  # Visibility on Gradescope
+    extra_data: Optional[Dict[str, Any]] = Field(  # Arbitrary extra data
         default_factory=dict
     )
 
@@ -40,9 +42,9 @@ class TestCaseJSON(BaseModel):
 # JSON schema for leaderboard entries
 # -----------------------------
 class LeaderboardJSON(BaseModel):
-    name: str                                  # Display name on the leaderboard
-    value: float | str                         # Numeric score or placeholder string ("***")
-    order: Optional[AscendingOrder] = None     # Optional ordering preference
+    name: str  # Display name on the leaderboard
+    value: float | str  # Numeric score or placeholder string ("***")
+    order: Optional[AscendingOrder] = None  # Optional ordering preference
 
     @field_validator("value")
     def validate_value(cls, v):
@@ -62,18 +64,20 @@ class LeaderboardJSON(BaseModel):
 # -----------------------------
 class AssignmentJSON(BaseModel):
     # Top-level submission information
-    score: Optional[float] = None                   # Overall assignment score
-    output: Optional[str] = None                    # Text relevant to the whole submission
-    output_format: Optional[TextFormat] = "ansi"    # Format for global output
-    test_output_format: Optional[TextFormat] = "ansi" # Format for individual test outputs
-    visibility: Optional[Visibility] = "visible"    # Overall visibility setting
-    extra_data: Optional[Dict[str, Any]] = Field(   # Arbitrary metadata
+    score: Optional[float] = None  # Overall assignment score
+    output: Optional[str] = None  # Text relevant to the whole submission
+    output_format: Optional[TextFormat] = "ansi"  # Format for global output
+    test_output_format: Optional[TextFormat] = (
+        "ansi"  # Format for individual test outputs
+    )
+    visibility: Optional[Visibility] = "visible"  # Overall visibility setting
+    extra_data: Optional[Dict[str, Any]] = Field(  # Arbitrary metadata
         default_factory=dict
     )
 
     # Per-test and leaderboard data
-    tests: Optional[List[TestCaseJSON]]             # List of test case results
-    leaderboard: Optional[List[LeaderboardJSON]] = None # Leaderboard entries
+    tests: Optional[List[TestCaseJSON]]  # List of test case results
+    leaderboard: Optional[List[LeaderboardJSON]] = None  # Leaderboard entries
 
     @model_validator(mode="after")
     def check_score_existence(self):

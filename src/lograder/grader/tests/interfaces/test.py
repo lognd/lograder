@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List, TYPE_CHECKING, Any, Optional, Mapping
+from typing import TYPE_CHECKING, Any, List, Mapping, Optional
 
 from ...json.raw_gradescope import TestCaseJSON
 
 if TYPE_CHECKING:
-    from ...penalties.interfaces.penalty import PenaltyInterface
-    from ...addons.addon import AddonInterface
-    from ...formatters.dispatcher import FormatPackage, FormatDispatcher
     from ....types import FormatLabel
+    from ...addons.addon import AddonInterface
+    from ...formatters.dispatcher import FormatDispatcher, FormatPackage
+    from ...penalties.interfaces.penalty import PenaltyInterface
+
 
 class TestInterface(ABC):
 
@@ -62,10 +63,11 @@ class TestInterface(ABC):
         return self._visible
 
     def run(self) -> TestCaseJSON:
+        score: float
         if self._override is not None:
-            score: float = self._override * self.get_weight() * self.get_max_score()
+            score = self._override * self.get_weight() * self.get_max_score()
         else:
-            score: float = self.get_score()
+            score = self.get_score()
 
             for addon in self._addons:
                 score *= addon.get_penalty()
@@ -80,11 +82,11 @@ class TestInterface(ABC):
             test_output.append(FormatDispatcher.format(output))
 
         pyd_output: TestCaseJSON = TestCaseJSON(
-            score = score,
-            max_score = self.get_max_score(),
-            name = self.get_name(),
-            output = '\n'.join(test_output),
-            visibility = "visible" if self.get_visibility() else "hidden",
+            score=score,
+            max_score=self.get_max_score(),
+            name=self.get_name(),
+            output="\n".join(test_output),
+            visibility="visible" if self.get_visibility() else "hidden",
         )
 
         return pyd_output
@@ -97,4 +99,3 @@ class TestInterface(ABC):
 
     def _add_to_output_raw(self, package: FormatPackage):
         self._outputs.append(package)
-
