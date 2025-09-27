@@ -25,6 +25,7 @@ FormatLabel = Literal[
     "stderr",
     "stdout",
     "unit-tests",
+    "build-fail",
 ]
 
 

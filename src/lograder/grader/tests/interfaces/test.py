@@ -27,7 +27,7 @@ class TestInterface(ABC):
         self._weight: float = 1.0
         self._override: Optional[bool] = None
 
-        self._created_tests.append(self)
+        TestInterface._created_tests.append(self)
 
     @abstractmethod
     def get_name(self) -> str:
