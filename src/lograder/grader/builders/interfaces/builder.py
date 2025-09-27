@@ -33,8 +33,15 @@ class BuilderInterface(ABC):
             self._built = True
             self.build_project()
 
+    def wrap_args(self) -> bool:
+        return False
+
     @abstractmethod
     def build_project(self) -> None:
+        pass
+
+    @abstractmethod
+    def get_working_directory(self) -> Path:
         pass
 
     @abstractmethod

@@ -4,12 +4,12 @@ import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
-from ...os.cmd import run_cmd
-from .interfaces.output_test import OutputTestInterface
+from ....os.cmd import run_cmd
+from ..interfaces.output_test import OutputTestInterface
 
 if TYPE_CHECKING:
-    from ...types import Command
-    from ..builders.interfaces.builder import BuilderInterface
+    from ....types import Command
+    from ...builders.interfaces.builder import BuilderInterface
 
 
 class CLIOutputTest(OutputTestInterface):
@@ -33,6 +33,7 @@ class CLIOutputTest(OutputTestInterface):
         builder: BuilderInterface,
         stdin: str,
         expected_stdout: str,
+        weight: float = 1.0,
         args: Optional[Command] = None,
         working_dir: Optional[Path] = None,
         wrap_args: bool = False,
@@ -43,6 +44,7 @@ class CLIOutputTest(OutputTestInterface):
         test.set_builder(builder)
         test.set_stdin(stdin)
         test.set_expected_stdout(expected_stdout)
+        test.set_weight(weight)
 
         test.set_wrap_args(wrap_args)
         if working_dir is not None:
