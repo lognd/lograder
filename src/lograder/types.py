@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Literal, TypedDict
+from typing import List, Literal, TypedDict, Union
 
 # --- GENERAL TYPES ---
-Command = List[Path | str]
+Command = List[Union[str, Path]]
 
 # --- GRADESCOPE TYPES ---
 TextFormat = Literal["text", "html", "simple_format", "md", "ansi"]
