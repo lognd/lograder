@@ -33,7 +33,6 @@ class FormatDispatcher:
 
     @classmethod
     def get(cls, label: FormatLabel) -> Type[FormatterInterface]:
-        print(cls._registered_formats)
         return cls._registered_formats[label]
 
     @classmethod

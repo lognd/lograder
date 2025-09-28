@@ -17,8 +17,12 @@ class CxxSourceBuilder(CLIBuilderInterface):
         self.set_project_root(PathConfig.DEFAULT_SUBMISSION_PATH)
 
         self._build_directory: Optional[Path] = None
+        self._built: bool = False
 
     def build_project(self) -> None:
+        if self._built:
+            return
+        self._built = True
         source_files: List[Path] = []
         for file in bfs_walk(self.get_project_root()):
             if is_cxx_source_file(file):
@@ -57,6 +61,6 @@ class CxxSourceBuilder(CLIBuilderInterface):
 
     def get_start_command(self) -> Command:
         if self._executable_path is None:
-            self.build()
+            self.build_project()
         assert self._executable_path is not None
         return [self._executable_path]

@@ -37,8 +37,8 @@ class OutputTestInterface(TestInterface, ABC):
 
     def get_score(self) -> float:
         input: StreamOutput = {"stream_contents": self.get_input()}
-        expected: StreamOutput = {"stream_contents": self.get_expected_output()}
-        actual: StreamOutput = {"stream_contents": self.get_actual_output()}
+        expected: StreamOutput = {"stream_contents": self.get_expected_output().strip()}
+        actual: StreamOutput = {"stream_contents": self.get_actual_output().strip()}
         error: StreamOutput = {"stream_contents": self.get_error()}
 
         byte_cmp: ByteStreamComparisonOutput = {
@@ -62,7 +62,7 @@ class OutputTestInterface(TestInterface, ABC):
             self._run = True
 
         return (
-            (expected["stream_contents"].strip() == actual["stream_contents"].strip())
+            (expected["stream_contents"] == actual["stream_contents"])
             * self.get_max_score()
             * self.get_weight()
         )

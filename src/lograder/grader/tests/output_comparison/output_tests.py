@@ -62,7 +62,7 @@ class CLIOutputTest(CLITest, OutputTestInterface):
 
     def _run_test(self) -> Tuple[int, Command]:
         builder = self.get_builder()
-        builder.build()
+        builder.build_project()
         self.set_working_dir(builder.get_build_directory())
 
         args = self.get_args()

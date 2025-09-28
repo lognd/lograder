@@ -23,6 +23,7 @@ class CMakeBuilder(CLIBuilderInterface):
         self._working_directory: Optional[Path] = None
         self._cmake_file: Optional[Path] = None
         self._target: Optional[str] = None
+        self._built: bool = False
 
     def set_working_directory(self, path: Path) -> None:
         self._working_directory = path
@@ -54,6 +55,9 @@ class CMakeBuilder(CLIBuilderInterface):
         raise FileNotFoundError
 
     def build_project(self) -> None:
+        if self._built:
+            return
+        self._built = True
         for file in bfs_walk(self._project_root):
             if is_cmake_file(file):
                 self._cmake_file = file
@@ -123,6 +127,6 @@ class CMakeBuilder(CLIBuilderInterface):
 
     def get_start_command(self) -> Command:
         if self._executable_path is None:
-            self.build()
+            self.build_project()
         assert self._executable_path is not None
         return [self._executable_path]

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 def make_tests_from_generator(builder: BuilderInterface):
     def decorator(
         generator: Callable[[], Generator[TestCase, None, None]],
-    ) -> None:
+    ) -> Callable[[], Generator[TestCase, None, None]]:
         generated_tests: List[CLIOutputTest] = []
         for test_case in generator():
             if isinstance(test_case, WeightedTestCaseProtocol):
@@ -94,5 +94,6 @@ def make_tests_from_generator(builder: BuilderInterface):
                 raise ValueError(
                     f"`generator` passed to `make_tests_from_generator` produced a type, `{type(test_case)}`, which is not supported."
                 )
+        return generator
 
     return decorator

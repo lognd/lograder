@@ -26,6 +26,8 @@ class ProjectDispatcher(CLIBuilderInterface):
         self._allowed_project_types = allowed_project_types
 
     def load_builder(self):
+        if self._builder is not None:
+            return
         project_type = detect_project_type(self.get_project_root())
         if project_type not in self._allowed_project_types:
             self.set_build_error(True)
@@ -37,6 +39,8 @@ class ProjectDispatcher(CLIBuilderInterface):
             self._builder = CxxSourceBuilder()
 
     def get_builder(self) -> CLIBuilderInterface:
+        if self._builder is None:
+            self.load_builder()
         assert self._builder is not None
         return self._builder
 

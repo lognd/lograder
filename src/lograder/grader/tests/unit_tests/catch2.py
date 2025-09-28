@@ -131,7 +131,7 @@ class Catch2UnitTest(UnitTestInterface, CLITest):
 
     def _run_test(self) -> Tuple[int, Command]:
         builder = self.get_tester()
-        builder.build()
+        builder.build_project()
         self.set_working_dir(builder.get_instance_root())
 
         command = builder.get_start_command() + self.get_args()

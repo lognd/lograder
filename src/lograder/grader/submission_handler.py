@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Any, List, Mapping
 
@@ -57,7 +56,4 @@ class SubmissionHandler:
 
     @classmethod
     def run_tests(cls) -> List[TestCaseJSON]:
-        tests = TestInterface.get_tests()
-        with ThreadPoolExecutor() as executor:
-            results = list(executor.map(lambda t: t.run(), tests))
-        return results
+        return [t.run() for t in TestInterface.get_tests()]

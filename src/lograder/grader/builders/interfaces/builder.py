@@ -12,7 +12,6 @@ class BuilderInterface(ABC):
     def __init__(self):
         super().__init__()
         self._project_root: Optional[Path] = None
-        self._built: bool = False
         self._build_error: bool = False
 
     def set_build_error(self, build_error: bool = True) -> None:
@@ -27,11 +26,6 @@ class BuilderInterface(ABC):
     def get_project_root(self) -> Path:
         assert self._project_root is not None
         return self._project_root
-
-    def build(self) -> None:
-        if not self._built:
-            self._built = True
-            self.build_project()
 
     def wrap_args(self) -> bool:
         return False
