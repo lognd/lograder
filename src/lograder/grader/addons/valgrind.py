@@ -198,7 +198,9 @@ class ValgrindAddon(ExecAddonInterface):
             self.run()
         assert self._output is not None
         return (
-            PenaltyConfig.DEFAULT_VALGRIND_LEAK_PENALTY if self._output.is_safe else 1.0
+            PenaltyConfig.DEFAULT_VALGRIND_LEAK_PENALTY
+            if not self._output.is_safe
+            else 1.0
         )
 
     def get_output(self) -> FormatPackage:

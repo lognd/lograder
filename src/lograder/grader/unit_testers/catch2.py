@@ -22,11 +22,11 @@ class Catch2UnitTester(UnitTesterInterface):
         return self.get_instance_root()
 
     def get_start_command(self) -> Command:
-        return self.get_builder().get_start_command()
+        return self.get_builder().get_start_command() + ["--success"]
 
     def build_test(self) -> None:
         cmake: bool = False
-        for file in bfs_walk(self.get_project_root()):
+        for file in bfs_walk(self.get_instance_root()):
             if is_cmake_file(file):
                 cmake = True
                 break
@@ -36,3 +36,4 @@ class Catch2UnitTester(UnitTesterInterface):
             self._builder = CxxSourceBuilder()
 
         self._builder.set_project_root(self.get_instance_root())
+        self._builder.build_project()

@@ -10,6 +10,7 @@ from ..interfaces.output_test import OutputTestInterface
 
 if TYPE_CHECKING:
     from ....types import Command
+    from ...addons.addon import ExecAddonInterface
     from ...builders.interfaces.builder import BuilderInterface
 
 
@@ -72,18 +73,30 @@ class CLIOutputTest(CLITest, OutputTestInterface):
         self.set_working_dir(builder.get_build_directory())
 
         args = self.get_args()
-        command = builder.get_start_command() + args
+        command = builder.get_start_command()
+        if not command:
+            self.force_fail()
+            self.get_builder().set_build_error(True)
+            self.add_to_output("build-fail", {})
+            return 1, []
+        command += args
 
         _tmp_stdout: List[str] = []
         _tmp_stderr: List[str] = []
-        result = run_cmd(
-            command,
-            self.get_input(),
-            [],
-            _tmp_stdout,
-            _tmp_stderr,
-            self.get_working_dir(),
-        )
+        try:
+            result = run_cmd(
+                command,
+                self.get_input(),
+                [],
+                _tmp_stdout,
+                _tmp_stderr,
+                self.get_working_dir(),
+            )
+        except FileNotFoundError:
+            self.force_fail()
+            self.get_builder().set_build_error(True)
+            self.add_to_output("build-fail", {})
+            return 1, []
 
         self._actual_stdout = _tmp_stdout.pop()
         self._stderr = _tmp_stderr.pop()
@@ -100,18 +113,18 @@ class CLIOutputTest(CLITest, OutputTestInterface):
         return self._expected_stdout
 
     def get_actual_output(self) -> str:
-        if self.get_builder().get_build_error():
-            return MessageConfig.DEFAULT_BUILD_ERROR
         if self._actual_stdout is None:
             _, _ = self._run_test()
+        if self.get_builder().get_build_error():
+            return MessageConfig.DEFAULT_BUILD_ERROR
         assert self._actual_stdout is not None
         return self._actual_stdout
 
     def get_error(self) -> str:
-        if self.get_builder().get_build_error():
-            return MessageConfig.DEFAULT_BUILD_ERROR
         if self._stderr is None:
             _, _ = self._run_test()
+        if self.get_builder().get_build_error():
+            return MessageConfig.DEFAULT_BUILD_ERROR
         assert self._stderr is not None
         return self._stderr
 
@@ -126,3 +139,9 @@ class CLIOutputTest(CLITest, OutputTestInterface):
     def get_name(self) -> str:
         assert self._name is not None
         return self._name
+
+    def add_exec_addon(self, addon: ExecAddonInterface):
+        addon.set_builder(self.get_builder())
+        addon.set_args(self.get_args())
+        addon.set_input(self.get_input())
+        self.add_addon(addon)

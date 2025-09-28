@@ -3,10 +3,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, List, Optional, cast
 
+from ....types import UnitTestCase, UnitTestSuite
 from .test import TestInterface
 
 if TYPE_CHECKING:
-    from ....types import UnitTestCase, UnitTestSuite
     from ...unit_testers.unit_tester import UnitTesterInterface
 
 
@@ -46,7 +46,7 @@ class UnitTestInterface(TestInterface, ABC):
 
         outputs: List[bool] = [test["success"] for test in cases]
         tests_passed: int = sum(outputs)
-        tests_total: int = len(outputs)
+        tests_total: int = max(len(outputs), 1)
 
         return (tests_passed / tests_total) * self.get_max_score() * self.get_weight()
 

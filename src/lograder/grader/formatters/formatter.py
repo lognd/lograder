@@ -157,12 +157,12 @@ class ByteCmpFormatter(FormatterInterface[ByteStreamComparisonOutput]):
             )
         elif len(differences) <= max_len:
             return "\n".join(
-                f"  {Fore.CYAN}*{Fore.RESET} Expected: ({Back.GREEN}{b_a:02x}{Back.RESET}); Actual: ({Back.RED}{b_b:02x}{Back.RESET}); @ Location: {b_l:08x}/{b_l}"
+                f"  {Fore.CYAN}*{Fore.RESET} Expected: ({Back.GREEN}{b_a:02x}{Back.RESET}); Actual: ({Back.RED}{b_b:02x}{Back.RESET}); @ Location: 0x{b_l:08x}/{b_l}"
                 for b_a, b_b, b_l in differences
             )
         return "\n".join(
             [
-                f"  {Fore.CYAN}*{Fore.RESET} Expected: ({Back.GREEN}{b_a:02x}{Back.RESET}); Actual: ({Back.RED}{b_b:02x}{Back.RESET}); @ Location: {b_l:08x}/{b_l}"
+                f"  {Fore.CYAN}*{Fore.RESET} Expected: ({Back.GREEN}{b_a:02x}{Back.RESET}); Actual: ({Back.RED}{b_b:02x}{Back.RESET}); @ Location: 0x{b_l:08x}/{b_l}"
                 for b_a, b_b, b_l in differences[:max_len]
             ]
             + [f"  {Fore.CYAN}*{Fore.RESET} ..."]

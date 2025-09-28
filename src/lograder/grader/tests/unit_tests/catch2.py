@@ -19,10 +19,8 @@ def _is_suite(entry: UnitTestCase | UnitTestSuite) -> TypeGuard[UnitTestSuite]:
 
 class Catch2UnitTest(UnitTestInterface, CLITest):
     HEADER_PATTERN = re.compile(
-        r"-{70,}\s*\n"  # line of dashes
-        r"([^\n]*)\n"  # suite (can be empty)
-        r"((?:\s+[^\n]+\n?)+)",  # one or more indented lines (case + nested sections)
-        re.MULTILINE,
+        r"-{79}\s*\n(.*?)\n-{79}\s*\n(.*?)(?=-{79}|={79}|$)",
+        re.DOTALL,
     )
 
     def __init__(self):
@@ -97,28 +95,26 @@ class Catch2UnitTest(UnitTestInterface, CLITest):
 
         top_suite: UnitTestSuite = {"name": self.get_name(), "cases": []}
 
+        print(raw)
         for match in self.HEADER_PATTERN.finditer(raw):
             suite_name = match.group(1).strip() or "Unnamed Suite"
-            case_lines = [
-                line.strip() for line in match.group(2).splitlines() if line.strip()
-            ]
-            sections = case_lines if case_lines else ["Unnamed Case"]
+            block = match.group(2).strip()
 
-            start = match.end()
-            end = raw.find("-" * 70, start)
-            if end == -1:
-                end = len(raw)
-            block = raw[start:end].strip()
+            # Look for assertion lines
+            assertions = []
+            for line in block.splitlines():
+                if "PASSED" in line or "FAILED" in line:
+                    assertions.append(line.strip())
 
-            failed = "FAILED" in block
-            case_output = block if block else "Test passed"
+            failed = any("FAILED" in a for a in assertions)
+            sections = assertions if assertions else ["Unnamed Case"]
 
             insert_nested_case(
                 top_suite,
                 suite_name,
                 sections,
                 success=not failed,
-                output=case_output,
+                output=block,
             )
 
         return top_suite
@@ -142,9 +138,7 @@ class Catch2UnitTest(UnitTestInterface, CLITest):
         command = builder.get_start_command() + self.get_args()
 
         _tmp_stdout: List[str] = []
-        result = run_cmd(
-            command, self.get_input(), [], _tmp_stdout, [], self.get_working_dir()
-        )
+        result = run_cmd(command, self.get_input(), [], _tmp_stdout, [])
 
         self._output = _tmp_stdout.pop()
 

@@ -10,7 +10,7 @@ from .catch2 import Catch2UnitTest
 def make_unit_test_from_directory(
     *,
     name: str,
-    directory: Path,
+    directory: Path = Path("."),
     weight: float = 1.0,
     visible: bool = True,
     stdin: str = "",
@@ -18,7 +18,7 @@ def make_unit_test_from_directory(
     wrap_args: bool = False,
 ) -> Catch2UnitTest:
     tester = Catch2UnitTester()
-    tester.set_testing_root(directory)
+    tester.set_testing_root(PathConfig.DEFAULT_SOURCE_PATH / directory)
     tester.set_project_root(PathConfig.DEFAULT_SUBMISSION_PATH)
 
     test = Catch2UnitTest.make(

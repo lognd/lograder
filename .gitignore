@@ -1,3 +1,6 @@
+catch_amalgamated.hpp
+catch_amalgamated.cpp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

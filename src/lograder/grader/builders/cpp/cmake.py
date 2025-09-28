@@ -112,6 +112,8 @@ class CMakeBuilder(CLIBuilderInterface):
                 return
             self._target = valid_targets[0]
 
+        print(self._target)
+
         if sys.platform.startswith("win"):
             cmd = [
                 "cmake",
@@ -144,7 +146,6 @@ class CMakeBuilder(CLIBuilderInterface):
             self._executable_path = self.find_executable(self._target)
         except FileNotFoundError:
             self.set_build_error(True)
-            print("find exec")
             return
 
         assert self._executable_path is not None
@@ -156,7 +157,8 @@ class CMakeBuilder(CLIBuilderInterface):
         return self._build_directory
 
     def get_start_command(self) -> Command:
-        self.build_project()
+        if self._executable_path is None:
+            self.build_project()
         if self.get_build_error():
             return []
         assert self._executable_path is not None

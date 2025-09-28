@@ -36,6 +36,65 @@ def test_cmake_hello_world(tmp_path: Path):
         assignment_due_date=datetime.now() + timedelta(hours=9.53),
     )
 
+    results = get_results()
+
+    for test in results["tests"]:
+        assert test["score"] == test["max_score"]
+
+
+def test_cmake_hello_world_bad_1(tmp_path: Path):
+    create_dummy_submission(tmp_path, Path("tests/test-projects/cmake-bad-project-1"))
+
+    SubmissionHandler.clear()
+
+    builder = ProjectDispatcher()
+    builder.set_allowed_project_types(["cmake"])
+
+    make_tests_from_strs(
+        builder=builder,
+        names=["Test `Hello World`."],
+        inputs=[""],
+        expected_outputs=["Hello World from `lograder`!"],
+    )
+    SubmissionHandler.make_submission(
+        assignment_name="Hello World from `lograder`!",
+        assignment_authors=["Logan Dapp"],
+        assignment_description="Test the most basic compilation process.",
+        assignment_due_date=datetime.now() + timedelta(hours=9.53),
+    )
+
+    results = get_results()
+
+    for test in results["tests"]:
+        assert test["score"] == 0.0
+
+
+def test_cmake_hello_world_bad_2(tmp_path: Path):
+    create_dummy_submission(tmp_path, Path("tests/test-projects/cmake-bad-project-2"))
+
+    SubmissionHandler.clear()
+
+    builder = ProjectDispatcher()
+    builder.set_allowed_project_types(["cmake"])
+
+    make_tests_from_strs(
+        builder=builder,
+        names=["Test `Hello World`."],
+        inputs=[""],
+        expected_outputs=["Hello World from `lograder`!"],
+    )
+    SubmissionHandler.make_submission(
+        assignment_name="Hello World from `lograder`!",
+        assignment_authors=["Logan Dapp"],
+        assignment_description="Test the most basic compilation process.",
+        assignment_due_date=datetime.now() + timedelta(hours=9.53),
+    )
+
+    results = get_results()
+
+    for test in results["tests"]:
+        assert test["score"] == 0.0
+
 
 def test_cmake_echo(tmp_path: Path):
     create_dummy_submission(tmp_path, Path("tests/test-projects/cmake-cmp-project-2"))
@@ -114,6 +173,58 @@ def test_cmake_echo_file(tmp_path: Path):
         assert test["score"] == test["max_score"]
 
 
+def test_cmake_echo_file_bad(tmp_path: Path):
+    ifile = tmp_path / "input.txt"
+    ofile = tmp_path / "output.txt"
+    with open(ifile, "w") as f:
+        f.write("Bye World")
+    with open(ofile, "w") as f:
+        f.write("Hello World")
+
+    create_dummy_submission(tmp_path, Path("tests/test-projects/cmake-cmp-project-2"))
+
+    SubmissionHandler.clear()
+
+    builder = ProjectDispatcher()
+    builder.set_allowed_project_types(["cmake"])
+
+    make_tests_from_files(
+        builder=builder,
+        names=['Echoing "Hello World" (both files).'],
+        input_files=[ifile],
+        expected_output_files=[ofile],
+    )
+    make_tests_from_files(
+        builder=builder,
+        names=['Echoing "Hello World" (input file, output string).'],
+        input_files=[ifile],
+        expected_output_strs=["Hello World"],
+    )
+    make_tests_from_files(
+        builder=builder,
+        names=['Echoing "Hello World" (input string, output file).'],
+        input_strs=["Bye World"],
+        expected_output_files=[ofile],
+    )
+    make_tests_from_files(
+        builder=builder,
+        names=['Echoing "Hello World" (both strings).'],
+        input_strs=["Bye World"],
+        expected_output_strs=["Hello World"],
+    )
+    SubmissionHandler.make_submission(
+        assignment_name="Test `Echo` from `lograder` with files!",
+        assignment_authors=["Logan Dapp"],
+        assignment_description="Test the most basic compilation process.",
+        assignment_due_date=datetime.now() + timedelta(hours=9.53),
+    )
+
+    results = get_results()
+    for test in results["tests"]:
+        print(test["output"])
+        assert test["score"] == 0
+
+
 def test_cmake_echo_gen(tmp_path: Path):
     N_TESTS: int = 1
 
@@ -160,3 +271,54 @@ def test_cmake_echo_gen(tmp_path: Path):
 
     for test in results["tests"]:
         assert test["score"] == test["max_score"]
+
+
+def test_cmake_echo_gen_bad(tmp_path: Path):
+    N_TESTS: int = 1
+
+    SubmissionHandler.clear()
+
+    builder = ProjectDispatcher()
+    builder.set_allowed_project_types(["cmake"])
+
+    class Case(TestCaseProtocol):
+        def __init__(self, num: int):
+            self._name: str = str(num)
+
+        def get_name(self):
+            return self._name
+
+        def get_input(self):
+            return self._name + "Buggadoo"
+
+        def get_expected_output(self):
+            return self._name
+
+    @make_tests_from_generator(builder)
+    def test_generator_dict() -> Generator[TestCaseDict, None, None]:
+        for i in range(N_TESTS):
+            yield TestCaseDict(
+                name=f"{i+100}", input=f"{i+100}", expected_output=f"{i}"
+            )
+
+    @make_tests_from_generator(builder)
+    def test_generator_protocol() -> Generator[TestCaseProtocol, None, None]:
+        for i in range(N_TESTS):
+            yield Case(i)
+
+    create_dummy_submission(tmp_path, Path("tests/test-projects/cmake-cmp-project-2"))
+
+    SubmissionHandler.make_submission(
+        assignment_name="Test `Echo` from `lograder` with files!",
+        assignment_authors=["Logan Dapp"],
+        assignment_description="Test the most basic compilation process.",
+        assignment_due_date=datetime.now() + timedelta(hours=9.53),
+    )
+
+    results = get_results()
+
+    assert len(results["tests"]) == 2 * N_TESTS
+
+    for test in results["tests"]:
+        print(test["output"])
+        assert test["score"] == 0

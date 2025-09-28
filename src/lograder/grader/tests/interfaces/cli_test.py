@@ -9,7 +9,6 @@ from .test import TestInterface
 
 if TYPE_CHECKING:
     from ....types import Command
-    from ...addons.addon import ExecAddonInterface
 
 
 class CLITest(TestInterface, ABC):
@@ -48,8 +47,3 @@ class CLITest(TestInterface, ABC):
                 f'ARGS="{shlex.join([str(arg.resolve()) if isinstance(arg, Path) else arg for arg in self._args])}"'
             ]
         return self._args
-
-    def add_exec_addon(self, addon: ExecAddonInterface):
-        addon.set_args(self.get_args())
-        addon.set_input(self.get_input())
-        self.add_addon(addon)
