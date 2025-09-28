@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from typing import List, TYPE_CHECKING
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from lograder.grader.submission_handler import SubmissionHandler
 from lograder.grader.tests.unit_tests.directory import make_unit_test_from_directory
