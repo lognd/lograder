@@ -1,6 +1,6 @@
 import difflib
 from abc import ABC, abstractmethod
-from typing import Any, Generic, List, Mapping, Tuple, TypeVar, cast, Dict
+from typing import Any, Dict, Generic, List, Mapping, Tuple, TypeVar, cast
 
 from colorama import Back, Fore
 
@@ -227,6 +227,7 @@ class ByteCmpFormatter(FormatterInterface[ByteStreamComparisonOutput]):
             f"<{Fore.LIGHTYELLOW_EX}END BYTE COMPARISON{Fore.RESET}>"
         )
 
+
 @register_format("unit-tests")
 class UnitTestFormatter(FormatterInterface[UnitTestSuite | UnitTestCase]):
     @classmethod
@@ -235,24 +236,41 @@ class UnitTestFormatter(FormatterInterface[UnitTestSuite | UnitTestCase]):
         color: str
         if "success" in data.keys():
             data = cast(UnitTestCase, data)
-            color = Fore.GREEN if is_successful_test(data) else Fore.RED
-            strings.append(f"<{color}BEGIN TEST CASE '{data['name']}'{Fore.RESET}>")
-            strings.append(
-                "\n".join(f"  {line}" for line in data["output"].split("\n"))
-            )
-            strings.append(f"<{color}END TEST CASE '{data['name']}'{Fore.RESET}>\n")
+            success = is_successful_test(data)
+            color = Fore.GREEN if success else Fore.RED
+            if not success:
+                strings.append(
+                    f"<{color}BEGIN FAILED TEST CASE '{data['name']}'{Fore.RESET}>"
+                )
+                strings.append(
+                    "\n".join(f"  {line}" for line in data["output"].split("\n"))
+                )
+                strings.append(
+                    f"<{color}END FAILED TEST CASE '{data['name']}'{Fore.RESET}>\n"
+                )
+            else:
+                strings.append(
+                    f"<{color}PASSED TEST CASE '{data['name']}'{Fore.RESET}>"
+                )
         else:
             data = cast(UnitTestSuite, data)
             color = Fore.GREEN if is_successful_test(data) else Fore.RED
+            desc = "PASSED" if is_successful_test(data) else "FAILED"
             rec_string: str = "\n".join(cls.to_string(_case) for _case in data["cases"])
 
-            strings.append(f"<{color}BEGIN TEST SUITE '{data['name']}'{Fore.RESET}>")
+            strings.append(
+                f"<{color}BEGIN {desc} TEST SUITE '{data['name']}'{Fore.RESET}>"
+            )
             strings.append("\n".join(f"  {line}" for line in rec_string.split("\n")))
-            strings.append(f"<{color}END TEST SUITE '{data['name']}'{Fore.RESET}>\n")
+            strings.append(
+                f"<{color}END {desc} TEST SUITE '{data['name']}'{Fore.RESET}>\n"
+            )
 
         return "\n".join(strings)
 
+
 @register_format("build-fail")
 class BuildFailureFormatter(FormatterInterface[Dict]):
-    def to_string(self, data: Dict):
+    @classmethod
+    def to_string(cls, data: Dict):
         return f"{Fore.RED}<NO EXECUTABLE GENERATED>{Fore.RESET}"
