@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import shlex
 from abc import ABC
 from pathlib import Path

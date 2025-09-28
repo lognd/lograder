@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from ...data.paths import PathConfig
 from ...os.file import detect_project_type
 from ...types import Command, ProjectType
 from .cpp.cmake import CMakeBuilder
@@ -19,6 +20,7 @@ class ProjectDispatcher(CLIBuilderInterface):
             "py-source",
             "pyproject",
         ]
+        self.set_project_root(PathConfig.DEFAULT_SUBMISSION_PATH)
 
     def set_allowed_project_types(self, allowed_project_types: List[ProjectType]):
         self._allowed_project_types = allowed_project_types

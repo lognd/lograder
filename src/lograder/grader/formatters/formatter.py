@@ -8,6 +8,7 @@ from colorama import Back, Fore
 from ...types import (
     AssignmentMetadataOutput,
     ByteStreamComparisonOutput,
+    CommandOutput,
     StreamOutput,
     UnitTestCase,
     UnitTestSuite,
@@ -313,6 +314,13 @@ class ValgrindFormatter(FormatterInterface[ValgrindOutput]):
         warning_text = "\n".join(output)
 
         return f"{leak_text}\n\n{warning_text}"
+
+
+@register_format("command")
+class CommandFormatter(FormatterInterface[CommandOutput]):
+    @classmethod
+    def to_string(cls, data: CommandOutput):
+        return f"Ran `{Fore.MAGENTA}{data['command']}{Fore.RESET}` in CLI with exit code, \"{data['exit_code']}\"."
 
 
 @register_format("assignment-metadata")

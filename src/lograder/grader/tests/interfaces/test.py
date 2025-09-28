@@ -3,12 +3,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, List, Mapping, Optional
 
+from ...formatters.dispatcher import FormatDispatcher, FormatPackage
 from ...json.raw_gradescope import TestCaseJSON
 
 if TYPE_CHECKING:
     from ....types import FormatLabel
     from ...addons.addon import AddonInterface
-    from ...formatters.dispatcher import FormatDispatcher, FormatPackage
     from ...penalties.interfaces.penalty import PenaltyInterface
 
 

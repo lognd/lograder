@@ -1,13 +1,13 @@
+from __future__ import annotations
+
 from abc import ABC
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, Optional
 
+from ....os.cmd import run_cmd
+from ....types import Command, CommandOutput, StreamOutput
 from ...submission_handler import SubmissionHandler
-
-if TYPE_CHECKING:
-    from ....os.cmd import run_cmd
-    from ....types import Command, CommandOutput, StreamOutput
-    from ..interfaces.builder import BuilderInterface
+from ..interfaces.builder import BuilderInterface
 
 
 class CLIBuilderInterface(BuilderInterface, ABC):

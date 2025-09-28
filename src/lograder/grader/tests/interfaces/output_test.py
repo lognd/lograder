@@ -62,7 +62,7 @@ class OutputTestInterface(TestInterface, ABC):
             self._run = True
 
         return (
-            (expected["stream_contents"] == actual["stream_contents"])
+            (expected["stream_contents"].strip() == actual["stream_contents"].strip())
             * self.get_max_score()
             * self.get_weight()
         )

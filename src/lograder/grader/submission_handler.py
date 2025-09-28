@@ -33,7 +33,7 @@ class SubmissionHandler:
             assignment_due_date=assignment_due_date,
         )
         packed_metadata: AssignmentMetadataOutput = {"metadata": metadata}
-        if not cls._outputs[0] or cls._outputs[0].label != "assignment-metadata":
+        if not cls._outputs or cls._outputs[0].label != "assignment-metadata":
             cls._outputs.insert(
                 0, FormatPackage(label="assignment-metadata", data=packed_metadata)
             )
@@ -51,8 +51,9 @@ class SubmissionHandler:
         return assignment
 
     @classmethod
-    def clear_outputs(cls):
+    def clear(cls):
         cls._outputs.clear()
+        TestInterface.clear()
 
     @classmethod
     def run_tests(cls) -> List[TestCaseJSON]:

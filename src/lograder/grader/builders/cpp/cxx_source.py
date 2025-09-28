@@ -47,7 +47,7 @@ class CxxSourceBuilder(CLIBuilderInterface):
         self._build_directory = build_directory
 
     def get_build_directory(self) -> Path:
-        if self._build_directory is not None:
+        if self._build_directory is None:
             build_directory: Path = self.get_project_root() / "build"
             if not build_directory.exists():
                 build_directory = self.get_project_root()
