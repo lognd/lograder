@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Literal, TypedDict, Union, cast
+from typing import TYPE_CHECKING, List, Literal, TypedDict, Union, cast
+
+if TYPE_CHECKING:
+    from .grader.addons.valgrind import ValgrindLeakSummary, ValgrindWarningSummary
 
 # --- BUILD TYPES ---
 Command = List[Union[str, Path]]
@@ -38,6 +41,11 @@ class StreamOutput(TypedDict):
 class ByteStreamComparisonOutput(TypedDict):
     stream_actual_bytes: bytes
     stream_expected_bytes: bytes
+
+
+class ValgrindOutput(TypedDict):
+    leaks: ValgrindLeakSummary
+    warnings: ValgrindWarningSummary
 
 
 # --- UNIT-TEST TYPES ---
