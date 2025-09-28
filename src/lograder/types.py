@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, List, Literal, TypedDict, Union, cast
 
 if TYPE_CHECKING:
     from .grader.addons.valgrind import ValgrindLeakSummary, ValgrindWarningSummary
+    from .grader.metadata import AssignmentMetadata
 
 # --- BUILD TYPES ---
 Command = List[Union[str, Path]]
@@ -19,6 +20,8 @@ AscendingOrder = Literal["asc"]
 
 # --- FORMATTER TYPES ---
 FormatLabel = Literal[
+    "assignment-metadata",
+    "command",
     "raw",
     "valgrind",
     "stdin",
@@ -44,6 +47,15 @@ class ByteStreamComparisonOutput(TypedDict):
 class ValgrindOutput(TypedDict):
     leaks: ValgrindLeakSummary
     warnings: ValgrindWarningSummary
+
+
+class CommandOutput(TypedDict):
+    command: Command
+    exit_code: int
+
+
+class AssignmentMetadataOutput(TypedDict):
+    metadata: AssignmentMetadata
 
 
 # --- UNIT-TEST TYPES ---

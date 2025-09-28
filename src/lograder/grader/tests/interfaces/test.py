@@ -29,6 +29,14 @@ class TestInterface(ABC):
 
         TestInterface._created_tests.append(self)
 
+    @classmethod
+    def clear(cls):
+        cls._created_tests.clear()
+
+    @classmethod
+    def get_tests(cls) -> List[TestInterface]:
+        return cls._created_tests
+
     @abstractmethod
     def get_name(self) -> str:
         pass
@@ -83,15 +91,15 @@ class TestInterface(ABC):
                 score *= penalty.get_penalty()
                 self._add_to_output_raw(penalty.get_output())
 
-        test_output: list[str] = []
-        for output in self._outputs:
-            test_output.append(FormatDispatcher.format(output))
+        test_output: list[str] = [
+            FormatDispatcher.format(output) for output in self._outputs
+        ]
 
         pyd_output: TestCaseJSON = TestCaseJSON(
             score=score,
             max_score=self.get_max_score(),
             name=self.get_name(),
-            output="\n".join(test_output),
+            output="\n\n".join(test_output),
             visibility="visible" if self.get_visibility() else "hidden",
         )
 

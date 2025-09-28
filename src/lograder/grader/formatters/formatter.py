@@ -1,10 +1,12 @@
 import difflib
 from abc import ABC, abstractmethod
+from datetime import timedelta
 from typing import Any, Dict, Generic, List, Mapping, Tuple, TypeVar, cast
 
 from colorama import Back, Fore
 
 from ...types import (
+    AssignmentMetadataOutput,
     ByteStreamComparisonOutput,
     StreamOutput,
     UnitTestCase,
@@ -311,3 +313,44 @@ class ValgrindFormatter(FormatterInterface[ValgrindOutput]):
         warning_text = "\n".join(output)
 
         return f"{leak_text}\n\n{warning_text}"
+
+
+@register_format("assignment-metadata")
+class MetadataFormatter(FormatterInterface[AssignmentMetadataOutput]):
+    @staticmethod
+    def format_timedelta(td: timedelta) -> str:
+        if td < timedelta(0):
+            return "0s"
+        total_seconds = int(td.total_seconds())
+        milliseconds = int(td.microseconds / 1000)
+
+        weeks, remainder = divmod(total_seconds, 7 * 24 * 3600)
+        days, remainder = divmod(remainder, 24 * 3600)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        parts = []
+        if weeks:
+            parts.append(f"{weeks}w")
+        if days:
+            parts.append(f"{days}d")
+        if hours:
+            parts.append(f"{hours}h")
+        if minutes:
+            parts.append(f"{minutes}m")
+        if seconds:
+            parts.append(f"{seconds}s")
+        if milliseconds:
+            parts.append(f"{milliseconds}ms")
+
+        return " ".join(parts) if parts else "0s"
+
+    @classmethod
+    def to_string(cls, data: AssignmentMetadataOutput) -> str:
+        return (
+            f"`{Fore.MAGENTA}{data['metadata'].assignment_name}{Fore.RESET}` made by {Fore.MAGENTA}{f'{Fore.RESET}, {Fore.MAGENTA}'.join(data['metadata'].assignment_authors)}{Fore.RESET}.\n"
+            + f'Submission date: {Fore.MAGENTA}{data["metadata"].assignment_submit_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n'
+            + f'Due date: {Fore.MAGENTA}{data["metadata"].assignment_due_date.strftime("%Y-%m-%d %H:%M:%S.%f")}{Fore.RESET}.\n'
+            + f"Time left: {Fore.MAGENTA}{cls.format_timedelta(data['metadata'].assignment_due_date - data['metadata'].assignment_submit_date)}{Fore.RESET}.\n\n"
+            + f"Assignment graded with `{Fore.GREEN}{data['metadata'].library_name}{Fore.RESET}` (version {Fore.GREEN}{data['metadata'].library_version}{Fore.RESET}), made by {Fore.GREEN}{f'{Fore.RESET}, {Fore.GREEN}'.join(data['metadata'].library_authors)}.{Fore.RESET}\n\n"
+        )
