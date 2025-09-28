@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Optional
 from ..penalties.interfaces.penalty import PenaltyInterface
 
 if TYPE_CHECKING:
-    from ..builders.interfaces.builder import BuilderInterface
     from ...types import Command
+    from ..builders.interfaces.builder import BuilderInterface
 
 
 class AddonInterface(PenaltyInterface, ABC):
@@ -25,6 +25,7 @@ class AddonInterface(PenaltyInterface, ABC):
     @abstractmethod
     def run(self) -> None:
         pass
+
 
 class ExecAddonInterface(AddonInterface, ABC):
     def __init__(self):

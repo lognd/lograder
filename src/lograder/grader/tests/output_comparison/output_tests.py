@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from ....os.cmd import run_cmd
-from ..interfaces.output_test import OutputTestInterface
 from ..interfaces.exec_addon_test import ExecAddonTestInterface
+from ..interfaces.output_test import OutputTestInterface
 
 if TYPE_CHECKING:
     from ....types import Command
