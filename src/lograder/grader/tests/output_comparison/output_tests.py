@@ -1,28 +1,22 @@
 from __future__ import annotations
 
-import shlex
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from ....os.cmd import run_cmd
-from ..interfaces.exec_addon_test import ExecAddonTestInterface
+from ..interfaces.cli_test import CLITest
 from ..interfaces.output_test import OutputTestInterface
 
 if TYPE_CHECKING:
     from ....types import Command
-    from ...addons.addon import ExecAddonInterface
     from ...builders.interfaces.builder import BuilderInterface
 
 
-class CLIOutputTest(OutputTestInterface, ExecAddonTestInterface):
+class CLIOutputTest(CLITest, OutputTestInterface):
     def __init__(self):
         super().__init__()
         self._name: Optional[str] = None
         self._builder: Optional[BuilderInterface] = None
-
-        self._args: Command = []
-        self._wrap_args: bool = False
-        self._working_dir: Optional[Path] = None
 
         self._expected_stdout: Optional[str] = None
         self._actual_stdout: Optional[str] = None
@@ -44,7 +38,7 @@ class CLIOutputTest(OutputTestInterface, ExecAddonTestInterface):
 
         test.set_name(name)
         test.set_builder(builder)
-        test.set_stdin(stdin)
+        test.set_input(stdin)
         test.set_expected_stdout(expected_stdout)
         test.set_weight(weight)
 
@@ -55,33 +49,6 @@ class CLIOutputTest(OutputTestInterface, ExecAddonTestInterface):
             test.set_args(args)
 
         return test
-
-    def add_exec_addon(self, addon: ExecAddonInterface):
-        addon.set_args(self.get_args())
-        addon.set_input(self.get_input())
-        self.add_addon(addon)
-
-    def set_working_dir(self, path: Path):
-        self._working_dir = path
-
-    def get_working_dir(self) -> Optional[Path]:
-        return self._working_dir
-
-    def set_wrap_args(self, wrap: bool = True) -> None:
-        self._wrap_args = wrap
-
-    def get_wrap_args(self) -> bool:
-        return self._wrap_args
-
-    def set_args(self, args: Command) -> None:
-        self._args = args
-
-    def get_args(self) -> Command:
-        if self.get_wrap_args():
-            return [
-                f'ARGS="{shlex.join([str(arg.resolve()) if isinstance(arg, Path) else arg for arg in self._args])}"'
-            ]
-        return self._args
 
     def set_builder(self, builder: BuilderInterface) -> None:
         self._builder = builder
@@ -96,13 +63,21 @@ class CLIOutputTest(OutputTestInterface, ExecAddonTestInterface):
     def _run_test(self) -> Tuple[int, Command]:
         builder = self.get_builder()
         builder.build()
+        self.set_working_dir(builder.get_build_directory())
 
         args = self.get_args()
         command = builder.get_start_command() + args
 
         _tmp_stdout: List[str] = []
         _tmp_stderr: List[str] = []
-        result = run_cmd(command, [], _tmp_stdout, _tmp_stderr, self.get_working_dir())
+        result = run_cmd(
+            command,
+            self.get_input(),
+            [],
+            _tmp_stdout,
+            _tmp_stderr,
+            self.get_working_dir(),
+        )
 
         self._actual_stdout = _tmp_stdout.pop()
         self._stderr = _tmp_stderr.pop()

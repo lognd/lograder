@@ -16,6 +16,13 @@ class UnitTestInterface(TestInterface, ABC):
         super().__init__()
         self._tester: Optional[UnitTesterInterface] = None
         self._run: bool = False
+        self._stdin: str = ""
+
+    def set_input(self, stdin: str) -> None:
+        self._stdin = stdin
+
+    def get_input(self) -> str:
+        return self._stdin
 
     @abstractmethod
     def collect_tests(self) -> UnitTestSuite:

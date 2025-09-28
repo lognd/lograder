@@ -19,29 +19,24 @@ def do_process(args: Command, **kwargs) -> subprocess.CompletedProcess:
 
 def run_cmd(
     cmd: List[str | Path],
+    stdin: str = "",
     commands: Optional[List[List[str | Path]]] = None,
     stdout: Optional[List[str]] = None,
     stderr: Optional[List[str]] = None,
     working_directory: Optional[Path] = None,
 ):
+    kwargs = dict(
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=BuildConfig.DEFAULT_EXECUTABLE_TIMEOUT,
+        input=stdin,
+    )
 
-    if working_directory is None:
-        result = do_process(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=BuildConfig.DEFAULT_EXECUTABLE_TIMEOUT,
-        )
-    else:
-        result = do_process(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=BuildConfig.DEFAULT_EXECUTABLE_TIMEOUT,
-            cwd=working_directory,
-        )
+    if working_directory is not None:
+        kwargs["cwd"] = working_directory
+
+    result = do_process(cmd, **kwargs)
 
     if commands is not None:
         commands.append(cmd)

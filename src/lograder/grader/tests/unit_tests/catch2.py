@@ -1,15 +1,23 @@
-import re
-from typing import List, Optional, TypeGuard, cast
+from __future__ import annotations
 
-from ....types import UnitTestCase, UnitTestSuite
+import re
+from pathlib import Path
+from typing import TYPE_CHECKING, List, Optional, Tuple, TypeGuard, cast
+
+from ....os.cmd import run_cmd
+from ....types import Command, UnitTestCase, UnitTestSuite
+from ..interfaces.cli_test import CLITest
 from ..interfaces.unit_test import UnitTestInterface
+
+if TYPE_CHECKING:
+    from ...unit_testers.unit_tester import UnitTesterInterface
 
 
 def _is_suite(entry: UnitTestCase | UnitTestSuite) -> TypeGuard[UnitTestSuite]:
     return "cases" in entry
 
 
-class Catch2UnitTest(UnitTestInterface):
+class Catch2UnitTest(UnitTestInterface, CLITest):
     HEADER_PATTERN = re.compile(
         r"-{70,}\s*\n"  # line of dashes
         r"([^\n]*)\n"  # suite (can be empty)
@@ -21,6 +29,32 @@ class Catch2UnitTest(UnitTestInterface):
         super().__init__()
         self._name: Optional[str] = None
         self._output: Optional[str] = None
+
+    @classmethod
+    def make(
+        cls,
+        name: str,
+        tester: UnitTesterInterface,
+        stdin: str,
+        weight: float = 1.0,
+        args: Optional[Command] = None,
+        working_dir: Optional[Path] = None,
+        wrap_args: bool = False,
+    ) -> Catch2UnitTest:
+        test = cls()
+
+        test.set_name(name)
+        test.set_tester(tester)
+        test.set_input(stdin)
+        test.set_weight(weight)
+
+        test.set_wrap_args(wrap_args)
+        if working_dir is not None:
+            test.set_working_dir(working_dir)
+        if args is not None:
+            test.set_args(args)
+
+        return test
 
     def set_name(self, name: str) -> None:
         self._name = name
@@ -89,7 +123,31 @@ class Catch2UnitTest(UnitTestInterface):
 
         return top_suite
 
+    def get_args(self):
+        return []
+
+    def get_input(self):
+        return ""
+
+    def _run_test(self) -> Tuple[int, Command]:
+        builder = self.get_tester()
+        builder.build()
+        self.set_working_dir(builder.get_instance_root())
+
+        command = builder.get_start_command() + self.get_args()
+
+        _tmp_stdout: List[str] = []
+        result = run_cmd(
+            command, self.get_input(), [], _tmp_stdout, [], self.get_working_dir()
+        )
+
+        self._output = _tmp_stdout.pop()
+
+        return result.returncode, command
+
     def get_output(self) -> str:
+        if self._output is None:
+            _, _ = self._run_test()
         assert self._output is not None
         return self._output
 

@@ -17,7 +17,7 @@ class OutputTestInterface(TestInterface, ABC):
         self._run: bool = False
         self._stdin: str = ""
 
-    def set_stdin(self, stdin: str) -> None:
+    def set_input(self, stdin: str) -> None:
         self._stdin = stdin
 
     def get_input(self) -> str:
