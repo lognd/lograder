@@ -1,6 +1,6 @@
 import difflib
 from abc import ABC, abstractmethod
-from typing import Any, Generic, List, Mapping, Tuple, TypeVar, cast
+from typing import Any, Generic, List, Mapping, Tuple, TypeVar, cast, Dict
 
 from colorama import Back, Fore
 
@@ -227,7 +227,7 @@ class ByteCmpFormatter(FormatterInterface[ByteStreamComparisonOutput]):
             f"<{Fore.LIGHTYELLOW_EX}END BYTE COMPARISON{Fore.RESET}>"
         )
 
-
+@register_format("unit-tests")
 class UnitTestFormatter(FormatterInterface[UnitTestSuite | UnitTestCase]):
     @classmethod
     def to_string(cls, data: UnitTestSuite | UnitTestCase):
@@ -251,3 +251,8 @@ class UnitTestFormatter(FormatterInterface[UnitTestSuite | UnitTestCase]):
             strings.append(f"<{color}END TEST SUITE '{data['name']}'{Fore.RESET}>\n")
 
         return "\n".join(strings)
+
+@register_format("build-fail")
+class BuildFailureFormatter(FormatterInterface[Dict]):
+    def to_string(self, data: Dict):
+        return f"{Fore.RED}<NO EXECUTABLE GENERATED>{Fore.RESET}"
