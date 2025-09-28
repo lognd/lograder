@@ -21,8 +21,6 @@ AscendingOrder = Literal["asc"]
 FormatLabel = Literal[
     "raw",
     "valgrind",
-    "callgrind",
-    "time",
     "stdin",
     "expected-stdout",
     "actual-stdout",

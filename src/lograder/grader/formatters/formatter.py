@@ -9,6 +9,7 @@ from ...types import (
     StreamOutput,
     UnitTestCase,
     UnitTestSuite,
+    ValgrindOutput,
     is_successful_test,
 )
 from .dispatcher import register_format
@@ -274,3 +275,39 @@ class BuildFailureFormatter(FormatterInterface[Dict]):
     @classmethod
     def to_string(cls, data: Dict):
         return f"{Fore.RED}<NO EXECUTABLE GENERATED>{Fore.RESET}"
+
+
+@register_format("valgrind")
+class ValgrindFormatter(FormatterInterface[ValgrindOutput]):
+    @classmethod
+    def to_string(cls, data: ValgrindOutput):
+        leak_summary = data["leaks"]
+        warning_summary = data["warnings"]
+
+        def_lost_color = (
+            Fore.LIGHTGREEN_EX if leak_summary.definitely_lost.is_safe else Fore.RED
+        )
+        ind_lost_color = (
+            Fore.LIGHTGREEN_EX if leak_summary.indirectly_lost.is_safe else Fore.RED
+        )
+        pos_lost_color = (
+            Fore.LIGHTGREEN_EX if leak_summary.possibly_lost.is_safe else Fore.RED
+        )
+        leak_text = (
+            f"{Fore.LIGHTGREEN_EX}VALGRIND LEAK SUMMARY{Fore.RESET}:\n" +  # I know these pluses aren't necessary, but I'm doing it for back-compatibility because linters yell at me for line-continuation.
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {def_lost_color}{leak_summary.definitely_lost.bytes}{Fore.RESET} bytes, {def_lost_color}{leak_summary.definitely_lost.blocks}{Fore.RESET} blocks {def_lost_color}definitely lost{Fore.RESET}.\n" +
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {ind_lost_color}{leak_summary.indirectly_lost.bytes}{Fore.RESET} bytes, {ind_lost_color}{leak_summary.indirectly_lost.blocks}{Fore.RESET} blocks {ind_lost_color}indirectly lost{Fore.RESET}.\n" +
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {pos_lost_color}{leak_summary.possibly_lost.bytes}{Fore.RESET} bytes, {pos_lost_color}{leak_summary.possibly_lost.blocks}{Fore.RESET} blocks {pos_lost_color}possibly lost{Fore.RESET}.\n" +
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {Fore.LIGHTGREEN_EX}{leak_summary.still_reachable.bytes}{Fore.RESET} bytes, {Fore.LIGHTGREEN_EX}{leak_summary.still_reachable.blocks}{Fore.RESET} blocks {Fore.LIGHTGREEN_EX}still reachable{Fore.RESET}."
+        )
+
+        warning = warning_summary.model_dump()
+        output = [f"{Fore.LIGHTGREEN_EX}VALGRIND WARNING SUMMARY{Fore.RESET}:"]
+        output += [
+            f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {Fore.LIGHTGREEN_EX if v == 0 else Fore.RED}{v}{Fore.RESET} `{Fore.LIGHTRED_EX}{k.replace('_', ' ').upper()}{Fore.RESET}` warnings encountered."
+            for k, v in warning.items()
+        ]
+
+        warning_text = "\n".join(output)
+
+        return f"{leak_text}\n\n{warning_text}"
