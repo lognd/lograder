@@ -50,11 +50,17 @@ class TestInterface(ABC):
     def set_visibility(self, visibility: bool):
         self._visible = visibility
 
+    def add_penalty(self, penalty: PenaltyInterface):
+        self._penalties.append(penalty)
+
     def set_penalties(self, penalties: List[PenaltyInterface]):
         self._penalties = penalties
 
     def set_addons(self, addons: List[AddonInterface]):
         self._addons = addons
+
+    def add_addon(self, addon: AddonInterface):
+        self._addons.append(addon)
 
     def add_to_output(self, label: FormatLabel, data: Mapping[str, Any]):
         self._add_to_output_raw(FormatPackage(label=label, data=data))

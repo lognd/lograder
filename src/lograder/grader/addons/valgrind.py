@@ -11,10 +11,9 @@ from ...data.build import BuildConfig
 from ...data.penalties import PenaltyConfig
 from ...random_utils import random_name
 from ..formatters.dispatcher import FormatPackage
-from .addon import AddonInterface
+from .addon import ExecAddonInterface
 
 if TYPE_CHECKING:
-    from ...types import Command
     from ...types import ValgrindOutput as ValgrindOutput_t
 
 
@@ -181,29 +180,15 @@ def valgrind(
     return valgrind_output.get_leaks(), valgrind_output.get_warnings()
 
 
-class ValgrindAddon(AddonInterface):
+class ValgrindAddon(ExecAddonInterface):
     def __init__(self):
         super().__init__()
         self._output: Optional[ValgrindLeakSummary] = None
         self._warnings: Optional[ValgrindWarningSummary] = None
-        self._stdin: str = ""
-        self._args: Command = []
-
-    def set_args(self, args: Command):
-        self._args = args
-
-    def get_args(self) -> Command:
-        return self._args
-
-    def set_stdin(self, stdin: str):
-        self._stdin = stdin
-
-    def get_stdin(self):
-        return self._stdin
 
     def run(self) -> None:
         self._output, self._warnings = valgrind(
-            self.get_builder().get_start_command() + self.get_args(), self.get_stdin()
+            self.get_builder().get_start_command() + self.get_args(), self.get_input()
         )
 
     def get_penalty(self) -> float:
