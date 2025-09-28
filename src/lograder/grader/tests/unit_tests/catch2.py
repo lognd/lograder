@@ -11,6 +11,7 @@ from ..interfaces.unit_test import UnitTestInterface
 
 if TYPE_CHECKING:
     from ...unit_testers.unit_tester import UnitTesterInterface
+    from ...addons.addon import ExecAddonInterface
 
 
 def _is_suite(entry: UnitTestCase | UnitTestSuite) -> TypeGuard[UnitTestSuite]:
@@ -95,7 +96,6 @@ class Catch2UnitTest(UnitTestInterface, CLITest):
 
         top_suite: UnitTestSuite = {"name": self.get_name(), "cases": []}
 
-        print(raw)
         for match in self.HEADER_PATTERN.finditer(raw):
             suite_name = match.group(1).strip() or "Unnamed Suite"
             block = match.group(2).strip()
@@ -153,3 +153,9 @@ class Catch2UnitTest(UnitTestInterface, CLITest):
     def get_name(self) -> str:
         assert self._name is not None
         return self._name
+
+    def add_exec_addon(self, addon: ExecAddonInterface):
+        addon.set_builder(self.get_tester())
+        addon.set_args(self.get_args())
+        addon.set_input(self.get_input())
+        self.add_addon(addon)
