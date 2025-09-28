@@ -14,15 +14,13 @@ class CxxSourceBuilder(CLIBuilderInterface):
     def __init__(self):
         super().__init__()
         self._executable_path: Optional[Path] = None
-        self._project_root: Path = PathConfig.DEFAULT_SUBMISSION_PATH
+        self.set_project_root(PathConfig.DEFAULT_SUBMISSION_PATH)
 
-        self._build_directory: Path = self._project_root / "build"
-        if not self._build_directory.exists():
-            self._build_directory = self._project_root
+        self._build_directory: Optional[Path] = None
 
     def build_project(self) -> None:
         source_files: List[Path] = []
-        for file in bfs_walk(self._project_root):
+        for file in bfs_walk(self.get_project_root()):
             if is_cxx_source_file(file):
                 source_files.append(file)
 
@@ -49,6 +47,12 @@ class CxxSourceBuilder(CLIBuilderInterface):
         self._build_directory = build_directory
 
     def get_build_directory(self) -> Path:
+        if self._build_directory is not None:
+            build_directory: Path = self.get_project_root() / "build"
+            if not build_directory.exists():
+                build_directory = self.get_project_root()
+            self.set_build_directory(build_directory)
+        assert self._build_directory is not None
         return self._build_directory
 
     def get_start_command(self) -> Command:

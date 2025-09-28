@@ -54,7 +54,7 @@ imports:
 	@echo "Checking import order with isort..."
 	@$(VENV_ISORT) src tests
 
-check: imports lint type format test
+check: imports format lint type test
 
 clean:
 	@echo "Cleaning build artifacts..."

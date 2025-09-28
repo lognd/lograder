@@ -86,9 +86,9 @@ goto :eof
 
 :check
 call :imports
+call :format
 call :lint
 call :type
-call :format
 call :test
 call :cycle-check
 goto :eof

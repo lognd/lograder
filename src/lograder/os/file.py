@@ -2,6 +2,17 @@ import subprocess
 from collections import deque
 from pathlib import Path
 
+from ..types import ProjectType
+
+
+def detect_project_type(project_root: Path) -> ProjectType:
+    for file in bfs_walk(project_root):
+        if is_cmake_file(file):
+            return "cmake"
+        if is_makefile_file(file):
+            return "makefile"
+    return "cxx-source"
+
 
 def bfs_walk(root: Path):  # pathlib defaults to dfs; must implement bfs ourselves.
     queue = deque([root])
