@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Literal, TypedDict, Union
+from typing import List, Literal, TypedDict, Union, cast
 
 # --- BUILD TYPES ---
 Command = List[Union[str, Path]]
@@ -36,8 +36,8 @@ class StreamOutput(TypedDict):
 
 
 class ByteStreamComparisonOutput(TypedDict):
-    stream_a_bytes: bytes
-    stream_b_bytes: bytes
+    stream_actual_bytes: bytes
+    stream_expected_bytes: bytes
 
 
 # --- UNIT-TEST TYPES ---
@@ -50,3 +50,9 @@ class UnitTestCase(TypedDict):
 class UnitTestSuite(TypedDict):
     name: str
     cases: List[UnitTestCase | UnitTestSuite]
+
+
+def is_successful_test(suite: UnitTestSuite | UnitTestCase) -> bool:
+    if "success" in suite.keys():
+        return cast(UnitTestCase, suite)["success"]
+    return all(is_successful_test(case) for case in cast(UnitTestSuite, suite)["cases"])

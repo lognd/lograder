@@ -32,7 +32,7 @@ class UnitTestInterface(TestInterface, ABC):
         while suites:
             suite = suites.pop()
             for test in suite["cases"]:
-                if hasattr(test, "success"):
+                if "success" in test.keys():
                     cases.append(cast(UnitTestCase, test))
                 else:
                     suites.append(cast(UnitTestSuite, test))

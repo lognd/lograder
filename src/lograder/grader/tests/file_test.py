@@ -59,8 +59,8 @@ class FileTest(TestInterface):
 
     def get_score(self) -> float:
         streams: ByteStreamComparisonOutput = {
-            "stream_a_bytes": self.get_expected_output(),
-            "stream_b_bytes": self.get_actual_output(),
+            "stream_expected_bytes": self.get_expected_output(),
+            "stream_actual_bytes": self.get_actual_output(),
         }
         if not self._run:  # stop duplicate appending
             self.add_to_output("byte-cmp", streams)
@@ -69,7 +69,9 @@ class FileTest(TestInterface):
         return (
             (
                 difflib.SequenceMatcher(
-                    None, streams["stream_a_bytes"], streams["stream_b_bytes"]
+                    None,
+                    streams["stream_actual_bytes"],
+                    streams["stream_expected_bytes"],
                 ).ratio()
             )
             * self.get_max_score()
