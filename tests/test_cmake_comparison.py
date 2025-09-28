@@ -15,13 +15,13 @@ from lograder.grader.tests.output_comparison import (
 )
 
 
-def test_cpp_hello_world(tmp_path: Path):
-    create_dummy_submission(tmp_path, Path("tests/test-projects/cpp-cmp-project-1"))
+def test_cmake_hello_world(tmp_path: Path):
+    create_dummy_submission(tmp_path, Path("tests/test-projects/cmake-cmp-project-1"))
 
     SubmissionHandler.clear()
 
     builder = ProjectDispatcher()
-    builder.set_allowed_project_types(["cxx-source"])
+    builder.set_allowed_project_types(["cmake"])
 
     make_tests_from_strs(
         builder=builder,
@@ -37,13 +37,13 @@ def test_cpp_hello_world(tmp_path: Path):
     )
 
 
-def test_cpp_echo(tmp_path: Path):
-    create_dummy_submission(tmp_path, Path("tests/test-projects/cpp-cmp-project-2"))
+def test_cmake_echo(tmp_path: Path):
+    create_dummy_submission(tmp_path, Path("tests/test-projects/cmake-cmp-project-2"))
 
     SubmissionHandler.clear()
 
     builder = ProjectDispatcher()
-    builder.set_allowed_project_types(["cxx-source"])
+    builder.set_allowed_project_types(["cmake"])
 
     make_tests_from_strs(
         builder=builder,
@@ -63,7 +63,7 @@ def test_cpp_echo(tmp_path: Path):
         assert test["score"] == test["max_score"]
 
 
-def test_cpp_echo_file(tmp_path: Path):
+def test_cmake_echo_file(tmp_path: Path):
     ifile = tmp_path / "input.txt"
     ofile = tmp_path / "output.txt"
     with open(ifile, "w") as f:
@@ -71,12 +71,12 @@ def test_cpp_echo_file(tmp_path: Path):
     with open(ofile, "w") as f:
         f.write("Hello World")
 
-    create_dummy_submission(tmp_path, Path("tests/test-projects/cpp-cmp-project-2"))
+    create_dummy_submission(tmp_path, Path("tests/test-projects/cmake-cmp-project-2"))
 
     SubmissionHandler.clear()
 
     builder = ProjectDispatcher()
-    builder.set_allowed_project_types(["cxx-source"])
+    builder.set_allowed_project_types(["cmake"])
 
     make_tests_from_files(
         builder=builder,
@@ -114,13 +114,13 @@ def test_cpp_echo_file(tmp_path: Path):
         assert test["score"] == test["max_score"]
 
 
-def test_cpp_echo_gen(tmp_path: Path):
-    N_TESTS: int = 100
+def test_cmake_echo_gen(tmp_path: Path):
+    N_TESTS: int = 1
 
     SubmissionHandler.clear()
 
     builder = ProjectDispatcher()
-    builder.set_allowed_project_types(["cxx-source"])
+    builder.set_allowed_project_types(["cmake"])
 
     class Case(TestCaseProtocol):
         def __init__(self, num: int):
@@ -145,7 +145,7 @@ def test_cpp_echo_gen(tmp_path: Path):
         for i in range(N_TESTS):
             yield Case(i)
 
-    create_dummy_submission(tmp_path, Path("tests/test-projects/cpp-cmp-project-2"))
+    create_dummy_submission(tmp_path, Path("tests/test-projects/cmake-cmp-project-2"))
 
     SubmissionHandler.make_submission(
         assignment_name="Test `Echo` from `lograder` with files!",

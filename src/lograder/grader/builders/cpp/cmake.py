@@ -1,4 +1,5 @@
 import re
+import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -13,6 +14,7 @@ from ..interfaces.cli_builder import CLIBuilderInterface
 class CMakeBuilder(CLIBuilderInterface):
 
     TARGET_PATTERN = re.compile(r"^\.\.\.\s+([a-zA-Z0-9_\-.]+)", re.MULTILINE)
+    WIN_TARGET_PATTERN = re.compile(r"^([A-Za-z0-9_\-.]+):", re.MULTILINE)
 
     def __init__(self):
         super().__init__()
@@ -20,10 +22,10 @@ class CMakeBuilder(CLIBuilderInterface):
         self._project_root: Path = Path(PathConfig.DEFAULT_SUBMISSION_PATH)
 
         self._build_directory: Path = self._project_root / f"build-{random_name()}"
+        self._build_directory.mkdir(parents=True, exist_ok=True)
         self._working_directory: Optional[Path] = None
         self._cmake_file: Optional[Path] = None
         self._target: Optional[str] = None
-        self._built: bool = False
 
     def set_working_directory(self, path: Path) -> None:
         self._working_directory = path
@@ -55,9 +57,6 @@ class CMakeBuilder(CLIBuilderInterface):
         raise FileNotFoundError
 
     def build_project(self) -> None:
-        if self._built:
-            return
-        self._built = True
         for file in bfs_walk(self._project_root):
             if is_cmake_file(file):
                 self._cmake_file = file
@@ -65,13 +64,26 @@ class CMakeBuilder(CLIBuilderInterface):
         assert self._cmake_file is not None
         self.set_working_directory(self._cmake_file.parent)
 
-        cmd: List[str | Path] = [
-            "cmake",
-            "-S",
-            self.get_working_directory(),
-            "-B",
-            self.get_build_directory(),
-        ]
+        if sys.platform.startswith("win"):
+            cmd: List[str | Path] = [
+                "cmake",
+                "-S",
+                self.get_working_directory(),
+                "-B",
+                self.get_build_directory(),
+                "-G",
+                "Ninja",
+            ]
+        else:
+            cmd: List[str | Path] = [
+                "cmake",
+                "-S",
+                self.get_working_directory(),
+                "-B",
+                self.get_build_directory(),
+                "-G",
+                "Unix Makefiles",
+            ]
 
         self.run_cmd(cmd)
         if self.get_build_error():
@@ -82,7 +94,11 @@ class CMakeBuilder(CLIBuilderInterface):
         if self.get_build_error():
             return
 
-        targets = self.TARGET_PATTERN.findall(self.get_stdout()[-1])
+        if sys.platform.startswith("win"):
+            targets = self.WIN_TARGET_PATTERN.findall(self.get_stdout()[-1])
+        else:
+            targets = self.TARGET_PATTERN.findall(self.get_stdout()[-1])
+
         if "main" in targets:
             self._target = "main"
         elif "build" in targets:
@@ -90,31 +106,45 @@ class CMakeBuilder(CLIBuilderInterface):
         elif "demo" in targets:
             self._target = "demo"
         else:
-            valid_targets = [target for target in targets if is_valid_target(target)]
+            valid_targets = [t for t in targets if is_valid_target(t)]
             if not valid_targets:
                 self.set_build_error(True)
                 return
             self._target = valid_targets[0]
 
-        cmd = [
-            "cmake",
-            *CxxConfig.DEFAULT_CMAKE_COMPILATION_FLAGS,
-            "--build",
-            self.get_build_directory(),
-            "--target",
-            self._target,
-            "--",
-            "-s",
-            "--no-print-directory",
-        ]
+        if sys.platform.startswith("win"):
+            cmd = [
+                "cmake",
+                *CxxConfig.DEFAULT_CMAKE_COMPILATION_FLAGS,
+                "--build",
+                self.get_build_directory(),
+                "--target",
+                self._target,
+                "--",
+                "--quiet",
+            ]
+        else:
+            cmd = [
+                "cmake",
+                *CxxConfig.DEFAULT_CMAKE_COMPILATION_FLAGS,
+                "--build",
+                self.get_build_directory(),
+                "--target",
+                self._target,
+                "--",
+                "-s",
+                "--no-print-directory",
+            ]
         self.run_cmd(cmd)
         if self.get_build_error():
             return
 
+        self._executable_path = self.find_executable(self._target)
         try:
             self._executable_path = self.find_executable(self._target)
         except FileNotFoundError:
             self.set_build_error(True)
+            print("find exec")
             return
 
         assert self._executable_path is not None
@@ -126,7 +156,8 @@ class CMakeBuilder(CLIBuilderInterface):
         return self._build_directory
 
     def get_start_command(self) -> Command:
-        if self._executable_path is None:
-            self.build_project()
+        self.build_project()
+        if self.get_build_error():
+            return []
         assert self._executable_path is not None
         return [self._executable_path]

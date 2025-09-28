@@ -48,5 +48,12 @@ class CLIBuilderInterface(BuilderInterface, ABC):
         SubmissionHandler.add_output(
             "stderr", StreamOutput(stream_contents=self._stderr[-1])
         )
+        print("========")
+        print(cmd)
+        print(result.returncode)
+        print(result.stdout)
+        print("--------")
+        print(result.stderr)
+        print("========")
         if result.returncode != 0:
             self.set_build_error(True)

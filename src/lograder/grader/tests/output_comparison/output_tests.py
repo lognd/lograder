@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
+from ....data.messages import MessageConfig
 from ....os.cmd import run_cmd
 from ..interfaces.cli_test import CLITest
 from ..interfaces.output_test import OutputTestInterface
@@ -63,6 +64,11 @@ class CLIOutputTest(CLITest, OutputTestInterface):
     def _run_test(self) -> Tuple[int, Command]:
         builder = self.get_builder()
         builder.build_project()
+        if builder.get_build_error():
+            self.force_fail()
+            self.add_to_output("build-fail", {})
+            return 1, []
+
         self.set_working_dir(builder.get_build_directory())
 
         args = self.get_args()
@@ -88,16 +94,22 @@ class CLIOutputTest(CLITest, OutputTestInterface):
         self._expected_stdout = expected_stdout
 
     def get_expected_output(self) -> str:
+        if self.get_builder().get_build_error():
+            return MessageConfig.DEFAULT_BUILD_ERROR
         assert self._expected_stdout is not None
         return self._expected_stdout
 
     def get_actual_output(self) -> str:
+        if self.get_builder().get_build_error():
+            return MessageConfig.DEFAULT_BUILD_ERROR
         if self._actual_stdout is None:
             _, _ = self._run_test()
         assert self._actual_stdout is not None
         return self._actual_stdout
 
     def get_error(self) -> str:
+        if self.get_builder().get_build_error():
+            return MessageConfig.DEFAULT_BUILD_ERROR
         if self._stderr is None:
             _, _ = self._run_test()
         assert self._stderr is not None
