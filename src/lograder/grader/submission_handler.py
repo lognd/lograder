@@ -25,6 +25,8 @@ class SubmissionHandler:
         assignment_description: str,
         assignment_due_date: datetime,
     ) -> AssignmentJSON:
+        tests = cls.run_tests()
+
         metadata: AssignmentMetadata = AssignmentMetadata(
             assignment_name=assignment_name,
             assignment_authors=assignment_authors,
@@ -41,7 +43,7 @@ class SubmissionHandler:
         ]
 
         assignment = AssignmentJSON(
-            output="\n\n".join(build_output), tests=cls.run_tests()
+            output="\n\n".join(build_output), tests=tests
         )
 
         with open(PathConfig.DEFAULT_RESULT_PATH, "w", encoding="utf-8") as f:

@@ -112,8 +112,6 @@ class CMakeBuilder(CLIBuilderInterface):
                 return
             self._target = valid_targets[0]
 
-        print(self._target)
-
         if sys.platform.startswith("win"):
             cmd = [
                 "cmake",

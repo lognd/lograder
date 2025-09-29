@@ -106,7 +106,7 @@ class Catch2UnitTest(UnitTestInterface, CLITest):
                 if "PASSED" in line or "FAILED" in line:
                     assertions.append(line.strip())
 
-            failed = any("FAILED" in a for a in assertions)
+            failed = any("FAILED" in a for a in assertions) or (self._override is False)
             sections = assertions if assertions else ["Unnamed Case"]
 
             insert_nested_case(
