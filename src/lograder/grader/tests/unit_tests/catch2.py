@@ -138,7 +138,13 @@ class Catch2UnitTest(UnitTestInterface, CLITest):
         command = builder.get_start_command() + self.get_args()
 
         _tmp_stdout: List[str] = []
-        result = run_cmd(command, self.get_input(), [], _tmp_stdout, [])
+        try:
+            result = run_cmd(command, self.get_input(), [], _tmp_stdout, [])
+        except FileNotFoundError:
+            self.force_fail()
+            builder.set_build_error()
+            self.add_to_output("build-fail", {})
+            return 1, []
 
         self._output = _tmp_stdout.pop()
 
