@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lograder"
-version = "0.1.5"
+version = "0.1.6"
 description = "An API for easy Gradescope Autograder assignment creation."
 readme = "README.md"
 license = { file = "LICENSE" }

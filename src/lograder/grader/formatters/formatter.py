@@ -1,6 +1,7 @@
 import difflib
 from abc import ABC, abstractmethod
 from datetime import timedelta
+from pathlib import Path
 from typing import Any, Dict, Generic, List, Mapping, Tuple, TypeVar, cast
 import shlex
 
@@ -321,7 +322,7 @@ class ValgrindFormatter(FormatterInterface[ValgrindOutput]):
 class CommandFormatter(FormatterInterface[CommandOutput]):
     @classmethod
     def to_string(cls, data: CommandOutput):
-        return f"Ran `{Fore.MAGENTA}{shlex.join(data['command'])}{Fore.RESET}` in CLI with exit code, \"{data['exit_code']}\"."
+        return f"Ran `{Fore.MAGENTA}{shlex.join([p.resolve() if isinstance(p, Path) else p for p in data['command']])}{Fore.RESET}` in CLI with exit code, \"{data['exit_code']}\"."
 
 
 @register_format("assignment-metadata")
