@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lograder"
-version = "0.1.2"  # If this is changed, change the metadata in `lograder.dispatch.common.types.AssignmentMetadata`.
+version = "0.1.3"
 description = "An API for easy Gradescope Autograder assignment creation."
 readme = "README.md"
 license = { file = "LICENSE" }
