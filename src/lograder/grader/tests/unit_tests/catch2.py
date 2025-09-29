@@ -144,6 +144,7 @@ class Catch2UnitTest(UnitTestInterface, CLITest):
             self.force_fail()
             builder.set_build_error()
             self.add_to_output("build-fail", {})
+            self._output = ""
             return 1, []
 
         self._output = _tmp_stdout.pop()
@@ -153,7 +154,6 @@ class Catch2UnitTest(UnitTestInterface, CLITest):
     def get_output(self) -> str:
         if self._output is None:
             _, _ = self._run_test()
-        assert self._output is not None
         return self._output
 
     def get_name(self) -> str:
