@@ -43,7 +43,7 @@ class SubmissionHandler:
         ]
 
         assignment = AssignmentJSON(
-            output="\n\n".join(build_output), tests=tests
+            output="\n".join(build_output), tests=tests
         )
 
         with open(PathConfig.DEFAULT_RESULT_PATH, "w", encoding="utf-8") as f:

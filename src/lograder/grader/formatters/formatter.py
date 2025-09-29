@@ -2,6 +2,7 @@ import difflib
 from abc import ABC, abstractmethod
 from datetime import timedelta
 from typing import Any, Dict, Generic, List, Mapping, Tuple, TypeVar, cast
+import shlex
 
 from colorama import Back, Fore
 
@@ -265,7 +266,7 @@ class UnitTestFormatter(FormatterInterface[UnitTestSuite | UnitTestCase]):
             strings.append(
                 f"<{color}BEGIN {desc} TEST SUITE '{data['name']}'{Fore.RESET}>"
             )
-            strings.append("\n".join(f"  {line}" for line in rec_string.split("\n")))
+            strings.append(("\n".join(f"  {line}" for line in rec_string.split("\n"))).rstrip())
             strings.append(
                 f"<{color}END {desc} TEST SUITE '{data['name']}'{Fore.RESET}>\n"
             )
@@ -320,7 +321,7 @@ class ValgrindFormatter(FormatterInterface[ValgrindOutput]):
 class CommandFormatter(FormatterInterface[CommandOutput]):
     @classmethod
     def to_string(cls, data: CommandOutput):
-        return f"Ran `{Fore.MAGENTA}{data['command']}{Fore.RESET}` in CLI with exit code, \"{data['exit_code']}\"."
+        return f"Ran `{Fore.MAGENTA}{shlex.join(data['command'])}{Fore.RESET}` in CLI with exit code, \"{data['exit_code']}\"."
 
 
 @register_format("assignment-metadata")
