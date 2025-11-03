@@ -140,14 +140,7 @@ class Directory:
 
     @classmethod
     def read(cls, tree: DirectoryType) -> Directory:
-        """Recursively construct a `Directory` hierarchy from a nested dictionary.
-
-        Args:
-            tree: Nested structure describing directories and files.
-
-        Returns:
-            A `Directory` instance representing the root of the structure.
-        """
+        """Recursively construct a `Directory` hierarchy from a nested dictionary."""
         root = Directory("/")
         files = tree.get("_files", [])
         if files and isinstance(files, list):
@@ -166,11 +159,7 @@ class Directory:
 
 
 class FileHandlerInterface(ProcessBool, ABC):
-    """Abstract base class for managing isolated file copies.
-
-    Creates a temporary root directory (`tempfile.mkdtemp()`) that is automatically
-    deleted on garbage collection. Subclasses implement specific setup behaviors.
-    """
+    """Abstract base class for managing isolated file copies."""
 
     def __init__(self):
         super().__init__()
@@ -187,15 +176,7 @@ class FileHandlerInterface(ProcessBool, ABC):
         return self._root_dir
 
     def move_file(self, file: Path, root: Path) -> Optional[Path]:
-        """Copy a file into the isolated working directory, preserving structure.
-
-        Args:
-            file: File to copy.
-            root: Root directory relative to which the path structure is preserved.
-
-        Returns:
-            The new file path in the temp root, or None if the operation failed.
-        """
+        """Copy a file into the isolated working directory, preserving structure."""
         relative_path: Path = file.relative_to(root)
         new_path: Path = self.root_dir / relative_path
         try:
@@ -212,16 +193,23 @@ class FileHandlerInterface(ProcessBool, ABC):
         ...
 
 
-class ProjectFileHandler(FileHandlerInterface):
-    """Copies all project files from a root directory into a temporary workspace."""
+# -------------------------------------------------------------------------
+# Project and Mixin Handlers with Structure Validation
+# -------------------------------------------------------------------------
 
-    def __init__(self, project_root: Path):
+
+class ProjectFileHandler(FileHandlerInterface):
+    """Copies a project root into a temporary workspace with optional structure validation."""
+
+    def __init__(self, project_root: Path, structure: Optional[DirectoryType] = None):
         """
         Args:
             project_root: The root directory of the project to copy.
+            structure: Optional expected directory structure for validation.
         """
         super().__init__()
         self._project_root = project_root
+        self._structure = Directory.read(structure) if structure else None
 
     @property
     def project_root(self) -> Path:
@@ -234,32 +222,43 @@ class ProjectFileHandler(FileHandlerInterface):
             if file.is_file():
                 self.move_file(file, self.project_root)
 
+        # Validate against expected structure if provided
+        if self._structure:
+            result = self._structure.match(self.root_dir, strict=False)
+            if not result["ok"]:
+                self.set_failure(traceback="Project structure mismatch detected.")
+                self._last_structure_diff = result  # store for external inspection
+            else:
+                self._last_structure_diff = result
+
+    @property
+    def structure_diff(self) -> Optional[DirectoryMatch]:
+        """Return the last directory comparison result, if structure validation was enabled."""
+        return getattr(self, "_last_structure_diff", None)
+
 
 class MixinFileHandler(FileHandlerInterface):
-    """Combines a base directory and a mixin/submission directory into one workspace.
-
-    This is typically used for combining instructor-provided starter code (base)
-    with student submissions (mixin). Optionally executes a callback after each
-    mixin file is successfully moved.
-    """
+    """Combines a base directory and a mixin/submission directory with optional structure validation."""
 
     def __init__(
         self,
         base: Path,
         submission: Path,
         mixin_callback: Optional[Callable[[Path], None]] = None,
+        structure: Optional[DirectoryType] = None,
     ):
         """
         Args:
-            base: The base directory containing original project files.
-            submission: The submission directory containing mix-in files.
-            mixin_callback: Optional function to execute after copying each file
-                from the submission directory.
+            base: The base directory containing instructor code.
+            submission: The student submission directory.
+            mixin_callback: Optional function to execute after each copied file.
+            structure: Optional expected structure to validate after merging.
         """
         super().__init__()
         self._base = base
         self._mixin = submission
         self._callback = mixin_callback or (lambda _: None)
+        self._structure = Directory.read(structure) if structure else None
 
     @property
     def base(self) -> Path:
@@ -272,30 +271,37 @@ class MixinFileHandler(FileHandlerInterface):
         return self._mixin
 
     def setup(self) -> None:
-        """Copy files from both base and mixin directories into the temp workspace.
-
-        - Base files are copied first.
-        - Mixin files overwrite only if not already present.
-        - Executes the callback for each successfully copied mixin file.
-        """
-        # Copy base files
+        """Copy files from both base and mixin directories into the temp workspace."""
+        # Copy base
         for file in self.base.rglob("*"):
             if file.is_file():
                 self.move_file(file, self.base)
 
-        # Copy mixin files, checking for conflicts
+        # Copy mixin
         for file in self.mixin.rglob("*"):
             if not file.is_file():
                 continue
-
             dest = self.root_dir / file.relative_to(self.mixin)
             if dest.exists():
                 self.set_failure(traceback=f"File `{file}` already exists.")
                 continue
-
             new_path = self.move_file(file, self.mixin)
             if new_path is not None:
                 try:
                     self._callback(new_path)
                 except Exception as e:
                     self.set_failure(e, traceback=traceback.format_exc())
+
+        # Validate against structure
+        if self._structure:
+            result = self._structure.match(self.root_dir, strict=False)
+            if not result["ok"]:
+                self.set_failure(traceback="Merged structure mismatch detected.")
+                self._last_structure_diff = result
+            else:
+                self._last_structure_diff = result
+
+    @property
+    def structure_diff(self) -> Optional[DirectoryMatch]:
+        """Return the last directory comparison result, if structure validation was enabled."""
+        return getattr(self, "_last_structure_diff", None)
