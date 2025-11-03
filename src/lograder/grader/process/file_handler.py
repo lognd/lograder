@@ -10,7 +10,6 @@ from typing import Callable, Dict, List, Optional, TypeAlias, TypedDict, Union
 
 from .process import ProcessBool
 
-
 # -------------------------------------------------------------------------
 # Type Definitions
 # -------------------------------------------------------------------------
@@ -33,6 +32,7 @@ Example:
 
 class DirectoryMatch(TypedDict):
     """Structured result from a directory comparison."""
+
     ok: bool
     missing_files: List[Path]
     extra_files: List[Path]
@@ -43,6 +43,7 @@ class DirectoryMatch(TypedDict):
 # -------------------------------------------------------------------------
 # Directory Tree Comparison Utility
 # -------------------------------------------------------------------------
+
 
 class Directory:
     """Represents an expected directory layout for structure validation.
@@ -162,6 +163,7 @@ class Directory:
 # -------------------------------------------------------------------------
 # File Handler Interfaces
 # -------------------------------------------------------------------------
+
 
 class FileHandlerInterface(ProcessBool, ABC):
     """Abstract base class for managing isolated file copies.
