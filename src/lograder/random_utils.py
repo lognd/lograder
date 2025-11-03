@@ -14,8 +14,8 @@ def random_name(length: int = 20) -> str:
     )
 
 
-def random_working_directory() -> Path:
-    directory = PathConfig.DEFAULT_ROOT_PATH / random_name()
+def random_working_directory(path_config: PathConfig = PathConfig()) -> Path:
+    directory = path_config.root / random_name()
     directory.mkdir(parents=True, exist_ok=False)
     return directory
 
