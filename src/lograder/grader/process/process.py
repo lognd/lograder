@@ -47,7 +47,9 @@ from ..file_utils import (
     Command,
     Commands,
     FunctionTag,
+    ProjectType,
     contains_token,
+    detect_project_type,
     is_cxx_source_file,
     random_exe,
     resolve_tokens,
@@ -80,6 +82,7 @@ def step(n: float) -> Callable:
     Returns:
         The wrapped callable with a `__step_index__` attribute.
     """
+
     def wrapper(func: Callable) -> Callable:
         setattr(func, "__step_index__", n)
         return func
@@ -343,7 +346,16 @@ class ProcessMeta(ABCMeta):
 
         steps.sort(key=lambda x: x[0])
         namespace["_steps"] = {s_[1]: s_[2] for s_ in steps}
-        return super().__new__(mcs, name, bases, namespace)
+
+        # Create the new class
+        cls = super().__new__(mcs, name, bases, namespace)
+
+        # Auto-register class if it defines an 'id'
+        process_id = getattr(cls, "id", None)
+        if process_id is not None:
+            ProcessRegistry.register(process_id, cast(type[ProcessInterface], cls))
+
+        return cls
 
     @staticmethod
     def validate_command(cmd: Any) -> bool:
@@ -411,6 +423,99 @@ class ProcessInterface(ProcessBool, ABC, metaclass=ProcessMeta):
                 self.set_failure()
                 return
         self.set_success()
+
+
+class ProcessRegistry:
+    """Global registry for process types.
+
+    This registry maps string identifiers (like 'cmake-project', 'make-project', 'cxx-project')
+    to concrete subclasses of `ProcessInterface`. It also supports instantiation and
+    automatic project-type detection using file-system heuristics from `file_utils`.
+    """
+
+    _registry: Dict[str, type[ProcessInterface]] = {}
+
+    # -------------------------------------------------------------------------
+    # Registration and lookup
+    # -------------------------------------------------------------------------
+
+    @classmethod
+    def register(cls, process_id: str, process_cls: type[ProcessInterface]) -> None:
+        """Register a process class with its unique identifier.
+
+        Args:
+            process_id: The unique ID (e.g., 'cmake-project').
+            process_cls: The class derived from `ProcessInterface` to register.
+
+        Raises:
+            ValueError: If the ID has already been registered.
+        """
+        if process_id in cls._registry:
+            raise ValueError(f"Duplicate process id '{process_id}' already registered.")
+        cls._registry[process_id] = process_cls
+
+    @classmethod
+    def get(cls, process_id: str) -> Optional[type[ProcessInterface]]:
+        """Retrieve a registered process class by its identifier."""
+        return cls._registry.get(process_id)
+
+    @classmethod
+    def list_ids(cls) -> List[str]:
+        """Return all registered process identifiers."""
+        return list(cls._registry.keys())
+
+    # -------------------------------------------------------------------------
+    # Creation and detection
+    # -------------------------------------------------------------------------
+
+    @classmethod
+    def create(cls, process_id: str, *args: Any, **kwargs: Any) -> ProcessInterface:
+        """Instantiate a registered process class by its ID.
+
+        Args:
+            process_id: Identifier of the process class (e.g., 'make-project').
+            *args: Positional arguments to pass to the process constructor.
+            **kwargs: Keyword arguments to pass to the process constructor.
+
+        Returns:
+            An initialized instance of the requested process type.
+
+        Raises:
+            ValueError: If the process_id is not registered.
+        """
+        proc_cls = cls.get(process_id)
+        if proc_cls is None:
+            raise ValueError(f"Unknown process type '{process_id}'.")
+        return proc_cls(*args, **kwargs)
+
+    @classmethod
+    def detect(cls, root: Path) -> Optional[type[ProcessInterface]]:
+        """Auto-detect a process class based on filesystem heuristics.
+
+        Uses the `detect_project_type()` function from `file_utils` to infer
+        whether the given directory represents a CMake, Makefile, or plain
+        C/C++ source project.
+
+        Args:
+            root: The project root directory to analyze.
+
+        Returns:
+            The corresponding registered process class, or None if no match.
+        """
+        project_type: ProjectType = detect_project_type(root)
+
+        # Map the detected type to a known process id
+        mapping: Dict[ProjectType, str] = {
+            "cmake": "cmake-project",
+            "makefile": "make-project",
+            "cxx-source": "cxx-project",
+        }
+
+        process_id = mapping.get(project_type)
+        if process_id is None:
+            return None
+
+        return cls.get(process_id)
 
 
 class FileProcess(ProcessInterface):

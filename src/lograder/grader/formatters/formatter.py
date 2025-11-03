@@ -129,6 +129,7 @@ class STDInFormatter(
     empty=f"<{Fore.MAGENTA}EMPTY STDIN{Fore.RESET}>",
 ):
     """Formatter for standard input streams (STDIN)."""
+
     ...
 
 
@@ -140,6 +141,7 @@ class STDOutFormatter(
     empty=f"<{Fore.BLUE}EMPTY STDOUT{Fore.RESET}>",
 ):
     """Formatter for standard output streams (STDOUT)."""
+
     ...
 
 
@@ -151,6 +153,7 @@ class STDErrFormatter(
     empty=f"<{Fore.RED}EMPTY STDERR{Fore.RESET}>",
 ):
     """Formatter for standard error streams (STDERR)."""
+
     ...
 
 
@@ -162,6 +165,7 @@ class ExpectedSTDOutFormatter(
     empty=f"<{Fore.BLUE}EMPTY EXPECTED STDOUT{Fore.RESET}>",
 ):
     """Formatter for expected stdout (reference output)."""
+
     ...
 
 
@@ -173,6 +177,7 @@ class ActualSTDOutFormatter(
     empty=f"<{Fore.LIGHTMAGENTA_EX}EMPTY ACTUAL STDOUT{Fore.RESET}>",
 ):
     """Formatter for actual stdout (student/program output)."""
+
     ...
 
 

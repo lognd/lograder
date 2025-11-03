@@ -34,6 +34,8 @@ class CxxSourceBuilder(FileProcess):
             include paths, and other C++ build options.
     """
 
+    id: str = "cxx-project"
+
     def __init__(self, root: Path, config: CxxConfig):
         """
         Initialize the C++ source builder.
@@ -86,6 +88,8 @@ class CMakeBuilder(FileProcess):
         config (CMakeConfig): Configuration defining generator, compiler, and
             custom CMake flags.
     """
+
+    id: str = "cmake-project"
 
     def __init__(self, root: Path, config: CMakeConfig):
         """
@@ -185,6 +189,8 @@ class MakefileBuilder(FileProcess):
         config (MakeConfig): The configuration defining make behavior,
             variables, and build options.
     """
+
+    id = "make-project"
 
     def __init__(self, root: Path, config: MakeConfig):
         """
