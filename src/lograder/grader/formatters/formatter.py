@@ -20,7 +20,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, Generic, List, Mapping, Tuple, TypeVar, cast
 
-from colorama import Back, Fore
+from colorama import Back, Fore, Style
 
 from ...types import (
     AssignmentMetadataOutput,
@@ -32,6 +32,7 @@ from ...types import (
     ValgrindOutput,
     is_successful_test,
 )
+from ..process.file_handler import DirectoryMatch
 from .dispatcher import register_format
 
 T = TypeVar("T", bound=Mapping[str, Any])
@@ -61,6 +62,85 @@ class FormatterInterface(ABC, Generic[T]):
             A formatted string representation of the data.
         """
         pass
+
+
+@register_format("tree-diff")
+class TreeDiffFormatter:
+    """
+    Renders a hierarchical, colorized ASCII tree of directory differences.
+
+    Symbols:
+        +  — Extra file or directory
+        −  — Missing file or directory
+        ~  — Structural mismatch detected in this subtree
+
+    Color Legend:
+        {Fore.GREEN}Green{Style.RESET_ALL}: OK / Matched
+        {Fore.YELLOW}Yellow{Style.RESET_ALL}: Extra
+        {Fore.RED}Red{Style.RESET_ALL}: Missing
+        {Fore.LIGHTBLACK_EX}Gray{Style.RESET_ALL}: Summary or neutral
+    """
+
+    @staticmethod
+    def to_string(
+        diff: DirectoryMatch,
+        base_path: Path | None = None,
+        label: str = "Project Root",
+    ) -> str:
+        """Render a DirectoryMatch recursively as a colorized tree diff."""
+        if diff["ok"]:
+            return (
+                f"{Fore.CYAN}{label}{Style.RESET_ALL}\n"
+                f"└── {Fore.GREEN}Structure matches expected layout{Style.RESET_ALL}"
+            )
+        return TreeDiffFormatter._render_recursive(diff, base_path or Path("."), label)
+
+    @staticmethod
+    def _render_recursive(
+        diff: DirectoryMatch,
+        base_path: Path,
+        label: str,
+        indent: str = "",
+        is_last: bool = True,
+    ) -> str:
+        """Recursively render a structured directory diff tree."""
+        lines: List[str] = []
+
+        branch = "└── " if is_last else "├── "
+        spacer = "    " if is_last else "│   "
+
+        # Root label
+        lines.append(f"{Fore.CYAN}{indent}{branch}{label}{Style.RESET_ALL}")
+
+        # Missing directories
+        for d in diff["missing_dirs"]:
+            lines.append(
+                f"{indent}{spacer}├── {Fore.RED}− {d.name}/ (missing dir){Style.RESET_ALL}"
+            )
+
+        # Missing files
+        for f in diff["missing_files"]:
+            lines.append(
+                f"{indent}{spacer}├── {Fore.RED}− {f.name} (missing file){Style.RESET_ALL}"
+            )
+
+        # Extra directories
+        for d in diff["extra_dirs"]:
+            lines.append(
+                f"{indent}{spacer}├── {Fore.YELLOW}+ {d.name}/ (extra dir){Style.RESET_ALL}"
+            )
+
+        # Extra files
+        for f in diff["extra_files"]:
+            lines.append(
+                f"{indent}{spacer}├── {Fore.YELLOW}+ {f.name} (extra file){Style.RESET_ALL}"
+            )
+
+        # Footer / summary
+        lines.append(
+            f"{indent}{spacer}└── {Fore.LIGHTBLACK_EX}~ Structure mismatch detected{Style.RESET_ALL}"
+        )
+        return "\n".join(lines)
 
 
 class StreamOutputInterface(FormatterInterface[StreamOutput]):

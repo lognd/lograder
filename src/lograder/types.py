@@ -33,6 +33,7 @@ FormatLabel = Literal[
     "stdout",
     "unit-tests",
     "build-fail",
+    "tree-diff",
 ]
 
 
