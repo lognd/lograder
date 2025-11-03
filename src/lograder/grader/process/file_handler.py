@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import shutil
+import tempfile
 import traceback
+import weakref
 from abc import ABC, abstractmethod
 from pathlib import Path
-import tempfile
-import weakref
-from typing import Optional, List, Dict, Union, TypeAlias, TypedDict, Callable
+from typing import Callable, Dict, List, Optional, TypeAlias, TypedDict, Union
+
 from .process import ProcessBool
 
 DirectoryType: TypeAlias = Dict[str, Union[List[str], "DirectoryType"]]
+
 
 class DirectoryMatch(TypedDict):
     ok: bool
@@ -17,6 +19,7 @@ class DirectoryMatch(TypedDict):
     extra_files: List[Path]
     missing_dirs: List[Path]
     extra_dirs: List[Path]
+
 
 class Directory:
     def __init__(self, name: str, parent: Optional[Directory] = None):
@@ -41,10 +44,14 @@ class Directory:
         expected_dirs = {self.path / d.path.name for d in self.subdirectories}
 
         missing_files = [f for f in expected_files if not (directory / f.name).exists()]
-        extra_files = [f for f in actual_files if f.name not in {ef.name for ef in expected_files}]
+        extra_files = [
+            f for f in actual_files if f.name not in {ef.name for ef in expected_files}
+        ]
 
         missing_dirs = [d for d in expected_dirs if not (directory / d.name).exists()]
-        extra_dirs = [d for d in actual_dirs if d.name not in {ed.name for ed in expected_dirs}]
+        extra_dirs = [
+            d for d in actual_dirs if d.name not in {ed.name for ed in expected_dirs}
+        ]
 
         for sub in self.subdirectories:
             real_sub = directory / sub.path.name
@@ -93,16 +100,16 @@ class Directory:
                 root.add_subdirectory(subdir)
         return root
 
+
 class FileHandlerInterface(ProcessBool, ABC):
     def __init__(self):
         super().__init__()
-        self._root_dir: Optional[Path] = Path(tempfile.mkdtemp())
+        self._root_dir: Path = Path(tempfile.mkdtemp())
 
-        def _cleanup(self):
-            shutil.rmtree(self._root_dir, ignore_errors=True)
-            self._root_dir = None
+        def _cleanup(_root_dir):
+            shutil.rmtree(_root_dir, ignore_errors=True)
 
-        weakref.finalize(self, _cleanup, self)
+        weakref.finalize(self, _cleanup, self._root_dir)
 
     @property
     def root_dir(self) -> Path:
@@ -122,6 +129,7 @@ class FileHandlerInterface(ProcessBool, ABC):
     @abstractmethod
     def setup(self): ...
 
+
 class ProjectFileHandler(FileHandlerInterface):
     def __init__(self, project_root: Path):
         super().__init__()
@@ -136,8 +144,14 @@ class ProjectFileHandler(FileHandlerInterface):
             if file.is_file():
                 self.move_file(file, self.project_root)
 
+
 class MixinFileHandler(FileHandlerInterface):
-    def __init__(self, base: Path, submission: Path, mixin_callback: Optional[Callable[[Path], None]] = None):
+    def __init__(
+        self,
+        base: Path,
+        submission: Path,
+        mixin_callback: Optional[Callable[[Path], None]] = None,
+    ):
         super().__init__()
         self._base = base
         self._mixin = submission

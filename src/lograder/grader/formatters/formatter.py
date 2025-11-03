@@ -1,9 +1,24 @@
+"""formatter.py
+
+Defines a modular formatter system for various grader output types such as:
+    - Stream outputs (stdin, stdout, stderr, etc.)
+    - Byte comparisons (expected vs actual outputs)
+    - Unit test results
+    - Valgrind summaries
+    - Command invocation results
+    - Assignment metadata
+
+Each formatter implements `FormatterInterface` and is registered dynamically
+via the `@register_format` decorator, enabling runtime lookup and flexible
+conversion to human-readable strings with ANSI color formatting.
+"""
+
 import difflib
+import shlex
 from abc import ABC, abstractmethod
 from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, Generic, List, Mapping, Tuple, TypeVar, cast
-import shlex
 
 from colorama import Back, Fore
 
@@ -23,25 +38,58 @@ T = TypeVar("T", bound=Mapping[str, Any])
 
 
 class FormatterInterface(ABC, Generic[T]):
+    """
+    Base abstract interface for all formatter types.
+
+    Formatters transform structured data (e.g. model outputs) into
+    human-readable, colorized string representations suitable for console output.
+
+    Type Parameters:
+        T: Mapping-like type of data accepted by the formatter.
+    """
 
     @classmethod
     @abstractmethod
     def to_string(cls, data: T) -> str:
+        """
+        Convert structured data into a formatted string.
+
+        Args:
+            data: Mapping containing structured output fields.
+
+        Returns:
+            A formatted string representation of the data.
+        """
         pass
 
 
 class StreamOutputInterface(FormatterInterface[StreamOutput]):
+    """
+    Shared base class for standard input/output/error stream formatters.
+
+    This class defines a generic template for wrapping stream contents
+    with colored, labeled prefix/suffix markers.
+    """
+
     _prefix: str = ""
     _suffix: str = ""
     _empty: str = ""
 
     def __init_subclass__(cls, *, prefix: str, suffix: str, empty: str):
+        """Configure default formatting markers for subclasses."""
         cls._prefix = prefix
         cls._suffix = suffix
         cls._empty = empty
 
     @classmethod
     def to_string(cls, data: StreamOutput) -> str:
+        """
+        Render a stream’s contents with colorized prefix/suffix markers.
+
+        Returns:
+            A formatted string of the stream contents, or the empty marker
+            if the stream is empty.
+        """
         return (
             f"{cls.get_prefix()}{data['stream_contents']}{cls.get_suffix()}"
             if data["stream_contents"]
@@ -49,20 +97,25 @@ class StreamOutputInterface(FormatterInterface[StreamOutput]):
         )
 
     @classmethod
-    def get_prefix(cls):
+    def get_prefix(cls) -> str:
+        """Return the colorized prefix used for marking stream beginnings."""
         return cls._prefix
 
     @classmethod
-    def get_suffix(cls):
+    def get_suffix(cls) -> str:
+        """Return the colorized suffix used for marking stream endings."""
         return cls._suffix
 
     @classmethod
-    def get_empty(cls):
+    def get_empty(cls) -> str:
+        """Return the formatted placeholder string for empty streams."""
         return cls._empty
 
 
 @register_format("raw")
 class RawFormatter(FormatterInterface[StreamOutput]):
+    """Outputs raw stream contents without any formatting."""
+
     @classmethod
     def to_string(cls, data: StreamOutput) -> str:
         return data["stream_contents"]
@@ -74,7 +127,9 @@ class STDInFormatter(
     prefix=f"<{Fore.MAGENTA}BEGIN STDIN{Fore.RESET}>\n",
     suffix=f"\n<{Fore.MAGENTA}END STDIN{Fore.RESET}>",
     empty=f"<{Fore.MAGENTA}EMPTY STDIN{Fore.RESET}>",
-): ...
+):
+    """Formatter for standard input streams (STDIN)."""
+    ...
 
 
 @register_format("stdout")
@@ -83,7 +138,9 @@ class STDOutFormatter(
     prefix=f"<{Fore.BLUE}BEGIN STDOUT{Fore.RESET}>\n",
     suffix=f"\n<{Fore.BLUE}END STDOUT{Fore.RESET}>",
     empty=f"<{Fore.BLUE}EMPTY STDOUT{Fore.RESET}>",
-): ...
+):
+    """Formatter for standard output streams (STDOUT)."""
+    ...
 
 
 @register_format("stderr")
@@ -92,7 +149,9 @@ class STDErrFormatter(
     prefix=f"<{Fore.RED}BEGIN STDERR{Fore.RESET}>\n",
     suffix=f"\n<{Fore.RED}END STDERR{Fore.RESET}>",
     empty=f"<{Fore.RED}EMPTY STDERR{Fore.RESET}>",
-): ...
+):
+    """Formatter for standard error streams (STDERR)."""
+    ...
 
 
 @register_format("expected-stdout")
@@ -101,7 +160,9 @@ class ExpectedSTDOutFormatter(
     prefix=f"<{Fore.BLUE}BEGIN EXPECTED STDOUT{Fore.RESET}>\n",
     suffix=f"\n<{Fore.BLUE}END EXPECTED STDOUT{Fore.RESET}>",
     empty=f"<{Fore.BLUE}EMPTY EXPECTED STDOUT{Fore.RESET}>",
-): ...
+):
+    """Formatter for expected stdout (reference output)."""
+    ...
 
 
 @register_format("actual-stdout")
@@ -110,13 +171,23 @@ class ActualSTDOutFormatter(
     prefix=f"<{Fore.LIGHTMAGENTA_EX}BEGIN ACTUAL STDOUT{Fore.RESET}>\n",
     suffix=f"\n<{Fore.LIGHTMAGENTA_EX}END ACTUAL STDOUT{Fore.RESET}>",
     empty=f"<{Fore.LIGHTMAGENTA_EX}EMPTY ACTUAL STDOUT{Fore.RESET}>",
-): ...
+):
+    """Formatter for actual stdout (student/program output)."""
+    ...
 
 
 @register_format("byte-cmp")
 class ByteCmpFormatter(FormatterInterface[ByteStreamComparisonOutput]):
+    """
+    Formatter for byte-level comparisons between expected and actual outputs.
+
+    Provides both byte- and string-level diffs with ANSI color highlighting
+    to make mismatches and positions visually clear.
+    """
+
     @staticmethod
     def bytes_to_safe_ascii(data: bytes) -> str:
+        """Convert binary data to a printable ASCII-safe string."""
         return "".join(
             (
                 chr(b)
@@ -136,6 +207,7 @@ class ByteCmpFormatter(FormatterInterface[ByteStreamComparisonOutput]):
 
     @staticmethod
     def abbreviate(a: bytes, max_len: int = 1024) -> str:
+        """Abbreviate long byte strings for readability."""
         if len(a) <= max_len:
             return ByteCmpFormatter.bytes_to_safe_ascii(a)
         return (
@@ -146,6 +218,7 @@ class ByteCmpFormatter(FormatterInterface[ByteStreamComparisonOutput]):
 
     @staticmethod
     def static_comparison(expected: bytes, actual: bytes, max_len: int = 32) -> str:
+        """Compare bytes positionally, printing mismatched indices and values."""
         differences: List[Tuple[int, int, int]] = []
         for i, (b_a, b_b) in enumerate(zip(expected, actual)):
             if len(differences) > max_len:
@@ -172,6 +245,7 @@ class ByteCmpFormatter(FormatterInterface[ByteStreamComparisonOutput]):
 
     @staticmethod
     def string_comparison(expected: bytes, actual: bytes, max_len: int = 32768) -> str:
+        """Generate a unified diff-style string comparison."""
         if len(expected) > max_len or len(actual) > max_len:
             return f"  {Fore.CYAN}*{Fore.RESET} ({Fore.RED}Too long to compare!{Fore.RESET})"
         str_a = ByteCmpFormatter.bytes_to_safe_ascii(expected)
@@ -200,7 +274,8 @@ class ByteCmpFormatter(FormatterInterface[ByteStreamComparisonOutput]):
         )
 
     @classmethod
-    def to_string(cls, data: ByteStreamComparisonOutput):
+    def to_string(cls, data: ByteStreamComparisonOutput) -> str:
+        """Combine byte and string comparisons into a unified formatted report."""
         expected: bytes = data["stream_expected_bytes"]
         actual: bytes = data["stream_actual_bytes"]
 
@@ -236,8 +311,16 @@ class ByteCmpFormatter(FormatterInterface[ByteStreamComparisonOutput]):
 
 @register_format("unit-tests")
 class UnitTestFormatter(FormatterInterface[UnitTestSuite | UnitTestCase]):
+    """
+    Formatter for test suites and individual test cases.
+
+    Displays hierarchical test suite and test case results with color-coded
+    PASS/FAIL markers and optional detailed failure outputs.
+    """
+
     @classmethod
-    def to_string(cls, data: UnitTestSuite | UnitTestCase):
+    def to_string(cls, data: UnitTestSuite | UnitTestCase) -> str:
+        """Render a formatted summary of the given test suite or case."""
         strings: List[str] = []
         color: str
         if "success" in data.keys():
@@ -267,7 +350,9 @@ class UnitTestFormatter(FormatterInterface[UnitTestSuite | UnitTestCase]):
             strings.append(
                 f"<{color}BEGIN {desc} TEST SUITE '{data['name']}'{Fore.RESET}>"
             )
-            strings.append(("\n".join(f"  {line}" for line in rec_string.split("\n"))).rstrip())
+            strings.append(
+                ("\n".join(f"  {line}" for line in rec_string.split("\n"))).rstrip()
+            )
             strings.append(
                 f"<{color}END {desc} TEST SUITE '{data['name']}'{Fore.RESET}>\n"
             )
@@ -277,15 +362,24 @@ class UnitTestFormatter(FormatterInterface[UnitTestSuite | UnitTestCase]):
 
 @register_format("build-fail")
 class BuildFailureFormatter(FormatterInterface[Dict]):
+    """Formatter used when a build step fails and no executable is generated."""
+
     @classmethod
-    def to_string(cls, data: Dict):
+    def to_string(cls, data: Dict) -> str:
         return f"{Fore.RED}<NO EXECUTABLE GENERATED>{Fore.RESET}"
 
 
 @register_format("valgrind")
 class ValgrindFormatter(FormatterInterface[ValgrindOutput]):
+    """
+    Formatter for Valgrind output summaries.
+
+    Displays memory leak and warning summaries in colorized human-readable format.
+    """
+
     @classmethod
-    def to_string(cls, data: ValgrindOutput):
+    def to_string(cls, data: ValgrindOutput) -> str:
+        """Render the leak and warning summaries into formatted text."""
         leak_summary = data["leaks"]
         warning_summary = data["warnings"]
 
@@ -299,7 +393,7 @@ class ValgrindFormatter(FormatterInterface[ValgrindOutput]):
             Fore.LIGHTGREEN_EX if leak_summary.possibly_lost.is_safe else Fore.RED
         )
         leak_text = (
-            f"{Fore.LIGHTGREEN_EX}VALGRIND LEAK SUMMARY{Fore.RESET}:\n"  # I know these pluses aren't necessary, but I'm doing it for back-compatibility because linters yell at me for line-continuation.
+            f"{Fore.LIGHTGREEN_EX}VALGRIND LEAK SUMMARY{Fore.RESET}:\n"
             + f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {def_lost_color}{leak_summary.definitely_lost.bytes}{Fore.RESET} bytes, {def_lost_color}{leak_summary.definitely_lost.blocks}{Fore.RESET} blocks {def_lost_color}definitely lost{Fore.RESET}.\n"
             + f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {ind_lost_color}{leak_summary.indirectly_lost.bytes}{Fore.RESET} bytes, {ind_lost_color}{leak_summary.indirectly_lost.blocks}{Fore.RESET} blocks {ind_lost_color}indirectly lost{Fore.RESET}.\n"
             + f"  {Fore.LIGHTBLUE_EX}*{Fore.RESET} {pos_lost_color}{leak_summary.possibly_lost.bytes}{Fore.RESET} bytes, {pos_lost_color}{leak_summary.possibly_lost.blocks}{Fore.RESET} blocks {pos_lost_color}possibly lost{Fore.RESET}.\n"
@@ -314,21 +408,30 @@ class ValgrindFormatter(FormatterInterface[ValgrindOutput]):
         ]
 
         warning_text = "\n".join(output)
-
         return f"{leak_text}\n\n{warning_text}"
 
 
 @register_format("command")
 class CommandFormatter(FormatterInterface[CommandOutput]):
+    """Formatter for shell command executions and exit codes."""
+
     @classmethod
-    def to_string(cls, data: CommandOutput):
+    def to_string(cls, data: CommandOutput) -> str:
+        """Render a shell command with resolved paths and its exit code."""
         return f"Ran `{Fore.MAGENTA}{shlex.join([str(p.resolve()) if isinstance(p, Path) else p for p in data['command']])}{Fore.RESET}` in CLI with exit code, \"{data['exit_code']}\"."
 
 
 @register_format("assignment-metadata")
 class MetadataFormatter(FormatterInterface[AssignmentMetadataOutput]):
+    """
+    Formatter for assignment metadata (author, submission, due date, etc.).
+
+    Displays submission timing, authorship, and grader tool information.
+    """
+
     @staticmethod
     def format_timedelta(td: timedelta) -> str:
+        """Convert a timedelta to a human-friendly duration string."""
         if td < timedelta(0):
             return "0s"
         total_seconds = int(td.total_seconds())

@@ -81,7 +81,7 @@ goto :eof
 
 :cycle-check
 echo Checking cyclical imports with pycycle...
-call %VENV_PYCYCLE% --here
+call %VENV_PYCYCLE% --here --ignore .venv-linux-arm64 --ignore .venv-win-arm64
 goto :eof
 
 :check
