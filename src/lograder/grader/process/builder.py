@@ -13,12 +13,13 @@ object (`CxxConfig`, `CMakeConfig`, `MakeConfig`), and produces a list of
 """
 
 from pathlib import Path
-from typing import List
+from typing import List, final
 
 from ...data.cxx import CMakeConfig, CxxConfig, MakeConfig
 from .process import FileProcess, OrderedCommand
 
 
+@final
 class CxxSourceBuilder(FileProcess):
     """
     Direct C++ compilation using g++ or another compiler specified in CxxConfig.
@@ -69,6 +70,7 @@ class CxxSourceBuilder(FileProcess):
         return [OrderedCommand(order=0, command=cmd)]
 
 
+@final
 class CMakeBuilder(FileProcess):
     """
     Standard CMake build pipeline.
@@ -174,6 +176,7 @@ class CMakeBuilder(FileProcess):
         return cmds
 
 
+@final
 class MakefileBuilder(FileProcess):
     """
     Makefile build process using MakeConfig.

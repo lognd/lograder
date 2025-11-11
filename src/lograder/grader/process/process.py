@@ -38,6 +38,7 @@ from typing import (
     Tuple,
     Union,
     cast,
+    final,
     get_args,
 )
 
@@ -57,6 +58,7 @@ from ..file_utils import (
 from ..logger import Logger
 
 
+@final
 class OrderedCommand(BaseModel):
     """Wraps a shell command with an explicit execution order.
 

@@ -22,7 +22,7 @@ class TestCaseJSON(BaseModel):
     # Output-related fields
     output: Optional[str]  # Output of the test (raw text or ANSI)
     output_format: Optional[TextFormat] = (
-        "ansi"  # Format of output (ansi, markdown, etc.)
+        "ansi"  # Format of output
     )
 
     # Metadata
