@@ -1,63 +1,44 @@
-.PHONY: all venv build preinstall uninstall reinstall test type lint format check clean cycle-check
+VENV := .venv/bin
+VENV_PY := $(VENV)/python
 
-VENV_DIR := .venv-linux-arm64
-VENV_PYTHON := $(VENV_DIR)/bin/python
-VENV_PIP := $(VENV_DIR)/bin/pip
-VENV_PYTEST := $(VENV_DIR)/bin/pytest
-VENV_MYPY := $(VENV_DIR)/bin/mypy
-VENV_BLACK := $(VENV_DIR)/bin/black
-VENV_RUFF := $(VENV_DIR)/bin/ruff
-VENV_ISORT := $(VENV_DIR)/bin/isort
+ifeq ($(wildcard $(VENV_PY)),)
+PYTHON := python3
+BLACK := black
+RUFF := ruff
+MYPY := mypy
+ISORT := isort
+PYTEST := pytest
+else
+PYTHON := $(VENV_PY)
+PIP := $(VENV)/pip3
+BLACK := $(VENV)/black
+RUFF := $(VENV)/ruff
+MYPY := $(VENV)/mypy
+ISORT := $(VENV)/isort
+PYTEST := $(VENV)/pytest
+endif
 
-all: venv build check test
+.PHONY: check build uninstall all test self-esteem
 
-fast: build check test
-
-venv:
-	@echo "Creating virtual environment in $(VENV_DIR)..."
-	@test -x "$(VENV_PYTHON)" || python3.13 -m venv $(VENV_DIR)
-	@$(VENV_PYTHON) -m pip install --upgrade pip
-	@$(VENV_PIP) install --upgrade setuptools
-
-build: clean preinstall uninstall reinstall
-
-preinstall:
-	@echo "Installing pre-install dependencies"
-	# @$(VENV_PIP) install --upgrade pip setuptools
-	@echo "Running pre-install scripts..."
+all: uninstall build check test
 
 uninstall:
-	@echo "Uninstalling lograder..."
-	@$(VENV_PIP) uninstall -y lograder || echo "(Already uninstalled)"
+	@$(PIP) uninstall -y lograder
 
-reinstall:
-	@echo "Installing lograder in editable mode with test extras..."
-	@$(VENV_PIP) install -e .[dev]
+build:
+	@$(PIP) install -e .[dev]
+
+check:
+	@$(BLACK) src/ tests/
+	@$(RUFF) format src/ tests/
+	@$(ISORT) src/ tests/
+	@$(MYPY) src/ tests/
 
 test:
-	@echo "Running tests..."
-	@$(VENV_PYTEST) tests/ -q --tb=short --maxfail=5
+	@$(PYTEST)
 
-type:
-	@echo "Type-checking with mypy..."
-	@$(VENV_MYPY) src --check-untyped-defs
+test-verbose:
+	@$(PYTEST) -v -s
 
-lint:
-	@echo "Linting the code..."
-	@$(VENV_RUFF) check --fix src tests
-
-format:
-	@echo "Checking format with black..."
-	@$(VENV_BLACK) src tests
-
-imports:
-	@echo "Checking import order with isort..."
-	@$(VENV_ISORT) src tests
-
-check: imports format lint type test
-
-clean:
-	@echo "Cleaning build artifacts..."
-	@rm -rf build dist *.egg-info .pytest_cache
-	@find . -type d -name "__pycache__" -exec rm -rf {} +
-	@find src -type f \( -name '*.so' -o -name '*.pyd' \) -delete
+self-esteem:
+	@cloc --vcs=git .
