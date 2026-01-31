@@ -9,7 +9,7 @@ from .logger import LograderLogger
 from .packets import unwrap_packet
 
 
-class LograderPacketFormatter(logging.Formatter):
+class PacketFormatter(logging.Formatter):
     def __init__(self, *, mode: SupportedFormat = "simple"):
         super().__init__()
         self.mode = mode
