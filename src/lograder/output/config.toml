@@ -2,16 +2,42 @@ version = 1
 disable_existing_loggers = false
 
 [formatters.simple]
-format = "%(levelname)s: %(message)s"
+"()" = "lograder.output.formatters.PacketFormatter"
+mode = "simple"
 
-[formatters.json]
-"()" = "lograder.logging.formatters.JSONFormatter"
+[formatters.ascii]
+"()" = "lograder.output.formatters.PacketFormatter"
+mode = "ascii"
+
+[formatters.ansi]
+"()" = "lograder.output.formatters.PacketFormatter"
+mode = "ansi"
+
+[formatters.html]
+"()" = "lograder.output.formatters.PacketFormatter"
+mode = "html"
 
 [handlers.stdout]
 class = "logging.StreamHandler"
 formatter = "simple"
 stream = "ext://sys.stdout"
+level = "DEBUG"
+filters = ["below_warning"]
+
+[handlers.stderr]
+class = "logging.StreamHandler"
+formatter = "simple"
+stream = "ext://sys.stderr"
+level = "WARNING"
+
+[handlers.student]
+"()" = "lograder.output.handlers.HTMLHandler"
+formatter = "html"
+level = "INFO"
+output_file = "./out.html"
+
+# TODO: Make Gradescope-compliant handler.
 
 [root]
 level = "DEBUG"
-handlers = ["stdout"]
+handlers = ["stdout", "stderr", "student"]
