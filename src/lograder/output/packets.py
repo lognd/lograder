@@ -51,7 +51,7 @@ class PacketAuthority:
         data_type = cls.get_class(packet_id)
         if data_type is None:
             raise DeveloperException(
-                f"A logging packet identifier (`{packet_id}`) was found missing a registered `pydantic.BaseModel`, set with `@register_layout(<packet_id>)` decorator used on a class implementing the `Layout[{obj.__class__.__name__}]` generic."
+                f"A logging packet identifier (`{packet_id}`) was found missing a registered `pydantic.BaseModel`, set with `@register_layout(<packet_id>)` decorator used on a class implementing the `Layout[<packet-type>]` generic."
             )
         return data_type
 
