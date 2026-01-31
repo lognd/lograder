@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+import atexit
 import logging
 import logging.config
 from pathlib import Path
 from typing import Optional
 
 from pydantic import BaseModel
-import atexit
 
-from .packets import wrap_packet
 from .handlers import HTMLHandler
+from .packets import wrap_packet
 
 try:
     import tomllib
