@@ -1,0 +1,13 @@
+<!--
+	This is the template used to generate the cards for `lograder.output.handlers.HTMLHandler`.
+		(Note that I couldn't find a proper extension for a filetype of "HTML fragment",
+		 so that's why I'm using `.htmf` extension.)
+-->
+
+<div class="card">
+	<div class="metadata">
+		<span class="timestamp">{{timestamp}}</span>
+		<span class="level">{{level}}</span>
+	</div>
+	<div class="content">{{fragment}}</div>
+</div>

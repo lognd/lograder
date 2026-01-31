@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Optional
 
 from pydantic import BaseModel
+import atexit
 
 from .packets import wrap_packet
+from .handlers import HTMLHandler
 
 try:
     import tomllib
@@ -20,15 +22,25 @@ _PAST_SETUP: Optional[Path] = None
 class LograderLogger(logging.Logger):
     PACKET_ATTR = "packet"
 
+    def __init__(self, name: str, level: int | str) -> None:
+        super().__init__(name, level)
+        atexit.register(self.emit_html)
+
     def packet(self, data: BaseModel, *, level: int = logging.INFO) -> None:
         self.log(
             level, data.__class__.__name__, extra={self.PACKET_ATTR: wrap_packet(data)}
         )  # extra automatically unwraps dict into kwargs.
 
+    def emit_html(self) -> None:
+        for h in self.handlers:
+            if isinstance(h, HTMLHandler):
+                h.render_page_to_file()
+
 
 def setup_logger(toml_file: Path = Path(__file__).parent / "config.toml") -> None:
     global _PAST_SETUP
     if _PAST_SETUP != toml_file:
+        logging.setLoggerClass(LograderLogger)
         logging.config.dictConfig(tomllib.load(toml_file.open("rb")))
         _PAST_SETUP = toml_file
 
