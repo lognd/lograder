@@ -50,4 +50,6 @@ setup_logger()
 
 def get_logger(name: str) -> LograderLogger:
     logger = logging.getLogger(name)
-    return cast(LograderLogger, logger)  # This looks cursed, but the default logger was set to my logger, meaning that the output is actually my logger and not the base logger.
+    return cast(
+        LograderLogger, logger
+    )  # This looks cursed, but the default logger was set to my logger, meaning that the output is actually my logger and not the base logger.
