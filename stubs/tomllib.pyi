@@ -1,0 +1,6 @@
+from typing import Any, Callable, BinaryIO
+
+ParseFloat = Callable[[str], Any]
+
+def load(__fp: BinaryIO, *, parse_float: ParseFloat = float) -> dict[str, Any]: ...
+def loads(__s: str, *, parse_float: ParseFloat = float) -> dict[str, Any]: ...

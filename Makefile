@@ -3,6 +3,7 @@ VENV_PY := $(VENV)/python
 
 ifeq ($(wildcard $(VENV_PY)),)
 PYTHON := python3
+PIP := pip3
 BLACK := black
 RUFF := ruff
 MYPY := mypy
@@ -32,7 +33,17 @@ check:
 	@$(BLACK) src/ tests/
 	@$(RUFF) format src/ tests/
 	@$(ISORT) src/ tests/
-	@$(MYPY) src/ tests/
+	@$(MYPY) --config-file mypy-py310.ini src/ tests/
+	@$(MYPY) --config-file mypy-py314.ini src/ tests/
+
+version:
+	@$(PYTHON) --version
+	@$(PIP) --version
+	@$(PYTEST) --version
+	@$(BLACK) --version
+	@$(RUFF) --version
+	@$(ISORT) --version
+	@$(MYPY) --version
 
 test:
 	@$(PYTEST)
