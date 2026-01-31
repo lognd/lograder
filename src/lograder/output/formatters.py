@@ -3,10 +3,10 @@ import json
 import logging
 from typing import Optional
 
-from .layout import SupportedFormat, dispatch_layout
-from .packets import unwrap_packet
 from ..exception import DeveloperException
+from .layout import SupportedFormat, dispatch_layout
 from .logger import LograderLogger
+from .packets import unwrap_packet
 
 
 class LograderPacketFormatter(logging.Formatter):
@@ -25,6 +25,11 @@ class LograderPacketFormatter(logging.Formatter):
 
         format_output = getattr(layout, self.mode)
         if format_output is None:
-            raise DeveloperException(f"`Layout` subclass (`{layout.__class__.__name__}`) does not support an output of type, `{self.mode}`.")
+            raise DeveloperException(
+                f"`Layout` subclass (`{layout.__class__.__name__}`) does not support an output of type, `{self.mode}`."
+            )
+        elif not isinstance(format_output, str):
+            raise DeveloperException(
+                f"`Layout` subclass (`{layout.__class__.__name__}`) is malformed; output type of `{self.mode}` property is not a `str` rather the type of, `{format_output.__class__.__name__}`."
+            )
         return format_output
-
