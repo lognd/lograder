@@ -4,7 +4,7 @@ import atexit
 import logging
 import logging.config
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 from pydantic import BaseModel
 
@@ -48,6 +48,6 @@ def setup_logger(toml_file: Path = Path(__file__).parent / "config.toml") -> Non
 setup_logger()
 
 
-def get_logger(name: str) -> logging.Logger:
+def get_logger(name: str) -> LograderLogger:
     logger = logging.getLogger(name)
-    return logger
+    return cast(LograderLogger, logger)  # This looks cursed, but the default logger was set to my logger, meaning that the output is actually my logger and not the base logger.
