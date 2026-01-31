@@ -1,0 +1,17 @@
+version = 1
+disable_existing_loggers = false
+
+[formatters.simple]
+format = "%(levelname)s: %(message)s"
+
+[formatters.json]
+"()" = "lograder.logging.formatters.JSONFormatter"
+
+[handlers.stdout]
+class = "logging.StreamHandler"
+formatter = "simple"
+stream = "ext://sys.stdout"
+
+[root]
+level = "DEBUG"
+handlers = ["stdout"]
