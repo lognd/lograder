@@ -3,35 +3,28 @@ import json
 import logging
 from typing import Optional
 
+from .layout import SupportedFormat, dispatch_layout
+from .packets import unwrap_packet
+from ..exception import DeveloperException
+from .logger import LograderLogger
 
-# Heavily inspired & plagiarized from mCoding; the source in question can be
-# found here: https://youtu.be/9L77QExPmI0. Please consider checking him out;
-# he is a _fantastic_ programmer.
-class JSONFormatter(logging.Formatter):
-    def __init__(self, *, fmt_keys: Optional[dict[str, str]] = None):
+
+class LograderPacketFormatter(logging.Formatter):
+    def __init__(self, *, mode: SupportedFormat = "simple"):
         super().__init__()
-        self.fmt_keys = fmt_keys or {}
+        self.mode = mode
+        self._fallback = logging.Formatter("%(levelname)s: %(message)s")
 
     def format(self, record: logging.LogRecord) -> str:
-        message = self._record_to_dict(record)
-        return json.dumps(message, default=str)
+        packet = getattr(record, LograderLogger.PACKET_ATTR, None)
+        if packet is None:
+            return self._fallback.format(record)
 
-    def _record_to_dict(self, record: logging.LogRecord) -> dict:
-        default_fields = {
-            "message": record.getMessage(),
-            "timestamp": dt.datetime.fromtimestamp(
-                record.created, tz=dt.timezone.utc
-            ).isoformat(),
-        }
-        if record.exc_info is not None:
-            default_fields["exc_info"] = self.formatException(record.exc_info)
-        if record.stack_info is not None:
-            default_fields["stack_info"] = self.formatStack(record.stack_info)
+        data = unwrap_packet(packet)
+        layout = dispatch_layout(data)
 
-        message = {
-            key: msg if (msg := default_fields.pop(val, None)) else getattr(record, val)
-            for key, val in self.fmt_keys.items()
-        }
-        message.update(default_fields)
+        format_output = getattr(layout, self.mode)
+        if format_output is None:
+            raise DeveloperException(f"`Layout` subclass (`{layout.__class__.__name__}`) does not support an output of type, `{self.mode}`.")
+        return format_output
 
-        return message
