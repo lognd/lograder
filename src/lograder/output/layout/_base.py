@@ -4,6 +4,7 @@ from typing import (
     Any,
     Callable,
     Generic,
+    Literal,
     Optional,
     Type,
     TypeVar,
@@ -44,21 +45,31 @@ def get_bound_type(cls: Type) -> Any:
     return None
 
 
+SupportedFormat = Literal["ansi", "ascii", "html", "simple"]
+
+
 class Layout(ABC, Generic[T]):
     _css_class: str = "layout-all"
+    _packet_id: Optional[str] = None
     bound_type: Optional[Type[T]] = None
 
-    def __init__(self, data: T, *args, **kwargs) -> None:
+    def __init__(self, data: T, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.data = data
 
-    def __init_subclass__(cls, **kwargs) -> None:
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         cls.bound_type = get_bound_type(cls)
         # noinspection PyUnnecessaryCast
         cls._packet_id = PacketAuthority.get_packet_id(
             cast(Type[BaseModel], cls.bound_type)
         )  # This cast looks bad but is very benign because we're doing a packet lookup; if the class isn't of BaseModel type, then `None` must be returned anyway.
+
+        if cls._packet_id is None:
+            raise DeveloperException(
+                f"`Layout` subclass (`{cls.__name__}`)'s generic type (`{cls.bound_type.__name__}`) is not a registered packet type. Ensure it inherits from `pydantic.BaseModel` and register the corresponding `Layout[...]` implementation with the `@register_layout(<packet_id>)` decorator."
+            )
+
         cls._css_class = f"{cls._packet_id.lower().replace(' ', '-')}-layout"
 
     @staticmethod
@@ -75,11 +86,11 @@ class Layout(ABC, Generic[T]):
 
     @classmethod
     @abstractmethod
-    def to_repr(cls, data: T) -> str: ...
+    def to_simple(cls, data: T) -> str: ...
 
     @property
-    def repr(self) -> str:
-        return self.to_repr(self.data)
+    def simple(self) -> str:
+        return self.to_simple(self.data)
 
     @classmethod
     def to_html(cls, data: T) -> str:
@@ -88,12 +99,7 @@ class Layout(ABC, Generic[T]):
                 f"`Layout` subclass (`{cls.__name__}`) must specify generic type, i.e. `Layout[Stream]` rather that merely `Layout`."
             )
 
-        if cls._packet_id is None:
-            raise DeveloperException(
-                f"`Layout` subclass (`{cls.__name__}`)'s generic type (`{cls.bound_type.__name__}`) is not a registered packet type. Ensure it inherits from `pydantic.BaseModel` and register the corresponding `Layout[...]` implementation with the `@register_layout(<packet_id>)` decorator."
-            )
-
-        return f'<pre class="{cls._css_class} {Layout._css_class}">{_ANSI2HTML.convert(cls.ansi(data), full=False)}</pre>'
+        return f'<pre class="{cls._css_class} {Layout._css_class}">{_ANSI2HTML.convert(cls.to_ansi(data), full=False)}</pre>'
 
     @property
     def html(self) -> str:
@@ -106,10 +112,6 @@ class Layout(ABC, Generic[T]):
     @property
     def ascii(self) -> str:
         return self.to_ascii(self.data)
-
-    @property
-    def packet(self) -> Packet:
-        return wrap_packet(self.data)
 
 
 def register_layout(packet_id: str) -> Callable[[Type[Layout]], Type[Layout]]:
