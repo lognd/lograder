@@ -1,6 +1,10 @@
 version = 1
 disable_existing_loggers = false
 
+[filters.below_warning]
+"()" = "lograder.output.filters.BelowLevelFilter"
+below = "WARNING"
+
 [formatters.simple]
 "()" = "lograder.output.formatters.PacketFormatter"
 mode = "simple"
