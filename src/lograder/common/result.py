@@ -49,7 +49,7 @@ class Result(Generic[T, E]):
             return cast(Result[V, E], self)
         # cast is safe because `is_err` being false guarantees that `_ok` is valid.
         # noinspection PyUnnecessaryCast
-        return Result[V, E](ok=cast(T, func(self._ok)))
+        return Result[V, E](ok=func(cast(T, self._ok)))
 
     @property
     def is_ok(self) -> bool:
