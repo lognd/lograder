@@ -4,10 +4,13 @@ from ..step import Step
 from ...common.result import Result
 from pydantic import BaseModel
 
+
 class BuildError(BaseModel):
     pass
 
+
 class Build(ABC, Step):
     @abstractmethod
-    def __call__(self, artifacts: dict[str, Artifact]) -> Result[dict[str, Artifact], BuildError]:
-        ...
+    def __call__(
+        self, artifacts: dict[str, Artifact]
+    ) -> Result[dict[str, Artifact], BuildError]: ...
