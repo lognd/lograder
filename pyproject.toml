@@ -16,7 +16,8 @@ authors = [
 dependencies = [
     "tomli>=2.0.0; python_version < '3.11'",
     "pydantic>=2.12.0",
-    "ansi2html>=1.9.2"
+    "ansi2html>=1.9.2",
+    "colorama>=0.4.6"
 ]
 
 [project.optional-dependencies]
