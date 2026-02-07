@@ -14,6 +14,8 @@ from .packets import wrap_packet
 try:
     import tomllib
 except ImportError:
+    # This block was added for tomli backwards compatibility.
+    # Note that the mypy-suppression is done intentionally because it is wrong.
     import tomli as tomllib  # type: ignore[no-redef]
 
 _PAST_SETUP: Optional[Path] = None
