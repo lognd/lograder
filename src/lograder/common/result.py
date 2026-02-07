@@ -119,6 +119,7 @@ class Result(Generic[T, E]):
 def Ok(ok: T, /) -> Result[T, E]:
     return Result(ok=ok)
 
+
 # noinspection PyPep8Naming
 def Err(err: E, /) -> Result[T, E]:
     return Result(err=err)
