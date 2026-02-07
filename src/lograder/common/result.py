@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Callable, Final, Generic, Optional, TypeVar, cast
 
+from .empty import Empty
 from ..exception import DeveloperException
 
 T = TypeVar("T")
@@ -11,13 +12,10 @@ F = TypeVar("F")
 
 
 # noinspection PyPep8Naming
-class _EMPTY_OK:
-    __slots__ = ()
-
+class _EMPTY_OK(Empty): ...
 
 # noinspection PyPep8Naming
-class _EMPTY_ERR:
-    __slots__ = ()
+class _EMPTY_ERR(Empty): ...
 
 
 # Stripped-down version of Rust's `Result<T, E>` macro; I figured this would be helpful.
