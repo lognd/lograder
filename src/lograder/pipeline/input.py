@@ -1,9 +1,16 @@
 from abc import ABC, abstractmethod
 
+from pydantic import BaseModel
+
+from ..common import Result
 from .package import Package
 from .step import Step
 
 
+class InputError(BaseModel):
+    pass
+
+
 class Input(Step, ABC):
     @abstractmethod
-    def __call__(self) -> Package: ...
+    def __call__(self) -> Result[Package, InputError]: ...

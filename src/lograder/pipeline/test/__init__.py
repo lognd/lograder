@@ -1,5 +1,3 @@
-from .test import Test
+from .test import Test, TestData
 
-__all__ = [
-    "Test",
-]
+__all__ = ["Test", "TestData"]

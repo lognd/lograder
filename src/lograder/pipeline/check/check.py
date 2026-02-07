@@ -11,6 +11,10 @@ class CheckError(BaseModel):
     pass
 
 
+class CheckData(BaseModel):
+    pass
+
+
 class Check(Step, ABC):
     def __init__(self, parallel: bool = False):
         self._parallel: bool = parallel
@@ -20,4 +24,4 @@ class Check(Step, ABC):
         return self._parallel
 
     @abstractmethod
-    def __call__(self, package: Package) -> Result[Package, CheckError]: ...
+    def __call__(self, package: Package) -> Result[list[CheckData], CheckError]: ...

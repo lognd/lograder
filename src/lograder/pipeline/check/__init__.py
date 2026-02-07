@@ -1,5 +1,6 @@
-from .check import Check
+from .check import Check, CheckData
 
 __all__ = [
     "Check",
+    "CheckData",
 ]
