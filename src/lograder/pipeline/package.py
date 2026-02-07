@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import traceback
 from pathlib import Path
-from typing import Optional
+from typing import NewType, Optional, cast
 
 from pydantic import BaseModel
 
 from ..common import Err, Ok, Result
+from ..exception import DeveloperException
 
 
 class Package:
@@ -61,3 +64,27 @@ class File(Package):
             return Ok(self._path.read_text(encoding="utf8"))
         except Exception as e:
             return Err(self._file_error(e))
+
+
+# PyCharm is wrong here; it's having trouble deducing the recursive typing structure.
+# noinspection PyTypeChecker
+DirectoryDict: type[dict] = NewType("DirectoryDict", dict[str, "DirectoryMapping"])
+# noinspection PyTypeHints
+DirectoryMapping = list[str | DirectoryDict]
+
+
+def validate_directory_dict(x: dict[str, DirectoryMapping], /) -> DirectoryDict:
+    if len(x) == 0:
+        raise DeveloperException(
+            f"Tried to make a `DictionaryDict` out of an empty dictionary. Please ensure that lines before the listed calling line create a properly formatted `DictionaryDict`; a `DirectoryDict` is a dictionary with a single key corresponding to the super-directory and a value of a list containing strings (corresponding to file names) or other `DirectoryDicts` (corresponding to nested folders)."
+        )
+    if len(x) > 1:
+        raise DeveloperException(
+            f"Tried to make a `DictionaryDict` out of a non-singleton dictionary (with keys, `{'`, `'.join(str(k) for k in x)}`, and values, `{'`, `'.join(str(k) for k in x.values())}`). Please ensure that lines before the listed calling line create a properly formatted `DictionaryDict`; a `DirectoryDict` is a dictionary with a single key corresponding to the super-directory and a value of a list containing strings (corresponding to file names) or other `DirectoryDicts` (corresponding to nested folders)."
+        )
+    return cast(DirectoryDict, x)
+
+
+class Manifest(Package):
+    def __init__(self, structure: DirectoryMapping):
+        pass
