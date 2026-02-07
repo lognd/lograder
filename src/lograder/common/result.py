@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Callable, Final, Generic, Optional, TypeVar, cast
 
-from .empty import Empty
 from ..exception import DeveloperException
+from .empty import Empty
 
 T = TypeVar("T")
 V = TypeVar("V")
@@ -13,6 +13,7 @@ F = TypeVar("F")
 
 # noinspection PyPep8Naming
 class _EMPTY_OK(Empty): ...
+
 
 # noinspection PyPep8Naming
 class _EMPTY_ERR(Empty): ...
