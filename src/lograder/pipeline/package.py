@@ -68,11 +68,12 @@ class File(Package):
 
 # PyCharm is wrong here; it's having trouble deducing the recursive typing structure.
 # noinspection PyTypeChecker
-DirectoryDict: type[dict] = NewType("DirectoryDict", dict[str, "DirectoryMapping"])
+DirectoryDict = NewType("DirectoryDict", dict[str, "DirectoryMapping"])
 # noinspection PyTypeHints
 DirectoryMapping = list[str | DirectoryDict]
 
 
+# noinspection PyTypeHints
 def validate_directory_dict(x: dict[str, DirectoryMapping], /) -> DirectoryDict:
     if len(x) == 0:
         raise DeveloperException(
