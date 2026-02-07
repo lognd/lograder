@@ -9,7 +9,7 @@ class BuildError(BaseModel):
     pass
 
 
-class Build(ABC, Step):
+class Build(Step, ABC):
     @abstractmethod
     def __call__(
         self, artifacts: dict[str, Artifact]

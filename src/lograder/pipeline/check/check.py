@@ -11,7 +11,7 @@ class CheckError(BaseModel):
     pass
 
 
-class Check(ABC, Step):
+class Check(Step, ABC):
     def __init__(self, parallel: bool = False):
         self._parallel: bool = parallel
 
