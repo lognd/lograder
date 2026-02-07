@@ -113,3 +113,12 @@ class Result(Generic[T, E]):
         # cast is safe because `is_err` guarantees that `_err` is valid.
         # noinspection PyUnnecessaryCast
         return cast(E, self._err) if self.is_err else None
+
+
+# noinspection PyPep8Naming
+def Ok(ok: T, /) -> Result[T, E]:
+    return Result(ok=ok)
+
+# noinspection PyPep8Naming
+def Err(err: E, /) -> Result[T, E]:
+    return Result(err=err)
