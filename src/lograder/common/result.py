@@ -105,6 +105,12 @@ class Result(Generic[T, E]):
         return cast(T, self._ok) if self.is_ok else None
 
     @property
+    def danger_ok(self) -> T:
+        assert self.is_ok
+        # noinspection PyUnnecessaryCast
+        return cast(T, self._ok)
+
+    @property
     def is_err(self) -> bool:
         return self._err is not Result._ERR_SINGLETON
 
@@ -113,6 +119,12 @@ class Result(Generic[T, E]):
         # cast is safe because `is_err` guarantees that `_err` is valid.
         # noinspection PyUnnecessaryCast
         return cast(E, self._err) if self.is_err else None
+
+    @property
+    def danger_err(self) -> E:
+        assert self.is_err
+        # noinspection PyUnnecessaryCast
+        return cast(E, self._err)
 
 
 # noinspection PyPep8Naming
