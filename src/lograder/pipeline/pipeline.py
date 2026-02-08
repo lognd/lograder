@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Generic
+from typing import Any
 
-from typing_extensions import TypeVar
-
-from ..common import Empty, Result
+from ..common import Result
 from ..exception import StaffException
 from .block import Block
 from .build import Build
