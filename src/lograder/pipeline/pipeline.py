@@ -16,16 +16,7 @@ from .step import Step
 from .test import Test, TestData
 
 
-class PipelineState(Empty): ...
-
-
-class _Init(PipelineState): ...
-
-
-T = TypeVar("T", bound=PipelineState, default=_Init)
-
-
-class Pipeline(Generic[T]):
+class Pipeline:
     def __init__(self, *steps: Step) -> None:
         if len(steps) < 2:
             raise StaffException(
