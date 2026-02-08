@@ -122,11 +122,20 @@ def directory_name(x: DirectoryDict, /) -> str:
 class Manifest(Package):
     def __init__(self, structure: DirectoryMapping):
         super().__init__()
+        self._mapping = structure
         self._files, self._dirs = self._explore_directory(structure)
+
+    @property
+    def paths(self) -> list[Path]:
+        return self._files + self._dirs
 
     @property
     def files(self) -> list[File]:
         return [File(f) for f in self._files]
+
+    @property
+    def directory_mapping(self) -> DirectoryMapping:
+        return self._mapping
 
     @staticmethod
     def _explore_directory(
