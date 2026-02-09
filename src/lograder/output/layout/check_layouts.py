@@ -8,6 +8,7 @@ from ._base import Layout, register_layout
 from .format_helpers import render_manifest_diff, render_manifest_tree
 
 
+# noinspection DuplicatedCode
 @register_layout("manifest-check-data")
 class ManifestCheckDataLayout(Layout[ManifestCheckData]):
     @classmethod
