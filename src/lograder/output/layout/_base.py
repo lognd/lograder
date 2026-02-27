@@ -9,7 +9,6 @@ from typing import (
     Type,
     TypeVar,
     cast,
-    get_args,
     get_origin,
 )
 
@@ -17,6 +16,7 @@ from ansi2html import Ansi2HTMLConverter
 from pydantic import BaseModel
 
 from ...exception import DeveloperException
+from ...common import get_bound_type
 from ..packets import Packet, PacketAuthority, PacketId, wrap_packet
 
 _ANSI_ESCAPE_RE = re.compile(
@@ -36,13 +36,6 @@ _ANSI_ESCAPE_RE = re.compile(
 _ANSI2HTML = Ansi2HTMLConverter(inline=True)
 
 T = TypeVar("T", bound=BaseModel)
-
-
-def get_bound_type(cls: Type) -> Any:
-    for base in getattr(cls, "__orig_bases__", ()):
-        if get_origin(base) is Layout:
-            return get_args(base)[0]
-    return None
 
 
 SupportedFormat = Literal["ansi", "ascii", "html", "simple"]
