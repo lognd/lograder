@@ -2,8 +2,8 @@
 from colorama import Fore as F
 from colorama import Style as S
 
-from ...pipeline.check.check import ManifestCheckData, ManifestCheckError
-from ...pipeline.config import get_config
+from ...graph.check.check import ManifestCheckData, ManifestCheckError
+from ...graph.config import get_config
 from ._base import Layout, register_layout
 from .format_helpers import render_manifest_diff, render_manifest_tree
 

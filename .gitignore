@@ -9,8 +9,8 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
-!src/lograder/pipeline/build
-!src/lograder/pipeline/build/**
+!src/lograder/graph/build
+!src/lograder/graph/build/**
 develop-eggs/
 dist/
 downloads/

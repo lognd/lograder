@@ -4,14 +4,14 @@ from colorama import Fore as F
 from colorama import Style as S
 
 from ...exception import DeveloperException, StaffException
-from ...pipeline.pipeline import PipelineError
+from ...graph.graph import GraphError
 from ._base import Layout, register_layout
 
 
-@register_layout("pipeline-error")
-class PipelineErrorLayout(Layout[PipelineError]):
+@register_layout("graph-error")
+class GraphErrorLayout(Layout[GraphError]):
     @classmethod
-    def to_ansi(cls, data: PipelineError) -> str:
+    def to_ansi(cls, data: GraphError) -> str:
         output = []
         if isinstance(data.error, StaffException):
             output.append(
@@ -41,7 +41,7 @@ class PipelineErrorLayout(Layout[PipelineError]):
         )
 
     @classmethod
-    def to_simple(cls, data: PipelineError) -> str:
+    def to_simple(cls, data: GraphError) -> str:
         if isinstance(data.error, StaffException):
             cause = "staff misconfiguration"
         elif isinstance(data.error, DeveloperException):
@@ -49,4 +49,4 @@ class PipelineErrorLayout(Layout[PipelineError]):
         else:
             cause = f"unanticipated fatal error ({data.error_type})"
 
-        return f"The pipeline met an error due to a {cause}; `{data.error_msg}`. Full traceback: {repr(data.error_traceback)}"
+        return f"The graph met an error due to a {cause}; `{data.error_msg}`. Full traceback: {repr(data.error_traceback)}"
