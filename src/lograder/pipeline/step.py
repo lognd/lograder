@@ -10,6 +10,7 @@ from ..exception import DeveloperException, LograderException, StaffException
 from .conversion import ConversionRegistry
 
 T = TypeVar("T")
+E = TypeVar("E")
 
 
 # noinspection PyPep8Naming
@@ -34,10 +35,7 @@ class Step:
     def get_valid_output(cls) -> Optional[Type[Step]]: ...
 
     @classmethod
-    def assert_begin(cls) -> None: ...
-
-    @classmethod
-    def assert_end(cls) -> None: ...
+    def assert_root(cls) -> None: ...
 
     @classmethod
     def assert_not_abstract(
@@ -55,12 +53,12 @@ class Step:
     @classmethod
     def get_conversions_to(
         cls, next: Type[Step]
-    ) -> set[Callable[[Self], Result[T, Any]]]: ...
+    ) -> set[Callable[[Self], Result[T, E]]]: ...
 
     @classmethod
     def get_conversions_from(
         cls, prev: Type[Step]
-    ) -> set[Callable[[Self], Result[T, Any]]]: ...
+    ) -> set[Callable[[Self], Result[T, E]]]: ...
 
     @classmethod
     def assert_follow(cls, previous: Type[Step]) -> None: ...
