@@ -1,5 +1,6 @@
 # noinspection PyPep8Naming
-from colorama import Fore as F, Style as S
+from colorama import Fore as F
+from colorama import Style as S
 
 from ...exception import DeveloperException, StaffException
 from ...graph.graph import GraphError
