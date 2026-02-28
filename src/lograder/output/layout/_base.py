@@ -15,8 +15,8 @@ from typing import (
 from ansi2html import Ansi2HTMLConverter
 from pydantic import BaseModel
 
+from ...common import get_first_bound_type
 from ...exception import DeveloperException
-from ...common import get_bound_type
 from ..packets import Packet, PacketAuthority, PacketId, wrap_packet
 
 _ANSI_ESCAPE_RE = re.compile(
@@ -52,7 +52,7 @@ class Layout(ABC, Generic[T]):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        cls.bound_type = get_bound_type(cls)
+        cls.bound_type = get_first_bound_type(cls)
         # noinspection PyUnnecessaryCast
         cls._packet_id = PacketAuthority.get_packet_id(
             cast(Type[BaseModel], cls.bound_type)
