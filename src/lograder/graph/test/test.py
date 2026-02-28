@@ -17,7 +17,7 @@ class TestData(BaseModel):
     pass
 
 
-class Test(ABC):
+class Test(Step, ABC):
     __test__: bool = False
 
     def __init__(self, parallel: bool = False):
