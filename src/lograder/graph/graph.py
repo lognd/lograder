@@ -14,8 +14,8 @@ from .artifact import Artifact
 from .block import Block
 from .build import Build
 from .check import Check, CheckData
-from .conversion import convert
 from .input import Input
+from .package import Package
 from .step import Step
 from .test import Test, TestData
 
@@ -113,6 +113,42 @@ class Graph:
             return Err(GraphStateError(error_type="step-was-const"))
         return Ok(self._states[prev_step])
 
+    def _prepare_input_data(self, step: Step) -> Any:
+        # TODO: MAYBE REFACTOR AS RESULT RATHER THAN ERROR MESSAGES.
+
+        prev_state = self.get_previous_state(step)
+        if prev_state.is_err:
+            match prev_state.danger_err:
+                case "is-root":
+                    # TODO: WRITE HELPFUL, DATA-FILLED ERROR MSG.
+                    raise DeveloperException()
+                case "not-in-graph":
+                    # TODO: WRITE HELPFUL, DATA-FILLED ERROR MSG.
+                    raise DeveloperException()
+                case "step-was-const":
+                    # TODO: WRITE HELPFUL, DATA-FILLED ERROR MSG.
+                    raise DeveloperException()
+        # This cast is okay because if it was `None`, it would have been caught by the above match.
+        # noinspection PyUnnecessaryCast
+        prev_step = cast(Step, self.get_previous_step(step))
+        conversions = step.get_conversions_from(prev_step.__class__)
+        if len(conversions) > 1:
+            # TODO: WRITE HELPFUL, DATA-FILLED ERROR MSG: "Conversion is ambiguous..."
+            raise StaffException()
+
+        conv = conversions.pop()
+        # This cast is okay because of this graph's invariance.
+        # We checked that the previous step's output is a valid input,
+        # meaning there exists a conversion from the previous type to
+        # the current type.
+
+        input_state = conv(prev_state)
+        if input_state.is_err:
+            # TODO: Handle conversion error case. Maybe change to result-based?
+            raise
+
+        return input_state.danger_ok
+
     def _handle_step(self, step: Step) -> None:
         match step:
             case Block():  # const
@@ -122,52 +158,40 @@ class Graph:
                 step()
 
             case Build():  # mut
-                # Because `Build` is not a root step, we can safely cast it from None.
-
-                prev_state = self.get_previous_state(step)
-                if prev_state.is_err:
-                    match prev_state.danger_err:
-                        case "is-root":
-                            # TODO: WRITE HELPFUL, DATA-FILLED ERROR MSG.
-                            raise DeveloperException()
-                        case "not-in-graph":
-                            # TODO: WRITE HELPFUL, DATA-FILLED ERROR MSG.
-                            raise DeveloperException()
-                        case "step-was-const":
-                            # TODO: WRITE HELPFUL, DATA-FILLED ERROR MSG.
-                            raise DeveloperException()
-                # This cast is okay because if it was `None`, it would have been caught by the above match.
-                # noinspection PyUnnecessaryCast
-                prev_step = cast(Step, self.get_previous_step(step))
-                conversions = step.get_conversions_from(prev_step.__class__)
-                if len(conversions) > 1:
-                    # TODO: WRITE HELPFUL, DATA-FILLED ERROR MSG: "Conversion is ambiguous..."
-                    raise StaffException()
-
-                conv = conversions.pop()
-                # This cast is okay because of this graph's invariance.
-                # We checked that the previous step's output is a valid input,
-                # meaning there exists a conversion from the previous type to
-                # the current type.
-
-                input_state = conv(prev_state)
-                if input_state.is_err:
-                    # TODO: Handle error case.
-                    return
-
                 # noinspection PyCallingNonCallable,PyUnnecessaryCast
-                self._states[step] = step(
-                    cast(dict[str, Artifact], input_state.danger_ok)
+                result = step(
+                    cast(dict[str, Artifact], self._prepare_input_data(step))
                 )
+                if result.is_err:
+                    # TODO: Handle build error case.
+                    return
+                self._states[step] = result.danger_ok
 
             case Check():  # const
-                pass
+                # noinspection PyCallingNonCallable,PyUnnecessaryCast
+                result = step(
+                    cast(Package, self._prepare_input_data(step))
+                )
+                if result.is_err:
+                    # TODO: Handle check error case.
+                    return
 
             case Input():  # mut
-                pass
+                # noinspection PyCallingNonCallable
+                result = step()
+                if result.is_err:
+                    # TODO: Handle input error case.
+                    return
+                self._states[step] = result.danger_ok
 
             case Test():  # const
-                pass
+                # noinspection PyCallingNonCallable,PyUnnecessaryCast
+                result = step(
+                    cast(dict[str, Artifact], self._prepare_input_data(step))
+                )
+                if result.is_err:
+                    # TODO: Handle check error case.
+                    return
 
     def __call__(self) -> None:
         pass
