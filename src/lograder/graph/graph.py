@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import traceback
 from contextlib import contextmanager
-from typing import Any, Iterable, Iterator, Optional, Type, cast
+from typing import Any, Generic, Iterable, Iterator, Optional, Type, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -15,15 +15,14 @@ from .build import Build
 from .check import Check, CheckData
 from .conversion import convert
 from .input import Input
-from .output import Output
 from .step import Step
 from .test import Test, TestData
 
 _LOGGER = get_logger("lograder.graph.graph")
 
+
 # Dummy class serving as a smarter sentinel for graph misconfigurations.
-class PreinitializedGraphData(Empty):
-    ...
+class PreinitializedGraphData(Empty): ...
 
 
 class GraphError(BaseModel):
@@ -52,35 +51,39 @@ def graceful_graph_context() -> Iterator[None]:
 
 
 class Graph:
-    def __init__(self, *steps: Step) -> None:
-        if len(steps) < 2:
-            raise StaffException(
-                f'`Graph` requires at least two steps (a "beginning step" defining the inputs and an "ending step" defining the outputs). Received only {len(steps)} `Steps` (`{"`, `".join(step.__class__.__name__ if step.__class__.__repr__ is object.__repr__ else repr(step) for step in steps)}`).'
-            )
-        steps[0].assert_begin()
-        for step_prev, step_next in zip(steps[:-1], steps[1:]):
-            step_next.assert_follow(step_prev.__class__)
-        steps[-1].assert_end()
+    def __init__(self, *flat_seq: Step) -> None:
+        self._roots: set[Step] = set()
+        self._f_adj_list: dict[Step, set[Step]] = {}
+        self._r_adj_list: dict[Step, set[Step]] = {}
 
-        self._steps = steps
-        self._previous_step: Optional[Type[Step]] = None
-        self._data: Any = PreinitializedGraphData()
+        self.unflatten_and_connect(flat_seq)
+
+        for next_step, prev_steps in self._r_adj_list.items():
+            for prev_step in prev_steps:
+                next_step.assert_follow(prev_step.__class__)
+
+    def unflatten_and_connect(self, flat_seq: Iterable[Step]) -> None:
+        previous_mutating: Step
+        for step_idx, step in enumerate(flat_seq):
+            if step_idx == 0:
+                self.add_root(step)
+                previous_mutating = step
+                continue
+            # I check above and assign it; I can't do a [0] access because it's iterable.
+            # noinspection PyUnboundLocalVariable
+            self.connect(previous_mutating, step)
+            if step.is_mutating():
+                previous_mutating = step
+
+    def add_root(self, root: Step) -> None:
+        root.assert_mutating(origin="Graph.add_root")
+        self._roots.add(root)
+
+    def connect(self, step_from: Step, step_to: Step) -> None:
+        self._f_adj_list.setdefault(step_from, set()).add(step_to)
+        self._r_adj_list.setdefault(step_to, set()).add(step_from)
 
     def _handle_step(self, step: Step) -> None:
-        if self._previous_step is None:
-            step.assert_begin()
-        else:
-            step.assert_follow(self._previous_step)
-            if isinstance(self._data, PreinitializedGraphData):
-                # If the invariants for this class are correct, this
-                # section of code should be unreachable; however, this
-                # is to serve as a canary for some future bugs.
-                raise DeveloperException(
-                    f"Beginning step failed to transform the data from its `PreinitializedGraphData` state. The "
-                    f"current step is `{step.__class__.__name__}`, the previous was `{self._previous_step.__name__}`. "
-                    f"The whole graph is `{'`, `'.join(stp.__class__.__name__ for stp in self._steps)}`."
-                )
-
         match step:
             case Block():
                 # noinspection PyUnnecessaryCast
@@ -93,9 +96,5 @@ class Graph:
                 build_step: Build = cast(Build, step)  # type: ignore[redundant-cast]
                 # Same here.
 
-        self._previous_step = step.__class__
-
     def __call__(self) -> None:
-        with graceful_graph_context():
-            for step in self._steps:
-                pass
+        pass
