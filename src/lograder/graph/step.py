@@ -4,7 +4,7 @@ import inspect
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Generic, Optional, Type, TypeVar, cast
 
-from ..common import Empty, Result, get_bound_types, unwrap_union_types
+from ..common import Empty, Ok, Result, get_bound_types, unwrap_union_types
 from ..exception import DeveloperException, LograderException, StaffException
 from .conversion import ConversionRegistry
 
@@ -93,6 +93,21 @@ class Step(Generic[In, Out], ABC):
         return not bool(cast(set[type], cls._valid_input_types))
 
     @classmethod
+    def is_follow(cls, prev: Type[Step]) -> bool:
+        if cls.is_abstract():
+            raise DeveloperException(
+                f"Tried to call `{cls.__name__}.is_follow(`{prev.__name__}`)` even though `{cls.__name__}` is abstract."
+            )
+        if prev.is_abstract():
+            raise DeveloperException(
+                f"Tried to call `{cls.__name__}.is_follow(`{prev.__name__}`)` even though `{prev.__name__}` is abstract."
+            )
+
+        if cls.get_conversions_from(prev):
+            return True
+        return False
+
+    @classmethod
     def get_valid_inputs(cls) -> frozenset[type]:
         if cls.is_abstract():
             raise DeveloperException(
@@ -122,10 +137,26 @@ class Step(Generic[In, Out], ABC):
             )
 
     @classmethod
-    def assert_mutating(cls, origin: str = "assert_mutating") -> None:
+    def assert_mutating(
+        cls,
+        origin: str = "assert_mutating",
+        origin_exception_type: Type[LograderException] = DeveloperException,
+    ) -> None:
         if not cls.is_mutating():
-            raise DeveloperException(
+            raise origin_exception_type(
                 f"`{origin}` requires that step, `{cls.__name__}`, be mutating. Usually this means that this `Step` was called as a starting-step (root node)."
+            )
+
+    @classmethod
+    def assert_follow(
+        cls,
+        prev: Type[Step],
+        origin: str = "assert_follow",
+        origin_exception_type: Type[LograderException] = DeveloperException,
+    ) -> None:
+        if not cls.is_follow(prev):
+            raise origin_exception_type(
+                f"`{origin}` requires that step, `{cls.__name__}`, be able to follow, `{prev.__name__}`."
             )
 
     @staticmethod
@@ -145,6 +176,13 @@ class Step(Generic[In, Out], ABC):
         type_tos: frozenset[Type[In2]] = cast(
             frozenset[Type[In2]], type_to_inp & type_to_reg
         )
+
+        # Trivial "do-nothing" conversion always takes priority.
+        if type_from in type_tos:
+            # Cast is okay because in this case, `Out3` == `In2`.
+            # noinspection PyUnnecessaryCast
+            return {cast(Callable[[Out3], Result[In2, Any]], lambda x: Ok(x))}
+
         return {
             ConversionRegistry.get_conversion(type_from, type_to)
             for type_to in type_tos
@@ -161,6 +199,3 @@ class Step(Generic[In, Out], ABC):
         cls, prev: Type[Step[In2, Out2]]
     ) -> set[Callable[[Out2], Result[In, Any]]]:
         return cls.get_conversions(prev, cls)
-
-    @classmethod
-    def assert_follow(cls, previous: Type[Step]) -> None: ...
