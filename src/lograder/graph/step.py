@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Generic, Optional, Type, TypeVar, cast
+from typing import Any, Callable, Generic, Type, TypeVar, cast
 
 from ..common import Empty, Ok, Result, get_bound_types, unwrap_union_types
-from ..exception import DeveloperException, LograderException, StaffException
+from ..exception import DeveloperException, LograderException
 from .conversion import ConversionRegistry
 
 In = TypeVar("In")
@@ -75,6 +75,10 @@ class Step(Generic[In, Out], ABC):
         )
 
     @classmethod
+    def is_promiscuous(cls) -> bool:
+        return cls._valid_input_types == {Any} and cls._valid_output_type == Any
+
+    @classmethod
     def is_mutating(cls) -> bool:
         if cls.is_abstract():
             raise DeveloperException(
@@ -103,7 +107,7 @@ class Step(Generic[In, Out], ABC):
                 f"Tried to call `{cls.__name__}.is_follow(`{prev.__name__}`)` even though `{prev.__name__}` is abstract."
             )
 
-        if cls.get_conversions_from(prev):
+        if cls.is_promiscuous() or cls.get_conversions_from(prev):
             return True
         return False
 
@@ -163,6 +167,15 @@ class Step(Generic[In, Out], ABC):
     def get_conversions(
         prev: Type[Step[In3, Out3]], next: Type[Step[In2, Out2]]
     ) -> set[Callable[[Out3], Result[In2, Any]]]:
+        if prev.is_promiscuous() or next.is_promiscuous():
+            # This is a built-in short-circuit. If a `Step` doesn't
+            # care what is put into it and doesn't know what comes out
+            # of itself, then there's no intelligible way to transform
+            # to its type, i.e. it must "do-nothing" to the input and output.
+
+            # noinspection PyUnnecessaryCast
+            return {cast(Callable[[Out3], Result[In2, Any]], lambda x: Ok(x))}
+
         type_from: Type[Out3] = prev.get_valid_output()
 
         type_to_inp: frozenset[type] = next.get_valid_inputs()
