@@ -150,6 +150,7 @@ class Graph:
         return input_state.danger_ok
 
     def _handle_step(self, step: Step) -> None:
+        result: Result[Any, Any]
         match step:
             case Block():  # const
                 # Not sure if PyCharm is bugged, but `step` must be a `Block`
@@ -159,9 +160,7 @@ class Graph:
 
             case Build():  # mut
                 # noinspection PyCallingNonCallable,PyUnnecessaryCast
-                result = step(
-                    cast(dict[str, Artifact], self._prepare_input_data(step))
-                )
+                result = step(cast(dict[str, Artifact], self._prepare_input_data(step)))
                 if result.is_err:
                     # TODO: Handle build error case.
                     return
@@ -169,9 +168,7 @@ class Graph:
 
             case Check():  # const
                 # noinspection PyCallingNonCallable,PyUnnecessaryCast
-                result = step(
-                    cast(Package, self._prepare_input_data(step))
-                )
+                result = step(cast(Package, self._prepare_input_data(step)))
                 if result.is_err:
                     # TODO: Handle check error case.
                     return
@@ -186,9 +183,7 @@ class Graph:
 
             case Test():  # const
                 # noinspection PyCallingNonCallable,PyUnnecessaryCast
-                result = step(
-                    cast(dict[str, Artifact], self._prepare_input_data(step))
-                )
+                result = step(cast(dict[str, Artifact], self._prepare_input_data(step)))
                 if result.is_err:
                     # TODO: Handle check error case.
                     return
