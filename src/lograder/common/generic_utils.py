@@ -1,10 +1,11 @@
-from typing import Any, Type, Union, Optional, get_args, get_origin
+from typing import Any, Optional, Type, Union, get_args, get_origin
 
 
 def get_first_bound_type(typ: Type) -> Any:
     for base in getattr(typ, "__orig_bases__", ()):
         return get_args(base)[0]
     return None
+
 
 def get_bound_types(cls: type, target_typ: Type) -> Optional[tuple[Any, ...]]:
     for base in getattr(cls, "__orig_bases__", ()):
@@ -14,9 +15,9 @@ def get_bound_types(cls: type, target_typ: Type) -> Optional[tuple[Any, ...]]:
         return tuple(args)
     return None
 
+
 def unwrap_union_types(typ: Type) -> set[Type]:
     origin = get_origin(typ)
     if origin is Union:
         return set(get_args(typ))
     return {typ}
-
