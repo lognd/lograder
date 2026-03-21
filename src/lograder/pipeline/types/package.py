@@ -11,6 +11,11 @@ from ...common import Err, Ok, Result
 from ...exception import DeveloperException, StaffException
 from ..config import get_config
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef]
+
 
 class Package:
     pass
@@ -148,6 +153,134 @@ class Manifest(Package):
         super().__init__()
         self._mapping = structure
         self._files, self._dirs = self._explore_directory(structure)
+
+    # noinspection PyShadowingBuiltins
+    @classmethod
+    def from_directory(cls, dir: Path) -> Manifest:
+        config = get_config()
+        root = Path(config.root_directory).resolve()
+        dir = dir.resolve()
+
+        if not dir.exists():
+            raise StaffException(f"Could not find directory, `{str(dir)}`.")
+        if not dir.is_dir():
+            raise StaffException(f"Path, `{str(dir)}` exists, but is not a directory.")
+        if not dir.is_relative_to(root):
+            raise StaffException(
+                f"Directory, `{str(dir)}`, is outside configured root directory, `{str(root)}`."
+            )
+
+        def build_mapping(current: Path) -> DirectoryMapping:
+            items: DirectoryMapping = []
+
+            for child in sorted(
+                current.iterdir(), key=lambda p: (not p.is_dir(), p.name.casefold())
+            ):
+                if child.is_dir():
+                    items.append(
+                        validate_directory_dict({child.name: build_mapping(child)})
+                    )
+                else:
+                    items.append(child.name)
+
+            return items
+
+        return cls(build_mapping(dir))
+
+    @classmethod
+    def from_toml(cls, toml: Path) -> Manifest:
+        """
+        Here's an example `.toml` format.
+
+        ```toml
+        manifest = [
+          "main.py",
+          "README.md",
+          { src = [
+            "app.py",
+            { utils = ["helpers.py"] }
+          ] }
+        ]
+        ```
+
+        Note that this matches the following directory:
+        ```text
+        <project-root>/
+        +- main.py
+        +- README.md
+        +- src/
+           +- app.py
+           +- utils/
+              +- helpers.py
+        ```
+        """
+        try:
+            if not toml.is_file():
+                raise StaffException(
+                    f"Could not find provided toml file, `{str(toml)}`."
+                )
+
+            with toml.open("rb") as f:
+                data = tomllib.load(f)
+        except StaffException:
+            raise
+        except Exception as e:
+            raise StaffException(
+                f"Provided toml file (`{str(toml)}`) was unparsable. "
+                f"(See traceback for more info.)"
+            ) from e
+
+        def parse_node(node: Any, *, where: str = "root") -> DirectoryMapping:
+            if isinstance(node, list):
+                out: DirectoryMapping = []
+                for i, item in enumerate(node):
+                    item_where = f"{where}[{i}]"
+                    if isinstance(item, str):
+                        out.append(item)
+                    elif isinstance(item, dict):
+                        out.append(parse_directory_dict(item, where=item_where))
+                    else:
+                        raise StaffException(
+                            f"Manifest TOML entry at `{item_where}` must be either a file name string "
+                            f"or a singleton table/dict representing a directory; got "
+                            f"`{type(item).__name__}`."
+                        )
+                return out
+
+            raise StaffException(
+                f"Manifest TOML node at `{where}` must be a list; got `{type(node).__name__}`."
+            )
+
+        def parse_directory_dict(node: Any, *, where: str) -> DirectoryDict:
+            if not isinstance(node, dict):
+                raise StaffException(
+                    f"Manifest TOML directory node at `{where}` must be a table/dict; "
+                    f"got `{type(node).__name__}`."
+                )
+            if len(node) != 1:
+                raise StaffException(
+                    f"Manifest TOML directory node at `{where}` must be a singleton table/dict; "
+                    f"got keys `{', '.join(repr(k) for k in node.keys())}`."
+                )
+
+            name, value = next(iter(node.items()))
+            if not isinstance(name, str):
+                raise StaffException(
+                    f"Manifest TOML directory key at `{where}` must be a string; "
+                    f"got `{type(name).__name__}`."
+                )
+
+            return validate_directory_dict(
+                {name: parse_node(value, where=f"{where}.{name}")}
+            )
+
+        if "manifest" in data:
+            mapping = parse_node(data["manifest"], where="manifest")
+        else:
+            # Treat the whole document as the manifest body if no top-level "manifest" key exists.
+            mapping = parse_node(data, where="root")
+
+        return cls(mapping)
 
     # noinspection PyTypeHints
     @staticmethod
