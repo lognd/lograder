@@ -9,11 +9,10 @@ from typing import (
     Type,
     TypeVar,
     cast,
-    get_origin,
 )
 
 from ansi2html import Ansi2HTMLConverter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ...common import get_first_bound_type
 from ...exception import DeveloperException
@@ -52,7 +51,9 @@ class Layout(ABC, Generic[T]):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        cls.bound_type = get_first_bound_type(cls)
+        cls.bound_type = getattr(
+            cls, "__meta_bound_type__", None
+        ) or get_first_bound_type(cls)  # used by dynamic.
         # noinspection PyUnnecessaryCast
         cls._packet_id = PacketAuthority.get_packet_id(
             cast(Type[BaseModel], cls.bound_type)
@@ -105,6 +106,13 @@ class Layout(ABC, Generic[T]):
     @property
     def ascii(self) -> str:
         return self.to_ascii(self.data)
+
+
+class LayoutLike(BaseModel):
+    to_ansi: Callable[[type[Layout], Any], str]
+    to_simple: Callable[[type[Layout], Any], str]
+    to_html: Optional[Callable[[type[Layout], Any], str]] = Field(default=None)
+    to_ascii: Optional[Callable[[type[Layout], Any], str]] = Field(default=None)
 
 
 def register_layout(packet_id: str) -> Callable[[Type[Layout]], Type[Layout]]:

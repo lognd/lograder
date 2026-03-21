@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import traceback
 from abc import ABC, abstractmethod
+from os.path import normpath
 from pathlib import Path
 from typing import Any, Callable, Iterable, NewType, Optional, cast
 
@@ -52,7 +53,7 @@ class File(FileContent):
     def __init__(self, path: Path):
         config = get_config()
         if not path.is_relative_to(config.root_directory):
-            path = config.root_directory / path.resolve()
+            path = config.root_directory / path
         if not path.resolve().exists():
             raise StaffException(
                 f"Could not find the file corresponding to the path, `{str(path)}`."
@@ -122,6 +123,11 @@ def validate_directory_dict(x: dict[str, DirectoryMapping], /) -> DirectoryDict:
 # noinspection PyTypeHints
 def directory_name(x: DirectoryDict, /) -> str:
     return next(iter(x.keys()))
+
+
+# noinspection PyTypeHints
+def directory_key(x: str | dict, /) -> str:
+    return x if isinstance(x, str) else directory_name(cast(DirectoryDict, x))
 
 
 class ManifestComparisonEntry(BaseModel):
@@ -282,15 +288,118 @@ class Manifest(Package):
 
         return cls(mapping)
 
+    @classmethod
+    def from_flat(cls, flat: list[Path]) -> Manifest:
+        config = get_config()
+        root = Path(config.root_directory).resolve()
+
+        TrieNode = dict[str, Any]
+
+        def make_node() -> TrieNode:
+            return {"dirs": {}, "files": set()}
+
+        trie: TrieNode = make_node()
+
+        def normalize_rel(path: Path) -> Path:
+            p = Path(path)
+
+            if p.is_absolute():
+                resolved = p.resolve()
+                try:
+                    return resolved.relative_to(root)
+                except ValueError as e:
+                    raise StaffException(
+                        f"Flat manifest path `{str(path)}` is outside configured root directory, `{str(root)}`."
+                    ) from e
+
+            # Lexical normalization for relative paths.
+            rel = Path(normpath(str(p)))
+
+            if rel == Path("."):
+                raise StaffException(
+                    "Flat manifest contains an empty/current-directory path (`.`), which is not a file."
+                )
+
+            # Any remaining `..` means the path still escapes upward relative to the manifest root.
+            if any(part == ".." for part in rel.parts):
+                raise StaffException(
+                    f"Flat manifest path `{str(path)}` escapes above the manifest root."
+                )
+
+            if rel.is_absolute():
+                raise StaffException(
+                    f"Flat manifest path `{str(path)}` normalized to an absolute path unexpectedly."
+                )
+
+            return rel
+
+        def insert_file(rel: Path) -> None:
+            if not rel.parts:
+                raise StaffException(
+                    "Flat manifest contained an empty path after normalization."
+                )
+
+            node = trie
+
+            for part in rel.parts[:-1]:
+                if part in node["files"]:
+                    raise StaffException(
+                        f"Flat manifest path conflict: `{str(rel)}` requires `{part}` to be a directory, "
+                        "but it was already recorded as a file."
+                    )
+                node = node["dirs"].setdefault(part, make_node())
+
+            file_name = rel.parts[-1]
+            if file_name in node["dirs"]:
+                raise StaffException(
+                    f"Flat manifest path conflict: `{str(rel)}` requires `{file_name}` to be a file, "
+                    "but it was already recorded as a directory."
+                )
+            node["files"].add(file_name)
+
+        def emit_mapping(node: TrieNode) -> DirectoryMapping:
+            out: DirectoryMapping = []
+
+            for dir_name in sorted(node["dirs"], key=lambda s: s.casefold()):
+                out.append(
+                    validate_directory_dict(
+                        {dir_name: emit_mapping(node["dirs"][dir_name])}
+                    )
+                )
+
+            for file_name in sorted(node["files"], key=lambda s: s.casefold()):
+                out.append(file_name)
+
+            return out
+
+        for raw_path in flat:
+            rel_path = normalize_rel(raw_path)
+            insert_file(rel_path)
+
+        return cls(emit_mapping(trie))
+
+    def __contains__(self, item: Any) -> bool:
+        if not isinstance(item, (str, Path)):
+            return False
+        path = Path(normpath(item)).parts
+        current = self._mapping
+        for i, sub in enumerate(path):
+            current_keys = [p for p in current if directory_key(p) == sub]
+            if sub not in current_keys:
+                return False
+            sub_item: dict | str = current_keys[0]
+            final_item: bool = i == len(path) - 1
+            if isinstance(sub_item, str) and not final_item:
+                return False
+            elif isinstance(sub_item, dict):
+                current = sub_item[sub]
+        return True
+
     # noinspection PyTypeHints
     @staticmethod
     def compare(
         expected: DirectoryMapping, received: DirectoryMapping
     ) -> ManifestComparisonSummary:
-        directory_key: Callable[[str | dict], str] = lambda item: (
-            item if isinstance(item, str) else directory_name(cast(DirectoryDict, item))
-        )
-
         manifest_expected = sorted(expected, key=directory_key)
         manifest_received = sorted(received, key=directory_key)
         if not manifest_expected and not manifest_received:
