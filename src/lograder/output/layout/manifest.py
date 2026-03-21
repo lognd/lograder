@@ -3,7 +3,6 @@ from colorama import Fore as F
 from colorama import Style as S
 
 from ...pipeline.check import ManifestCheckData, ManifestCheckError
-from ...pipeline.config import get_config
 from .format_helpers.manifest import render_manifest_diff, render_manifest_tree
 from .layout import Layout, register_layout
 
@@ -13,7 +12,6 @@ from .layout import Layout, register_layout
 class ManifestCheckDataLayout(Layout[ManifestCheckData]):
     @classmethod
     def to_ansi(cls, data: ManifestCheckData) -> str:
-        root_directory = get_config().root_directory
         tree = render_manifest_tree(
             data.manifest_expected.directory_mapping,
             data.manifest_received.directory_mapping,
@@ -22,7 +20,7 @@ class ManifestCheckDataLayout(Layout[ManifestCheckData]):
         return (
             f"{S.BRIGHT}< {F.CYAN}MANIFEST CHECK{F.RESET} >{S.RESET_ALL}\n"
             f"{F.GREEN}The received manifest is compliant with the expected manifest.{F.RESET}\n\n"
-            f"{str(root_directory)}/\n"
+            f"<project-root>/\n"
             f"{tree_ansi}"
         )
 
@@ -41,7 +39,6 @@ class ManifestCheckDataLayout(Layout[ManifestCheckData]):
 class ManifestCheckErrorLayout(Layout[ManifestCheckError]):
     @classmethod
     def to_ansi(cls, data: ManifestCheckError) -> str:
-        root_directory = get_config().root_directory
         tree = render_manifest_tree(
             data.manifest_expected.directory_mapping,
             data.manifest_received.directory_mapping,
@@ -50,7 +47,7 @@ class ManifestCheckErrorLayout(Layout[ManifestCheckError]):
         return (
             f"{S.BRIGHT}< {F.CYAN}MANIFEST CHECK{F.RESET} >{S.RESET_ALL}\n"
             f"{F.RED}The received manifest does not fit the expected manifest.{F.RESET}\n\n"
-            f"{str(root_directory)}/\n"
+            f"<project-root>/\n"
             f"{tree_ansi}"
         )
 
