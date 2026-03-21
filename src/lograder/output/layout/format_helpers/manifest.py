@@ -5,7 +5,7 @@ from typing import Callable, cast
 from colorama import Fore as F
 
 from ....exception import DeveloperException
-from ....pipeline.types.package import (
+from ....pipeline.types.parcels import (
     DirectoryDict,
     DirectoryMapping,
     Manifest,

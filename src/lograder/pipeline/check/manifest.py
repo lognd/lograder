@@ -3,7 +3,7 @@ from typing import Generator, final
 from pydantic import Field
 
 from ...common import Err, Ok, Result, Unreachable
-from ..types.package import Manifest
+from ..types.parcels import Manifest
 from .check import Check, CheckData, CheckError
 
 

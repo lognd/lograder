@@ -4,7 +4,7 @@ from typing import Generator
 from ...common import Err, Ok, Result, Unreachable
 from ...exception import UncaughtException
 from ..config import get_config
-from ..types.package import Manifest
+from ..types.parcels import Manifest
 from ..types.pipeline_sentinel import PIPELINE_START
 from .input import Input
 
