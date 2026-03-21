@@ -6,7 +6,7 @@ from ..common import Result
 from ..exception import DeveloperException, StaffException
 from ..output import get_logger
 from .step import Step
-from .types.pipeline_sentinel import PIPELINE_START
+from .types.sentinel import PIPELINE_START
 
 _LOGGER = get_logger(__name__)
 

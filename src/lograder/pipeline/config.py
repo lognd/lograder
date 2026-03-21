@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Any, ContextManager, Iterator
+from typing import Any, ContextManager, Iterator, Optional
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -17,6 +17,8 @@ except ImportError:
 
 class EnvironmentConfig(BaseModel):
     root_directory: Path = Field(default=Path("/"))
+    executable_timeout: Optional[float] = None
+    executable_max_workers: int = 16
 
     @staticmethod
     def diff_keys(*keys: str) -> set[str]:
