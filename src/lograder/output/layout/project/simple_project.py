@@ -2,17 +2,16 @@
 from colorama import Fore as F
 from colorama import Style as S
 
-from ...pipeline.check import (
+from ....pipeline.check.project.manifest import ManifestCheckData, ManifestCheckError
+from ....pipeline.check.project.simple_project import (
     REQUIRED_FILES,
-    ManifestCheckData,
-    ManifestCheckError,
     ProjectType,
     get_data_cls,
     get_error_cls,
 )
-from .dynamic import make_dynamic_layout
-from .format_helpers.manifest import render_manifest_diff, render_manifest_tree
-from .layout import Layout, LayoutLike
+from ..dynamic import make_dynamic_layout
+from ..format_helpers.manifest import render_manifest_diff, render_manifest_tree
+from ..layout import Layout, LayoutLike
 
 
 def make_simple_layout_checker(

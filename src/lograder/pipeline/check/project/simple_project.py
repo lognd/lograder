@@ -1,12 +1,12 @@
 from os.path import normpath
 from pathlib import Path
-from typing import Generator, Literal, TypeAlias, cast
+from typing import Generator, Literal, TypeAlias
 
 from pydantic import Field
 
-from ...common import Err, Ok, Result, Unreachable
-from ..types.parcels import Manifest
-from .check import Check
+from ....common import Err, Ok, Result, Unreachable
+from ...types.parcels import Manifest
+from ..check import Check
 from .manifest import ManifestCheckData, ManifestCheckError
 
 ProjectType: TypeAlias = Literal["CMake", "Makefile", "PyProject"]

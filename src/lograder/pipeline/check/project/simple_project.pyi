@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Generator, Literal, TypeAlias, overload
 
-from ...common import Result, Unreachable
-from ..types.parcels import Manifest
-from .check import Check
+from ....common import Result, Unreachable
+from ...types.parcels import Manifest
+from ..check import Check
 from .manifest import ManifestCheckData, ManifestCheckError
 
 ProjectType: TypeAlias = Literal["CMake", "Makefile", "PyProject"]

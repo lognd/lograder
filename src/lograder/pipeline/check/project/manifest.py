@@ -2,9 +2,9 @@ from typing import Generator, final
 
 from pydantic import Field
 
-from ...common import Err, Ok, Result, Unreachable
-from ..types.parcels import Manifest
-from .check import Check, CheckData, CheckError
+from ....common import Err, Ok, Result, Unreachable
+from ...check.check import Check, CheckData, CheckError
+from ...types.parcels import Manifest
 
 
 class ManifestCheckData(CheckData):
