@@ -7,7 +7,7 @@ except ImportError:
 from pathlib import Path
 from typing import Literal
 
-from ...types.cli_args import CLIArgs, CLIField
+from lograder.pipeline.types.executable.cli_args import CLIArgs, CLIField
 
 
 class CMakeBuildType(StrEnum):
@@ -35,9 +35,15 @@ class CMakeConfigureArgs(CLIArgs):
     build_dir: Path = CLIField(default=Path("build"), flag="-B")
 
     generator: CMakeGenerator | str | None = CLIField(default=None, flag="-G")
-    toolchain_file: Path | None = CLIField(default=None, flag="-DCMAKE_TOOLCHAIN_FILE", compact=True)
-    build_type: CMakeBuildType | str | None = CLIField(default=None, flag="-DCMAKE_BUILD_TYPE", compact=True)
-    install_prefix: Path | None = CLIField(default=None, flag="-DCMAKE_INSTALL_PREFIX", compact=True)
+    toolchain_file: Path | None = CLIField(
+        default=None, flag="-DCMAKE_TOOLCHAIN_FILE", compact=True
+    )
+    build_type: CMakeBuildType | str | None = CLIField(
+        default=None, flag="-DCMAKE_BUILD_TYPE", compact=True
+    )
+    install_prefix: Path | None = CLIField(
+        default=None, flag="-DCMAKE_INSTALL_PREFIX", compact=True
+    )
 
     export_compile_commands: bool | None = CLIField(
         default=None,
@@ -81,7 +87,10 @@ class CMakeConfigureArgs(CLIArgs):
     trace: bool = CLIField(default=False, flag="--trace")
     trace_expand: bool = CLIField(default=False, flag="--trace-expand")
     debug_find: bool = CLIField(default=False, flag="--debug-find")
-    log_level: Literal["ERROR", "WARNING", "NOTICE", "STATUS", "VERBOSE", "DEBUG", "TRACE"] | None = CLIField(
+    log_level: (
+        Literal["ERROR", "WARNING", "NOTICE", "STATUS", "VERBOSE", "DEBUG", "TRACE"]
+        | None
+    ) = CLIField(
         default=None,
         flag="--log-level",
     )
@@ -105,7 +114,9 @@ class CMakeBuildArgs(CLIArgs):
     verbose: bool = CLIField(default=False, flag="--verbose")
 
     # Arguments after `--` passed through to native build tool.
-    native_args: list[str] = CLIField(default_factory=list, positional=True, exclude=True)
+    native_args: list[str] = CLIField(
+        default_factory=list, positional=True, exclude=True
+    )
 
     def to_arguments(self) -> list[str]:
         args = ["--build", *super().to_arguments()]
@@ -185,7 +196,9 @@ class PyProjectBuildArgs(CLIArgs):
     sdist: bool = CLIField(default=False, flag="--sdist")
     wheel: bool = CLIField(default=False, flag="--wheel")
     no_isolation: bool = CLIField(default=False, flag="--no-isolation")
-    skip_dependency_check: bool = CLIField(default=False, flag="--skip-dependency-check")
+    skip_dependency_check: bool = CLIField(
+        default=False, flag="--skip-dependency-check"
+    )
     config_settings: dict[str, str | int | float | bool] = CLIField(
         default_factory=dict,
         flag="-C",
@@ -212,8 +225,12 @@ class PyProjectInstallArgs(CLIArgs):
     force_reinstall: bool = CLIField(default=False, flag="--force-reinstall")
     no_build_isolation: bool = CLIField(default=False, flag="--no-build-isolation")
     index_url: str | None = CLIField(default=None, flag="--index-url")
-    extra_index_url: list[str] = CLIField(default_factory=list, flag="--extra-index-url", repeat=True)
-    find_links: list[str | Path] = CLIField(default_factory=list, flag="--find-links", repeat=True)
+    extra_index_url: list[str] = CLIField(
+        default_factory=list, flag="--extra-index-url", repeat=True
+    )
+    find_links: list[str | Path] = CLIField(
+        default_factory=list, flag="--find-links", repeat=True
+    )
     config_settings: dict[str, str | int | float | bool] = CLIField(
         default_factory=dict,
         flag="--config-settings",

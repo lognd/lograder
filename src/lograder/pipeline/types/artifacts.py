@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict
 
-from .executable import Executable
+from lograder.pipeline.types.executable.base_executable import Executable
 
 
 class Artifact(BaseModel):

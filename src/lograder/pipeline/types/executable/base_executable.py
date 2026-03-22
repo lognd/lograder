@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from abc import ABC, abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from enum import Enum, auto
 from functools import lru_cache
@@ -12,9 +13,9 @@ from typing import Any, Final, TypeVar, cast
 
 from pydantic import BaseModel, Field, field_validator
 
-from ...exception import DeveloperException
-from ..config import get_config
-from .sentinel import NOT_APPLICABLE
+from lograder.exception import DeveloperException
+from lograder.pipeline.config import get_config
+from lograder.pipeline.types.sentinel import NOT_APPLICABLE
 
 # from winapi
 CREATE_NEW_PROCESS_GROUP: Final = 0x200
@@ -334,8 +335,10 @@ class ExecutableInvocation(BaseModel):
         raise DeveloperException(f"Unsupported stream mode: {mode}")
 
 
-class Executable(BaseModel):
-    command: list[str]
+class Executable(ABC):
+    @property
+    @abstractmethod
+    def command(self) -> list[str]: ...
 
     def __call__(
         self,
@@ -364,3 +367,7 @@ class Executable(BaseModel):
             invocation = resolve_invocation(self.command, input=input, options=option)
             futures.append(executor.submit(invoke_command, invocation))
         return futures
+
+
+class GeneratedExecutable(BaseModel, Executable):
+    command: list[str]

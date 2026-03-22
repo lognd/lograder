@@ -7,7 +7,6 @@ from typing import Any, Callable, ClassVar, Literal
 
 from pydantic import BaseModel, Field
 
-
 CLIHookResult = list[str] | None
 CLIHook = Callable[
     ["CLIArgs", str, Any, Mapping[str, Any], str],
@@ -108,7 +107,9 @@ class CLIArgs(BaseModel):
 
         return [flag, rendered]
 
-    def _emit_bool(self, flag: str, value: bool, cli_meta: Mapping[str, Any]) -> list[str]:
+    def _emit_bool(
+        self, flag: str, value: bool, cli_meta: Mapping[str, Any]
+    ) -> list[str]:
         style = cli_meta.get("bool_style", self._default_bool_style)
 
         if style == "explicit":
@@ -129,7 +130,9 @@ class CLIArgs(BaseModel):
 
         raise ValueError(f"Unsupported bool style: {style!r}")
 
-    def _emit_iterable(self, flag: str, value: Iterable[Any], cli_meta: Mapping[str, Any]) -> list[str]:
+    def _emit_iterable(
+        self, flag: str, value: Iterable[Any], cli_meta: Mapping[str, Any]
+    ) -> list[str]:
         items = self._flatten_value(value, cli_meta)
         if not items:
             return []
@@ -161,14 +164,19 @@ class CLIArgs(BaseModel):
         if isinstance(value, BaseModel):
             if isinstance(value, CLIArgs):
                 return value.to_arguments()
-            raise TypeError(f"Nested BaseModel {type(value).__name__} must inherit from CLIArgs")
+            raise TypeError(
+                f"Nested BaseModel {type(value).__name__} must inherit from CLIArgs"
+            )
 
         if isinstance(value, Mapping):
             mapping_mode = cli_meta.get("mapping", "key_value")
             sep = str(cli_meta.get("kv_sep", "="))
 
             if mapping_mode == "key_value":
-                return [f"{self._render_scalar(k)}{sep}{self._render_scalar(v)}" for k, v in value.items()]
+                return [
+                    f"{self._render_scalar(k)}{sep}{self._render_scalar(v)}"
+                    for k, v in value.items()
+                ]
 
             raise ValueError(f"Unsupported mapping mode: {mapping_mode!r}")
 
@@ -196,6 +204,7 @@ class CLIArgs(BaseModel):
 
 
 # ---------- Reusable hooks ----------
+
 
 def hook_joined_prefix(
     model: CLIArgs,
@@ -251,7 +260,10 @@ def hook_mapping_repeat_compact(
         return None
 
     sep = str(cli_meta.get("kv_sep", "="))
-    items = [f"{model._render_scalar(k)}{sep}{model._render_scalar(v)}" for k, v in value.items()]
+    items = [
+        f"{model._render_scalar(k)}{sep}{model._render_scalar(v)}"
+        for k, v in value.items()
+    ]
     if not items:
         return []
 

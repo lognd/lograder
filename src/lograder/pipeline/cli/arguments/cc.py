@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from enum import Enum
 from pathlib import Path
 from typing import Literal
+
 try:
     from enum import StrEnum
 except ImportError:
     from strenum import StrEnum
 
-from ...types.cli_args import CLIArgs, CLIField
+from lograder.pipeline.types.executable.cli_args import CLIArgs, CLIField
 
 
 class LanguageStandard(StrEnum):
@@ -36,7 +36,7 @@ class OptimizationLevel(StrEnum):
     OS = "s"
     OFAST = "fast"
     OG = "g"
-    OZ = "z"   # clang supports this; gcc may not
+    OZ = "z"  # clang supports this; gcc may not
 
 
 class DebugLevel(StrEnum):
@@ -74,7 +74,9 @@ class GCCLikeCompilerArgs(CLIArgs):
 
     # Language / mode
     language: str | None = CLIField(default=None, flag="-x")
-    standard: LanguageStandard | str | None = CLIField(default=None, flag="-std", compact=True)
+    standard: LanguageStandard | str | None = CLIField(
+        default=None, flag="-std", compact=True
+    )
 
     # Warnings
     wall: bool = CLIField(default=False, flag="-Wall")
@@ -90,7 +92,9 @@ class GCCLikeCompilerArgs(CLIArgs):
     )
 
     # Optimization / debug
-    optimization: OptimizationLevel | str | None = CLIField(default=None, flag="-O", compact=True)
+    optimization: OptimizationLevel | str | None = CLIField(
+        default=None, flag="-O", compact=True
+    )
     debug: bool = CLIField(default=False, flag="-g")
     debug_level: DebugLevel | str | None = CLIField(default=None, exclude=True)
 
@@ -100,9 +104,15 @@ class GCCLikeCompilerArgs(CLIArgs):
         exclude=True,
     )
     undefines: list[str] = CLIField(default_factory=list, flag="-U", repeat=True)
-    include_dirs: list[Path | str] = CLIField(default_factory=list, flag="-I", repeat=True)
-    system_include_dirs: list[Path | str] = CLIField(default_factory=list, flag="-isystem", repeat=True)
-    include_headers: list[Path | str] = CLIField(default_factory=list, flag="-include", repeat=True)
+    include_dirs: list[Path | str] = CLIField(
+        default_factory=list, flag="-I", repeat=True
+    )
+    system_include_dirs: list[Path | str] = CLIField(
+        default_factory=list, flag="-isystem", repeat=True
+    )
+    include_headers: list[Path | str] = CLIField(
+        default_factory=list, flag="-include", repeat=True
+    )
 
     # Dependency generation
     md: bool = CLIField(default=False, flag="-MD")
@@ -118,12 +128,14 @@ class GCCLikeCompilerArgs(CLIArgs):
     static: bool = CLIField(default=False, flag="-static")
 
     # Libraries / link
-    library_dirs: list[Path | str] = CLIField(default_factory=list, flag="-L", repeat=True)
+    library_dirs: list[Path | str] = CLIField(
+        default_factory=list, flag="-L", repeat=True
+    )
     libraries: list[str] = CLIField(default_factory=list, exclude=True)
     linker_options: list[str] = CLIField(default_factory=list, exclude=True)
 
     # Machine / arch / target
-    machine: str | None = CLIField(default=None, flag="-m", compact=True)   # e.g. 64
+    machine: str | None = CLIField(default=None, flag="-m", compact=True)  # e.g. 64
     target: str | None = CLIField(default=None, flag="--target")
 
     # Misc
@@ -294,15 +306,21 @@ class MSVCCompilerArgs(CLIArgs):
     warning_level: MSVCWarningLevel | str | None = CLIField(default=None, exclude=True)
     wx: bool = CLIField(default=False, flag="/WX")
     debug: bool = CLIField(default=False, flag="/Zi")
-    optimize: Literal["Od", "O1", "O2", "Ox"] | None = CLIField(default=None, exclude=True)
+    optimize: Literal["Od", "O1", "O2", "Ox"] | None = CLIField(
+        default=None, exclude=True
+    )
 
     # Runtime / EH / RTTI
     runtime_library: RuntimeLibrary | str | None = CLIField(default=None, exclude=True)
     exceptions: bool = CLIField(default=False, flag="/EHsc")
-    rtti: bool | None = CLIField(default=None, exclude=True)  # True => /GR, False => /GR-
+    rtti: bool | None = CLIField(
+        default=None, exclude=True
+    )  # True => /GR, False => /GR-
 
     # Preprocessor / includes
-    defines: dict[str, str | int | float | bool | None] = CLIField(default_factory=dict, exclude=True)
+    defines: dict[str, str | int | float | bool | None] = CLIField(
+        default_factory=dict, exclude=True
+    )
     undefines: list[str] = CLIField(default_factory=list, exclude=True)
     include_dirs: list[Path | str] = CLIField(default_factory=list, exclude=True)
 
