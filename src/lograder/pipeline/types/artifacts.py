@@ -7,6 +7,3 @@ from .executable import Executable
 
 class Artifact(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
-
-class ExecutableArtifact(Executable): ...

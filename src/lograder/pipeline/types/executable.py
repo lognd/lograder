@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from abc import ABC, abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from enum import Enum, auto
 from functools import lru_cache
@@ -334,8 +335,10 @@ class ExecutableInvocation(BaseModel):
         raise DeveloperException(f"Unsupported stream mode: {mode}")
 
 
-class Executable(BaseModel):
-    command: list[str]
+class Executable(ABC):
+    @property
+    @abstractmethod
+    def command(self) -> list[str]: ...
 
     def __call__(
         self,
