@@ -97,7 +97,7 @@ class CLIArgs(BaseModel):
                 schema[name] = transformation
         return schema
 
-    def to_cli_args(self) -> list[str]:
+    def emit(self) -> list[str]:
         cli_schema = self.get_cli_schema()
         arguments: list[str] = []
         for name, transformation in cli_schema.items():

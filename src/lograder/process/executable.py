@@ -7,12 +7,14 @@ from abc import ABC, abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 from subprocess import TimeoutExpired
-from typing import Any, TypeVar, cast
+from typing import Any, Callable, Generic, Optional, TypeVar, cast
 
 from pydantic import BaseModel, Field, field_validator
 
-from lograder.exception import DeveloperException
+from lograder.common import get_first_bound_type, unwrap_union_types
+from lograder.exception import DeveloperException, StaffException
 from lograder.pipeline.config import get_config
+from lograder.process.cli_args import CLIArgs
 from lograder.process.os_helpers import (
     CREATE_NEW_PROCESS_GROUP,
     NOT_APPLICABLE,
@@ -290,3 +292,63 @@ class Executable(ABC):
             invocation = resolve_invocation(self.command, input=input, options=option)
             futures.append(executor.submit(invoke_command, invocation))
         return futures
+
+
+class StaticExecutable(Executable, BaseModel):
+    command: list[str]
+
+
+def register_typed_executable(
+    base_command: list[str],
+) -> Callable[[type[TypedExecutable]], type[TypedExecutable]]:
+    def wrapper(cls: type[TypedExecutable]) -> type[TypedExecutable]:
+        cls.executable = StaticExecutable(command=base_command)
+        return cls
+
+    return wrapper
+
+
+class TypedExecutable(Generic[T]):
+    bound_types: Optional[set[type[CLIArgs]]] = None
+    executable: Optional[StaticExecutable] = None
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        _bound_type = getattr(cls, "__meta_bound_type__", None) or get_first_bound_type(
+            cls
+        )
+        _bound_types = (
+            unwrap_union_types(_bound_type) if _bound_type is not None else None
+        )
+        if _bound_types is not None:
+            for typ in _bound_types:
+                if not issubclass(typ, CLIArgs):
+                    raise DeveloperException(
+                        f"A `TypedExecutable` subclass, `{cls.__name__}`, uses `{typ.__name__}` as a generic parameter, but "
+                        f"`{typ.__name__}` does not inherit from `CLIArgs`."
+                    )
+        # noinspection PyUnnecessaryCast
+        cls.bound_types = cast(Optional[set[type[CLIArgs]]], _bound_types)
+
+    def __call__(
+        self,
+        args: CLIArgs,
+        input: ExecutableInput = ExecutableInput(),
+        options: ExecutableOptions = ExecutableOptions(),
+    ) -> ExecutableOutput:
+        if self.bound_types is None:
+            raise DeveloperException(
+                f"Cannot call a `{self.__class__.__name__}` instance because the class does not specify a bound `CLIArgs` type or union type with `class <your-executable>(TypedExecutable[<CLIArgs-type-or-union-of-CLIArgs-type>])."
+            )
+        if self.executable is None:
+            raise DeveloperException(
+                f"Cannot call a `{self.__class__.__name__}` instance because the class does not specify a bound executable with `@register_typed_executable([<command-goes-here>])`."
+            )
+        if input.arguments:
+            raise StaffException(
+                f"Call to `{self.__class__.__name__}` with non-empty arguments (`{'`, `'.join(e for e in input.arguments)}`) in `input` parameter is not allowed because "
+                f"the arguments must be provided by the `args` parameter of one of the type(s): `{'`, `'.join(t.__name__ for t in self.bound_types)}`. This is to "
+                f"enforce a single source of truth for the arguments."
+            )
+        input.arguments = args.emit()
+        return self.executable(input=input, options=options)
