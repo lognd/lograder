@@ -11,7 +11,14 @@ from typing import Any, Callable, Generic, Optional, TypeVar, cast
 
 from pydantic import BaseModel, Field, field_validator
 
-from lograder.common import get_first_bound_type, unwrap_union_types
+from lograder.common import (
+    Empty,
+    Err,
+    Ok,
+    Result,
+    get_first_bound_type,
+    unwrap_union_types,
+)
 from lograder.exception import DeveloperException, StaffException
 from lograder.pipeline.config import get_config
 from lograder.process.cli_args import CLIArgs
@@ -330,12 +337,18 @@ class TypedExecutable(Generic[T]):
         # noinspection PyUnnecessaryCast
         cls.bound_types = cast(Optional[set[type[CLIArgs]]], _bound_types)
 
+    def is_runnable(self) -> Result[Empty, BaseModel]:
+        """
+        Provides a method for platform checking or any sort of pre-run validation.
+        """
+        return Ok(Empty())
+
     def __call__(
         self,
         args: CLIArgs,
         input: ExecutableInput = ExecutableInput(),
         options: ExecutableOptions = ExecutableOptions(),
-    ) -> ExecutableOutput:
+    ) -> Result[ExecutableOutput, BaseModel]:
         if self.bound_types is None:
             raise DeveloperException(
                 f"Cannot call a `{self.__class__.__name__}` instance because the class does not specify a bound `CLIArgs` type or union type with `class <your-executable>(TypedExecutable[<CLIArgs-type-or-union-of-CLIArgs-type>])."
@@ -351,4 +364,11 @@ class TypedExecutable(Generic[T]):
                 f"enforce a single source of truth for the arguments."
             )
         input.arguments = args.emit()
-        return self.executable(input=input, options=options)
+        may_run = self.is_runnable()
+        # This cast is okay because we check if `self.executable` is None and the function runs immediately and is discarded.
+        # noinspection PyUnnecessaryCast
+        return may_run.map(
+            lambda _: cast(StaticExecutable, self.executable)(
+                input=input, options=options
+            )
+        )
