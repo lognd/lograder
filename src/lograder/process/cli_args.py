@@ -4,6 +4,7 @@ from typing import Any, Callable, Optional, Sequence, TypedDict, TypeVar, cast
 from pydantic import BaseModel, Field
 
 from lograder.exception import DeveloperException
+from lograder.common import Singleton
 
 T = TypeVar("T")
 
@@ -12,6 +13,9 @@ class _PydanticCLIExtra(TypedDict):
     emit: Optional[Sequence[str]]
     emitter: Optional[Callable[[Any], Any]]
 
+# noinspection PyPep8Naming
+class CLI_ARG_MISSING(Singleton):
+    ...
 
 # noinspection PyPep8Naming
 def CLIOption(
@@ -81,6 +85,8 @@ class CLIArgs(BaseModel):
                 if cli_data["emit"] is not None:
 
                     def transformation(v: Any) -> list[str]:
+                        if v is MISSING():
+                            return []
                         # noinspection PyUnnecessaryCast
                         return [
                             s.format(str(v)) for s in cast(list[str], cli_data["emit"])
