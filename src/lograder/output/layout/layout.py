@@ -6,7 +6,6 @@ from typing import (
     Generic,
     Literal,
     Optional,
-    Type,
     TypeVar,
     cast,
 )
@@ -16,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from lograder.common import get_first_bound_type
 from lograder.exception import DeveloperException
-from lograder.output.packets import Packet, PacketAuthority, PacketId, wrap_packet
+from lograder.output.packets import PacketAuthority, PacketId
 
 _ANSI_ESCAPE_RE = re.compile(
     r"""
@@ -43,7 +42,7 @@ SupportedFormat = Literal["ansi", "ascii", "html", "simple"]
 class Layout(ABC, Generic[T]):
     _css_class: str = "layout-all"
     _packet_id: Optional[str] = None
-    bound_type: Optional[Type[T]] = None
+    bound_type: Optional[type[T]] = None
 
     def __init__(self, data: T, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -56,7 +55,7 @@ class Layout(ABC, Generic[T]):
         ) or get_first_bound_type(cls)  # used by dynamic.
         # noinspection PyUnnecessaryCast
         cls._packet_id = PacketAuthority.get_packet_id(
-            cast(Type[BaseModel], cls.bound_type)
+            cast(type[BaseModel], cls.bound_type)
         )  # This cast looks bad but is very benign because we're doing a packet lookup; if the class isn't of BaseModel type, then `None` must be returned anyway.
 
         if cls._packet_id is None:
@@ -115,8 +114,8 @@ class LayoutLike(BaseModel):
     to_ascii: Optional[Callable[[type[Layout], Any], str]] = Field(default=None)
 
 
-def register_layout(packet_id: str) -> Callable[[Type[Layout]], Type[Layout]]:
-    def wrapper(cls: Type[Layout]) -> Type[Layout]:
+def register_layout(packet_id: str) -> Callable[[type[Layout]], type[Layout]]:
+    def wrapper(cls: type[Layout]) -> type[Layout]:
         if cls.bound_type is None:
             raise DeveloperException(
                 f"`Layout` subclass (`{cls.__name__}`) must specify generic type, i.e. `Layout[Stream]` rather that merely `Layout`."
@@ -129,5 +128,5 @@ def register_layout(packet_id: str) -> Callable[[Type[Layout]], Type[Layout]]:
 
 def dispatch_layout(data: BaseModel) -> Layout:
     packet_id: PacketId = PacketAuthority.access_packet_id(data.__class__)
-    layout_cls: Type[Layout] = PacketAuthority.access_layout(packet_id)
+    layout_cls: type[Layout] = PacketAuthority.access_layout(packet_id)
     return layout_cls(data)
