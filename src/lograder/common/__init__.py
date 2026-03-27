@@ -1,4 +1,4 @@
-from lograder.common.empty import Empty, Unreachable
+from lograder.common.empty import Empty, Unreachable, Singleton
 from lograder.common.generic_utils import (
     get_args,
     get_bound_types,
@@ -12,6 +12,7 @@ from lograder.common.result import Err, Ok, Result
 __all__ = [
     "Result",
     "Empty",
+    "Singleton",
     "Unreachable",
     "Ok",
     "Err",

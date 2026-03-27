@@ -4,22 +4,13 @@ import os
 import sys
 from enum import Enum, auto
 from functools import lru_cache
-from typing import Final, Optional, TypeVar, final
+from typing import Final, TypeVar, final
 
-from lograder.common import Empty
-
-_NOT_APPLICABLE_SINGLETON: Optional[NOT_APPLICABLE] = None
-
+from lograder.common import Singleton
 
 # noinspection PyPep8Naming
 @final
-class NOT_APPLICABLE(Empty):
-    def __new__(cls) -> NOT_APPLICABLE:
-        global _NOT_APPLICABLE_SINGLETON
-        if _NOT_APPLICABLE_SINGLETON is None:
-            _NOT_APPLICABLE_SINGLETON = super().__new__(cls)
-        return _NOT_APPLICABLE_SINGLETON
-
+class NOT_APPLICABLE(Singleton): ...
 
 T = TypeVar("T")
 
