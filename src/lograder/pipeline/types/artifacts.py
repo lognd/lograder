@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
-from .executable import Executable
+from pydantic import BaseModel, ConfigDict
 
 
 class Artifact(BaseModel):

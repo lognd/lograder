@@ -5,109 +5,18 @@ import subprocess
 import sys
 from abc import ABC, abstractmethod
 from concurrent.futures import Future, ThreadPoolExecutor
-from enum import Enum, auto
-from functools import lru_cache
 from pathlib import Path
 from subprocess import TimeoutExpired
-from typing import Any, Final, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel, Field, field_validator
 
-from ...exception import DeveloperException
-from ..config import get_config
-from .sentinel import NOT_APPLICABLE
+from lograder.exception import DeveloperException
+from lograder.process.os_helpers import is_windows, is_posix, CREATE_NEW_PROCESS_GROUP, SIGKILL, StreamMode, posix_and, windows_and, get_current_umask, get_current_uid, get_current_username, get_current_gid, get_current_groupname, get_current_extra_groups
+from lograder.pipeline.config import get_config
+from lograder.pipeline.types.sentinel import NOT_APPLICABLE
 
-# from winapi
-CREATE_NEW_PROCESS_GROUP: Final = 0x200
-SIGKILL = 137
 T = TypeVar("T")
-
-
-def is_windows() -> bool:
-    return sys.platform.startswith("win")
-
-
-def is_posix() -> bool:
-    return os.name == "posix"
-
-
-def posix_and(val: T, /) -> NOT_APPLICABLE | T:
-    if is_posix():
-        return val
-    return NOT_APPLICABLE()
-
-
-def windows_and(val: T, /) -> NOT_APPLICABLE | T:
-    if is_windows():
-        return val
-    return NOT_APPLICABLE()
-
-
-def get_current_uid() -> int | NOT_APPLICABLE:
-    if not is_posix():
-        return NOT_APPLICABLE()
-    return os.getuid()
-
-
-def get_current_gid() -> int | NOT_APPLICABLE:
-    if not is_posix():
-        return NOT_APPLICABLE()
-    return os.getgid()
-
-
-def get_current_groups() -> list[int] | NOT_APPLICABLE:
-    if not is_posix():
-        return NOT_APPLICABLE()
-    return os.getgroups()
-
-
-def get_current_username() -> str | NOT_APPLICABLE:
-    if not is_posix():
-        return NOT_APPLICABLE()
-    import pwd
-
-    return pwd.getpwuid(os.getuid()).pw_name
-
-
-def get_current_groupname() -> str | NOT_APPLICABLE:
-    if not is_posix():
-        return NOT_APPLICABLE()
-    import grp
-
-    return grp.getgrgid(os.getgid()).gr_name
-
-
-def get_current_extra_groups() -> list[int] | NOT_APPLICABLE:
-    if not is_posix():
-        return NOT_APPLICABLE()
-    return os.getgroups()
-
-
-@lru_cache(maxsize=1)
-def get_current_umask() -> int | NOT_APPLICABLE:
-    if not is_posix():
-        return NOT_APPLICABLE()
-
-    # Try Linux fast path first
-    try:
-        with open("/proc/self/status") as f:
-            for line in f:
-                if line.startswith("Umask:"):
-                    return int(line.split()[1], 8)
-    except Exception:
-        pass
-
-    # Portable fallback
-    current = os.umask(0)
-    os.umask(current)
-    return current
-
-
-class StreamMode(Enum):
-    PIPE = auto()
-    INHERIT = auto()
-    NULL = auto()
-    STDOUT = auto()
 
 
 def resolve_invocation(

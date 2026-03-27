@@ -3,7 +3,7 @@ from typing import Any, Callable, Optional, Sequence, TypedDict, TypeVar, cast
 
 from pydantic import BaseModel, Field
 
-from ...exception import DeveloperException
+from lograder.exception import DeveloperException
 
 T = TypeVar("T")
 
