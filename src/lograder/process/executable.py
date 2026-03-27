@@ -12,9 +12,23 @@ from typing import Any, TypeVar, cast
 from pydantic import BaseModel, Field, field_validator
 
 from lograder.exception import DeveloperException
-from lograder.process.os_helpers import is_windows, is_posix, CREATE_NEW_PROCESS_GROUP, SIGKILL, StreamMode, posix_and, windows_and, get_current_umask, get_current_uid, get_current_username, get_current_gid, get_current_groupname, get_current_extra_groups
 from lograder.pipeline.config import get_config
-from lograder.pipeline.types.sentinel import NOT_APPLICABLE
+from lograder.process.os_helpers import (
+    CREATE_NEW_PROCESS_GROUP,
+    NOT_APPLICABLE,
+    SIGKILL,
+    StreamMode,
+    get_current_extra_groups,
+    get_current_gid,
+    get_current_groupname,
+    get_current_uid,
+    get_current_umask,
+    get_current_username,
+    is_posix,
+    is_windows,
+    posix_and,
+    windows_and,
+)
 
 T = TypeVar("T")
 
