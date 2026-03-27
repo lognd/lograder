@@ -1,6 +1,6 @@
 import traceback
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class LograderException(Exception):
@@ -20,6 +20,7 @@ class StaffException(LograderException):
 
 
 class UncaughtException(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     error: Exception
     error_traceback: str = Field(default_factory=traceback.format_exc)
 

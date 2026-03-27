@@ -9,11 +9,14 @@ class Empty:
 
 
 _SINGLETON_INSTANCES: dict[type[Singleton], Singleton] = {}
+
+
 class Singleton(Empty):
     def __new__(cls) -> Singleton:
         if cls in _SINGLETON_INSTANCES:
             return _SINGLETON_INSTANCES[cls]
         return super().__new__(cls)
+
 
 @final
 class Unreachable(Empty):
