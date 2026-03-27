@@ -1,7 +1,6 @@
 from typing import (
     Any,
     Optional,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -66,7 +65,7 @@ def write_generic_type(
     return cls
 
 
-def get_first_bound_type(typ: Type) -> Any:
+def get_first_bound_type(typ: type) -> Any:
     for base in getattr(typ, "__orig_bases__", ()):
         return get_args(base)[0]
     return None
@@ -76,7 +75,7 @@ def get_bound_types(cls: type, target_typ: type) -> Optional[tuple[Any, ...]]:
     return _get_bound_types_recursive(cls, target_typ, {})
 
 
-def unwrap_union_types(typ: Type) -> set[Type]:
+def unwrap_union_types(typ: type) -> set[type]:
     origin = get_origin(typ)
     if origin is Union:  # type: ignore[comparison-overlap]
         return set(get_args(typ))
