@@ -1,4 +1,4 @@
-from lograder.common.empty import Empty, Unreachable, Singleton
+from lograder.common.empty import Empty, Singleton, Unreachable
 from lograder.common.generic_utils import (
     get_args,
     get_bound_types,

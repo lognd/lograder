@@ -8,9 +8,11 @@ from typing import Final, TypeVar, final
 
 from lograder.common import Singleton
 
+
 # noinspection PyPep8Naming
 @final
 class NOT_APPLICABLE(Singleton): ...
+
 
 T = TypeVar("T")
 
