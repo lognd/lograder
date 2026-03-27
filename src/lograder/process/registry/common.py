@@ -19,6 +19,7 @@ else:
         # noinspection PyUnresolvedReferences
         from strenum import StrEnum
 
+
 # You cannot inherit from enums, so this is a simple runtime check.
 def find_missing(sub: type[StrEnum], sup: type[StrEnum]) -> set[str]:
     return {m.value for m in sub} - {m.value for m in sup}

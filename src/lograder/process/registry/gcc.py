@@ -3,7 +3,12 @@ from typing import TYPE_CHECKING
 from lograder.exception import DeveloperException
 from lograder.process.cli_args import CLIOption
 from lograder.process.executable import TypedExecutable, register_typed_executable
-from lograder.process.registry.common import CompilerArgs, CStandard, CXXStandard, find_missing
+from lograder.process.registry.common import (
+    CompilerArgs,
+    CStandard,
+    CXXStandard,
+    find_missing,
+)
 
 if TYPE_CHECKING:
     from _strenum_compat import StrEnum
@@ -25,8 +30,13 @@ class GNUStandard(StrEnum):
     GNU11 = "gnu11"
     GNU99 = "gnu99"
     GNU90 = "gnu90"
+
+
 if not find_missing(CStandard, GNUStandard):
-    raise DeveloperException(f"`GNUStandard` string enum. class should be a superset of `CStandard`. The following was found missing: `{'`, `'.join(find_missing(CStandard, GNUStandard))}`")
+    raise DeveloperException(
+        f"`GNUStandard` string enum. class should be a superset of `CStandard`. The following was found missing: `{'`, `'.join(find_missing(CStandard, GNUStandard))}`"
+    )
+
 
 class GNUXXStandard(StrEnum):
     CXX23 = "c++23"
@@ -43,8 +53,12 @@ class GNUXXStandard(StrEnum):
     GNUXX11 = "gnu++11"
     GNUXX03 = "gnu++03"
     GNUXX98 = "gnu++98"
+
+
 if not find_missing(CXXStandard, GNUXXStandard):
-    raise DeveloperException(f"`GNUXXStandard` string enum. class should be a superset of `CXXStandard`. The following was found missing: `{'`, `'.join(find_missing(CXXStandard, GNUXXStandard))}`")
+    raise DeveloperException(
+        f"`GNUXXStandard` string enum. class should be a superset of `CXXStandard`. The following was found missing: `{'`, `'.join(find_missing(CXXStandard, GNUXXStandard))}`"
+    )
 
 
 class GNUOptimizationLevel(StrEnum):

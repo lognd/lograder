@@ -1,5 +1,15 @@
 from types import EllipsisType
-from typing import Any, Callable, Iterable, Optional, Sequence, TypedDict, TypeVar, Mapping, cast
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Mapping,
+    Optional,
+    Sequence,
+    TypedDict,
+    TypeVar,
+    cast,
+)
 
 from pydantic import BaseModel, Field
 
@@ -39,11 +49,7 @@ def CLIOption(
     return Field(default=default, json_schema_extra=extra, **field_kwargs)
 
 
-def validate_single_specification(
-        source: str,
-        /,
-        **kwargs: Any
-) -> None:
+def validate_single_specification(source: str, /, **kwargs: Any) -> None:
     if not kwargs:
         return
 
@@ -76,11 +82,19 @@ def CLIMultiOption(
     token_emitter: Optional[Callable[[T], Sequence[str]]] = None,
     **field_kwargs: Any,
 ) -> Any:
-    validate_single_specification("CLIMultiOption", sequence_emit=sequence_emit, sequence_emitter=sequence_emitter)
-    validate_single_specification("CLIMultiOption", token_emit=token_emit, token_emitter=token_emitter)
+    validate_single_specification(
+        "CLIMultiOption", sequence_emit=sequence_emit, sequence_emitter=sequence_emitter
+    )
+    validate_single_specification(
+        "CLIMultiOption", token_emit=token_emit, token_emitter=token_emitter
+    )
 
     if sequence_emitter is None:
+        assert sequence_emit is not None  # Must be true; we just validated.
         sequence_emitter = lambda _: sequence_emit
+    assert (
+        sequence_emitter is not None
+    )  # Must be true; if it was originally None, then the branch above must have been taken.
 
     def emitter(input: Iterable[T]) -> Sequence[str]:
         base_sequence = sequence_emitter(input)
@@ -91,6 +105,9 @@ def CLIMultiOption(
                     if token_emit is not None:
                         new_sequence.extend(t.format(item) for t in token_emit)
                         continue
+                    assert (
+                        token_emitter is not None
+                    )  # Must be true because we validate at the beginning of the surrounding function.
                     new_sequence.extend(token_emitter(item))
             else:
                 new_sequence.append(token)
@@ -101,21 +118,29 @@ def CLIMultiOption(
 
 # noinspection PyPep8Naming
 def CLIKVOption(
-        *,
-        default: Mapping[K, V] | EllipsisType = ...,
-        sequence_emit: Optional[Sequence[str | EllipsisType]] = (...,),
-        sequence_emitter: Optional[
-            Callable[[Mapping[K, V]], Sequence[str | EllipsisType]]
-        ] = None,
-        token_emit: Optional[Sequence[str]] = ("{key}={value}",),
-        token_emitter: Optional[Callable[[K, V], Sequence[str]]] = None,
-        **field_kwargs: Any,
+    *,
+    default: Mapping[K, V] | EllipsisType = ...,
+    sequence_emit: Optional[Sequence[str | EllipsisType]] = (...,),
+    sequence_emitter: Optional[
+        Callable[[Mapping[K, V]], Sequence[str | EllipsisType]]
+    ] = None,
+    token_emit: Optional[Sequence[str]] = ("{key}={value}",),
+    token_emitter: Optional[Callable[[K, V], Sequence[str]]] = None,
+    **field_kwargs: Any,
 ) -> Any:
-    validate_single_specification("CLIMultiOption", sequence_emit=sequence_emit, sequence_emitter=sequence_emitter)
-    validate_single_specification("CLIMultiOption", token_emit=token_emit, token_emitter=token_emitter)
+    validate_single_specification(
+        "CLIMultiOption", sequence_emit=sequence_emit, sequence_emitter=sequence_emitter
+    )
+    validate_single_specification(
+        "CLIMultiOption", token_emit=token_emit, token_emitter=token_emitter
+    )
 
     if sequence_emitter is None:
+        assert sequence_emit is not None  # Must be true; we just validated.
         sequence_emitter = lambda _: sequence_emit
+    assert (
+        sequence_emitter is not None
+    )  # Must be true; if it was originally None, then the branch above must have been taken.
 
     def emitter(input: Mapping[K, V]) -> Sequence[str]:
         base_sequence = sequence_emitter(input)
@@ -124,8 +149,14 @@ def CLIKVOption(
             if isinstance(token, EllipsisType):
                 for key, value in input.items():
                     if token_emit is not None:
-                        new_sequence.extend(t.format(k=key, v=value, key=key, value=value) for t in token_emit)
+                        new_sequence.extend(
+                            t.format(k=key, v=value, key=key, value=value)
+                            for t in token_emit
+                        )
                         continue
+                    assert (
+                        token_emitter is not None
+                    )  # Must be true because we validate at the beginning of the surrounding function.
                     new_sequence.extend(token_emitter(key, value))
             else:
                 new_sequence.append(token)
