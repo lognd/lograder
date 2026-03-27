@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import Generator
 
-from ...common import Err, Ok, Result, Unreachable
-from ...exception import UncaughtException
-from ..config import get_config
-from ..types.parcels import Manifest
-from ..types.sentinel import PIPELINE_START
-from .input import Input
+from lograder.common import Err, Ok, Result, Unreachable
+from lograder.exception import UncaughtException
+from lograder.pipeline.config import get_config
+from lograder.pipeline.input.input import Input
+from lograder.pipeline.types.parcels import Manifest
+from lograder.pipeline.types.sentinel import PIPELINE_START
 
 
 class LocalDirectory(

@@ -1,5 +1,5 @@
-from .check import Check, CheckData, CheckError
-from .project import (
+from lograder.pipeline.check.check import Check, CheckData, CheckError
+from lograder.pipeline.check.project import (
     CMakeProjectManifest,
     CMakeProjectManifestCheck,
     MakefileProjectManifest,

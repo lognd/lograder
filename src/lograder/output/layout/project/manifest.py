@@ -2,9 +2,12 @@
 from colorama import Fore as F
 from colorama import Style as S
 
-from ....pipeline.check import ManifestCheckData, ManifestCheckError
-from ..format_helpers.manifest import render_manifest_diff, render_manifest_tree
-from ..layout import Layout, register_layout
+from lograder.output.layout.format_helpers.manifest import (
+    render_manifest_diff,
+    render_manifest_tree,
+)
+from lograder.output.layout.layout import Layout, register_layout
+from lograder.pipeline.check import ManifestCheckData, ManifestCheckError
 
 
 # noinspection DuplicatedCode

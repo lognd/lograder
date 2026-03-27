@@ -2,16 +2,22 @@
 from colorama import Fore as F
 from colorama import Style as S
 
-from ....pipeline.check.project.manifest import ManifestCheckData, ManifestCheckError
-from ....pipeline.check.project.simple_project import (
+from lograder.output.layout.dynamic import make_dynamic_layout
+from lograder.output.layout.format_helpers.manifest import (
+    render_manifest_diff,
+    render_manifest_tree,
+)
+from lograder.output.layout.layout import Layout, LayoutLike
+from lograder.pipeline.check.project.manifest import (
+    ManifestCheckData,
+    ManifestCheckError,
+)
+from lograder.pipeline.check.project.simple_project import (
     REQUIRED_FILES,
     ProjectType,
     get_data_cls,
     get_error_cls,
 )
-from ..dynamic import make_dynamic_layout
-from ..format_helpers.manifest import render_manifest_diff, render_manifest_tree
-from ..layout import Layout, LayoutLike
 
 
 def make_simple_layout_checker(

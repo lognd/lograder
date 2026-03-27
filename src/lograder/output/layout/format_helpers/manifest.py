@@ -4,8 +4,8 @@ from typing import Callable, cast
 # noinspection PyPep8Naming
 from colorama import Fore as F
 
-from ....exception import DeveloperException
-from ....pipeline.types.parcels import (
+from lograder.exception import DeveloperException
+from lograder.pipeline.types.parcels import (
     DirectoryDict,
     DirectoryMapping,
     Manifest,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional, final
 
-from ...common import Empty
+from lograder.common import Empty
 
 _PIPELINE_START_SINGLETON: Optional[PIPELINE_START] = None
 _NOT_APPLICABLE_SINGLETON: Optional[NOT_APPLICABLE] = None

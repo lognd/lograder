@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from ..exception import DeveloperException
+from lograder.exception import DeveloperException
 
 
 class HTMLItem(BaseModel):

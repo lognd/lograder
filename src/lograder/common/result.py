@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Callable, Final, Generic, Optional, TypeVar, cast, final
 
-from ..exception import DeveloperException
-from .empty import Empty
+from lograder.common.empty import Empty
+from lograder.exception import DeveloperException
 
 T = TypeVar("T")
 V = TypeVar("V")

@@ -8,8 +8,8 @@ from typing import Optional, cast
 
 from pydantic import BaseModel
 
-from .handlers import HTMLHandler
-from .packets import wrap_packet
+from lograder.output.handlers import HTMLHandler
+from lograder.output.packets import wrap_packet
 
 try:
     import tomllib

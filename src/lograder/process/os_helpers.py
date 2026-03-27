@@ -1,16 +1,17 @@
-import sys
 import os
-from typing import TypeVar, Final
-from functools import lru_cache
+import sys
 from enum import Enum, auto
+from functools import lru_cache
+from typing import Final, TypeVar
 
-from ..pipeline.types.sentinel import NOT_APPLICABLE
+from lograder.pipeline.types.sentinel import NOT_APPLICABLE
 
 T = TypeVar("T")
 
 # from winapi
 CREATE_NEW_PROCESS_GROUP: Final = 0x200
 SIGKILL = 137
+
 
 def is_windows() -> bool:
     return sys.platform.startswith("win")

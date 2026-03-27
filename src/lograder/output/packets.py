@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING, Callable, NewType, Optional, Type, TypedDict
 
 from pydantic import BaseModel
 
-from ..exception import DeveloperException
+from lograder.exception import DeveloperException
 
 if TYPE_CHECKING:
-    from .layout import Layout
+    from lograder.output.layout import Layout
 
 PacketId = NewType("PacketId", str)
 

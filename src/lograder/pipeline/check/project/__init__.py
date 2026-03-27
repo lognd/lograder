@@ -1,5 +1,9 @@
-from .manifest import ManifestCheck, ManifestCheckData, ManifestCheckError
-from .simple_project import (
+from lograder.pipeline.check.project.manifest import (
+    ManifestCheck,
+    ManifestCheckData,
+    ManifestCheckError,
+)
+from lograder.pipeline.check.project.simple_project import (
     REQUIRED_FILES,
     CMakeProjectManifest,
     CMakeProjectManifestCheck,

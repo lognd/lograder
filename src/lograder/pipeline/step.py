@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from inspect import isabstract
 from typing import Any, Generator, Generic, TypeVar, cast, final
 
-from ..common import Empty, Result, get_bound_types, unwrap_union_types
-from ..exception import DeveloperException, LograderException
+from lograder.common import Empty, Result, get_bound_types, unwrap_union_types
+from lograder.exception import DeveloperException, LograderException
 
 InputT = TypeVar("InputT")
 OkOutputT = TypeVar("OkOutputT")

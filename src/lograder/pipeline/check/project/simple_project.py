@@ -4,10 +4,13 @@ from typing import Generator, Literal, TypeAlias
 
 from pydantic import Field
 
-from ....common import Err, Ok, Result, Unreachable
-from ...types.parcels import Manifest
-from ..check import Check
-from .manifest import ManifestCheckData, ManifestCheckError
+from lograder.common import Err, Ok, Result, Unreachable
+from lograder.pipeline.check.check import Check
+from lograder.pipeline.check.project.manifest import (
+    ManifestCheckData,
+    ManifestCheckError,
+)
+from lograder.pipeline.types.parcels import Manifest
 
 ProjectType: TypeAlias = Literal["CMake", "Makefile", "PyProject"]
 REQUIRED_FILES: dict[ProjectType, list[Path | str]] = {

@@ -1,5 +1,5 @@
-from .empty import Empty, Unreachable
-from .generic_utils import (
+from lograder.common.empty import Empty, Unreachable
+from lograder.common.generic_utils import (
     get_args,
     get_bound_types,
     get_first_bound_type,
@@ -7,7 +7,7 @@ from .generic_utils import (
     unwrap_union_types,
     write_generic_type,
 )
-from .result import Err, Ok, Result
+from lograder.common.result import Err, Ok, Result
 
 __all__ = [
     "Result",

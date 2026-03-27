@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from .step import Step
-from .types.sentinel import PIPELINE_START
-from ..common import Result
-from ..exception import DeveloperException, StaffException
-from ..output import get_logger
+from lograder.common import Result
+from lograder.exception import DeveloperException, StaffException
+from lograder.output import get_logger
+from lograder.pipeline.step import Step
+from lograder.pipeline.types.sentinel import PIPELINE_START
 
 _LOGGER = get_logger(__name__)
 

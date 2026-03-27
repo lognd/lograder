@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Union
 
-from ..exception import DeveloperException
+from lograder.exception import DeveloperException
 
 
 def _coerce_level(level: Union[int, str]) -> int:

@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import TypeVar
 
-from ..step import Step
+from lograder.pipeline.step import Step
 
 InputT = TypeVar("InputT")
 OkOutputT = TypeVar("OkOutputT")

@@ -14,9 +14,9 @@ from typing import (
 from ansi2html import Ansi2HTMLConverter
 from pydantic import BaseModel, Field
 
-from ...common import get_first_bound_type
-from ...exception import DeveloperException
-from ..packets import Packet, PacketAuthority, PacketId, wrap_packet
+from lograder.common import get_first_bound_type
+from lograder.exception import DeveloperException
+from lograder.output.packets import Packet, PacketAuthority, PacketId, wrap_packet
 
 _ANSI_ESCAPE_RE = re.compile(
     r"""

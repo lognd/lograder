@@ -2,9 +2,9 @@ from typing import Generator, final
 
 from pydantic import Field
 
-from ....common import Err, Ok, Result, Unreachable
-from ...check.check import Check, CheckData, CheckError
-from ...types.parcels import Manifest
+from lograder.common import Err, Ok, Result, Unreachable
+from lograder.pipeline.check.check import Check, CheckData, CheckError
+from lograder.pipeline.types.parcels import Manifest
 
 
 class ManifestCheckData(CheckData):

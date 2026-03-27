@@ -3,7 +3,7 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-from ..step import Step
+from lograder.pipeline.step import Step
 
 
 class CheckError(BaseModel):

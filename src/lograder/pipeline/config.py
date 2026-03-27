@@ -5,7 +5,7 @@ from typing import Any, ContextManager, Iterator, Optional
 
 from pydantic import BaseModel, Field, ValidationError
 
-from ..exception import StaffException
+from lograder.exception import StaffException
 
 try:
     import tomllib

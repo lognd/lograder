@@ -8,9 +8,9 @@ from typing import Any, Callable, Iterable, NewType, Optional, cast
 
 from pydantic import BaseModel, Field
 
-from ...common import Err, Ok, Result
-from ...exception import DeveloperException, StaffException
-from ..config import get_config
+from lograder.common import Err, Ok, Result
+from lograder.exception import DeveloperException, StaffException
+from lograder.pipeline.config import get_config
 
 try:
     import tomllib

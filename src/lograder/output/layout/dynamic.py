@@ -5,8 +5,8 @@ from typing import Any, MutableMapping, cast, no_type_check
 
 from pydantic import BaseModel
 
-from ...common import write_generic_type
-from .layout import Layout, LayoutLike, register_layout
+from lograder.common import write_generic_type
+from lograder.output.layout.layout import Layout, LayoutLike, register_layout
 
 
 # noinspection PyPep8Naming

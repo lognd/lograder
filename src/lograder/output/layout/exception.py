@@ -2,8 +2,8 @@
 from colorama import Fore as F
 from colorama import Style as S
 
-from ...exception import DeveloperException, StaffException, UncaughtException
-from .layout import Layout, register_layout
+from lograder.exception import DeveloperException, StaffException, UncaughtException
+from lograder.output.layout.layout import Layout, register_layout
 
 
 @register_layout("uncaught-exception")
