@@ -1,21 +1,24 @@
 from types import EllipsisType
-from typing import Any, Callable, Optional, Sequence, Iterable, TypedDict, TypeVar, cast
+from typing import Any, Callable, Iterable, Optional, Sequence, TypedDict, TypeVar, Mapping, cast
 
 from pydantic import BaseModel, Field
 
-from lograder.exception import DeveloperException
 from lograder.common import Singleton
+from lograder.exception import DeveloperException
 
 T = TypeVar("T")
+K = TypeVar("K")
+V = TypeVar("V")
 
 
 class _PydanticCLIExtra(TypedDict):
     emit: Optional[Sequence[str]]
     emitter: Optional[Callable[[Any], Any]]
 
+
 # noinspection PyPep8Naming
-class CLI_ARG_MISSING(Singleton):
-    ...
+class CLI_ARG_MISSING(Singleton): ...
+
 
 # noinspection PyPep8Naming
 def CLIOption(
@@ -35,39 +38,53 @@ def CLIOption(
     extra["cli"] = _PydanticCLIExtra(emit=emit, emitter=emitter)
     return Field(default=default, json_schema_extra=extra, **field_kwargs)
 
+
+def validate_single_specification(
+        source: str,
+        /,
+        **kwargs: Any
+) -> None:
+    if not kwargs:
+        return
+
+    specs: dict[str, Any] = {}
+    for kw, arg in kwargs.items():
+        if arg is not None:
+            specs[kw] = arg
+
+    if len(specs) == 1:
+        return
+    elif len(specs) == 0:
+        raise DeveloperException(
+            f"In `{source}`, parameters `{'`, `'.join(kwargs)}` cannot all be `None`."
+        )
+
+    raise DeveloperException(
+        f"In `{source}`, only a single argument may be specified (not `None`) within the parameters of `{', '.join(f'`{k}` ({v} of type {v.__class__.__name__})' for k, v in kwargs.items())}`."
+    )
+
+
 # noinspection PyPep8Naming
 def CLIMultiOption(
-        *,
-        default: Iterable[T] | EllipsisType = ...,
-        sequence_emit: Optional[Sequence[str | EllipsisType]] = (...,),
-        sequence_emitter: Optional[Callable[[Iterable[T]], Sequence[str | EllipsisType]]] = None,
-        token_emit: Optional[Sequence[str]] = ("{}",),
-        token_emitter: Optional[Callable[[T], Sequence[str]]] = None,
-        **field_kwargs: Any
+    *,
+    default: Iterable[T] | EllipsisType = ...,
+    sequence_emit: Optional[Sequence[str | EllipsisType]] = (...,),
+    sequence_emitter: Optional[
+        Callable[[Iterable[T]], Sequence[str | EllipsisType]]
+    ] = None,
+    token_emit: Optional[Sequence[str]] = ("{}",),
+    token_emitter: Optional[Callable[[T], Sequence[str]]] = None,
+    **field_kwargs: Any,
 ) -> Any:
-    if sequence_emit is None and sequence_emitter is None:
-        raise DeveloperException(
-            f"Keyword parameter `sequence_emit` and `sequence_emitter` cannot both be `None` in `CLIMultiOption`."
-        )
-    elif sequence_emit is not None and sequence_emitter is not None:
-        raise DeveloperException(
-            f"Keyword parameter `sequence_emit` ({sequence_emit}) and `sequence_emitter` ({sequence_emitter}) cannot both be specified in `CLIMultiOption`."
-        )
-    elif token_emit is None and token_emitter is None:
-        raise DeveloperException(
-            f"Keyword parameter `token_emit` and `token_emitter` cannot both be `None` in `CLIMultiOption`."
-        )
-    elif token_emit is not None and token_emitter is not None:
-        raise DeveloperException(
-            f"Keyword parameter `token_emit` ({token_emit}) and `token_emitter` ({token_emitter}) cannot both be specified in `CLIMultiOption`."
-        )
+    validate_single_specification("CLIMultiOption", sequence_emit=sequence_emit, sequence_emitter=sequence_emitter)
+    validate_single_specification("CLIMultiOption", token_emit=token_emit, token_emitter=token_emitter)
 
     if sequence_emitter is None:
         sequence_emitter = lambda _: sequence_emit
 
     def emitter(input: Iterable[T]) -> Sequence[str]:
         base_sequence = sequence_emitter(input)
-        new_sequence = []
+        new_sequence: list[str] = []
         for token in base_sequence:
             if isinstance(token, EllipsisType):
                 for item in input:
@@ -79,12 +96,42 @@ def CLIMultiOption(
                 new_sequence.append(token)
         return new_sequence
 
-    return CLIOption(
-        default=default,
-        emit=None,
-        emitter=emitter,
-        **field_kwargs
-    )
+    return CLIOption(default=default, emit=None, emitter=emitter, **field_kwargs)
+
+
+# noinspection PyPep8Naming
+def CLIKVOption(
+        *,
+        default: Mapping[K, V] | EllipsisType = ...,
+        sequence_emit: Optional[Sequence[str | EllipsisType]] = (...,),
+        sequence_emitter: Optional[
+            Callable[[Mapping[K, V]], Sequence[str | EllipsisType]]
+        ] = None,
+        token_emit: Optional[Sequence[str]] = ("{key}={value}",),
+        token_emitter: Optional[Callable[[K, V], Sequence[str]]] = None,
+        **field_kwargs: Any,
+) -> Any:
+    validate_single_specification("CLIMultiOption", sequence_emit=sequence_emit, sequence_emitter=sequence_emitter)
+    validate_single_specification("CLIMultiOption", token_emit=token_emit, token_emitter=token_emitter)
+
+    if sequence_emitter is None:
+        sequence_emitter = lambda _: sequence_emit
+
+    def emitter(input: Mapping[K, V]) -> Sequence[str]:
+        base_sequence = sequence_emitter(input)
+        new_sequence: list[str] = []
+        for token in base_sequence:
+            if isinstance(token, EllipsisType):
+                for key, value in input.items():
+                    if token_emit is not None:
+                        new_sequence.extend(t.format(k=key, v=value, key=key, value=value) for t in token_emit)
+                        continue
+                    new_sequence.extend(token_emitter(key, value))
+            else:
+                new_sequence.append(token)
+        return new_sequence
+
+    return CLIOption(default=default, emit=None, emitter=emitter, **field_kwargs)
 
 
 # noinspection PyPep8Naming
