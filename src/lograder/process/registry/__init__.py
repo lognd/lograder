@@ -3,6 +3,7 @@ from lograder.process.registry.cmake import (
     CMakeConfigureArgs,
     CMakeExecutable,
 )
+from lograder.process.registry.curl import CURLArgs, CURLExecutable
 from lograder.process.registry.gcc import GCCArgs, GCCExecutable, GXXArgs, GXXExecutable
 from lograder.process.registry.makefile import MakefileArgs, MakefileExecutable
 
@@ -16,4 +17,6 @@ __all__ = [
     "GCCExecutable",
     "GXXArgs",
     "GXXExecutable",
+    "CURLArgs",
+    "CURLExecutable",
 ]
