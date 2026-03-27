@@ -1,5 +1,5 @@
 from types import EllipsisType
-from typing import Any, Callable, Optional, Sequence, TypedDict, TypeVar, cast
+from typing import Any, Callable, Optional, Sequence, Iterable, TypedDict, TypeVar, cast
 
 from pydantic import BaseModel, Field
 
@@ -21,7 +21,7 @@ class CLI_ARG_MISSING(Singleton):
 def CLIOption(
     *,
     default: T | EllipsisType = ...,
-    emit: Optional[Sequence[str]] = None,
+    emit: Optional[Sequence[str]] = ("{}",),
     emitter: Optional[Callable[[T], Sequence[str]]] = None,
     **field_kwargs: Any,
 ) -> Any:
@@ -34,6 +34,57 @@ def CLIOption(
     extra: dict = _extra if isinstance(_extra, dict) else {}
     extra["cli"] = _PydanticCLIExtra(emit=emit, emitter=emitter)
     return Field(default=default, json_schema_extra=extra, **field_kwargs)
+
+# noinspection PyPep8Naming
+def CLIMultiOption(
+        *,
+        default: Iterable[T] | EllipsisType = ...,
+        sequence_emit: Optional[Sequence[str | EllipsisType]] = (...,),
+        sequence_emitter: Optional[Callable[[Iterable[T]], Sequence[str | EllipsisType]]] = None,
+        token_emit: Optional[Sequence[str]] = ("{}",),
+        token_emitter: Optional[Callable[[T], Sequence[str]]] = None,
+        **field_kwargs: Any
+) -> Any:
+    if sequence_emit is None and sequence_emitter is None:
+        raise DeveloperException(
+            f"Keyword parameter `sequence_emit` and `sequence_emitter` cannot both be `None` in `CLIMultiOption`."
+        )
+    elif sequence_emit is not None and sequence_emitter is not None:
+        raise DeveloperException(
+            f"Keyword parameter `sequence_emit` ({sequence_emit}) and `sequence_emitter` ({sequence_emitter}) cannot both be specified in `CLIMultiOption`."
+        )
+    elif token_emit is None and token_emitter is None:
+        raise DeveloperException(
+            f"Keyword parameter `token_emit` and `token_emitter` cannot both be `None` in `CLIMultiOption`."
+        )
+    elif token_emit is not None and token_emitter is not None:
+        raise DeveloperException(
+            f"Keyword parameter `token_emit` ({token_emit}) and `token_emitter` ({token_emitter}) cannot both be specified in `CLIMultiOption`."
+        )
+
+    if sequence_emitter is None:
+        sequence_emitter = lambda _: sequence_emit
+
+    def emitter(input: Iterable[T]) -> Sequence[str]:
+        base_sequence = sequence_emitter(input)
+        new_sequence = []
+        for token in base_sequence:
+            if isinstance(token, EllipsisType):
+                for item in input:
+                    if token_emit is not None:
+                        new_sequence.extend(t.format(item) for t in token_emit)
+                        continue
+                    new_sequence.extend(token_emitter(item))
+            else:
+                new_sequence.append(token)
+        return new_sequence
+
+    return CLIOption(
+        default=default,
+        emit=None,
+        emitter=emitter,
+        **field_kwargs
+    )
 
 
 # noinspection PyPep8Naming
@@ -85,7 +136,7 @@ class CLIArgs(BaseModel):
                 if cli_data["emit"] is not None:
 
                     def transformation(v: Any) -> list[str]:
-                        if v is MISSING():
+                        if v is CLI_ARG_MISSING():
                             return []
                         # noinspection PyUnnecessaryCast
                         return [
