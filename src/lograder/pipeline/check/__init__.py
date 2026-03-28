@@ -1,15 +1,15 @@
 from lograder.pipeline.check.check import Check, CheckData, CheckError
 from lograder.pipeline.check.project import (
-    CMakeProjectManifest,
-    CMakeProjectManifestCheck,
-    MakefileProjectManifest,
-    MakefileProjectManifestCheck,
+    CMakeManifest,
+    CMakeManifestCheck,
+    MakefileManifest,
+    MakefileManifestCheck,
     ManifestCheck,
     ManifestCheckData,
     ManifestCheckError,
     ProjectType,
-    PyProjectProjectManifest,
-    PyProjectProjectManifestCheck,
+    PyProjectManifest,
+    PyProjectManifestCheck,
 )
 
 __all__ = [
@@ -20,10 +20,10 @@ __all__ = [
     "ManifestCheckError",
     "ManifestCheckData",
     "ProjectType",
-    "CMakeProjectManifestCheck",
-    "MakefileProjectManifestCheck",
-    "PyProjectProjectManifestCheck",
-    "CMakeProjectManifest",
-    "MakefileProjectManifest",
-    "PyProjectProjectManifest",
+    "CMakeManifestCheck",
+    "MakefileManifestCheck",
+    "PyProjectManifestCheck",
+    "CMakeManifest",
+    "MakefileManifest",
+    "PyProjectManifest",
 ]

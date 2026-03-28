@@ -27,7 +27,7 @@ def make_simple_manifest_checker(
 ]:
     _req_files: list[Path] = [Path(normpath(p)) for p in req_files]
 
-    manifest_name = f"{project_name}ProjectManifest"
+    manifest_name = f"{project_name}Manifest"
     data_name = f"{project_name}ManifestCheckData"
     error_name = f"{project_name}ManifestCheckError"
     check_name = f"{project_name}ManifestCheck"

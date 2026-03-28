@@ -128,6 +128,20 @@ class Result(Generic[T, E]):
         # noinspection PyUnnecessaryCast
         return cast(E, self._err)
 
+    def __repr__(self) -> str:
+        if self.is_ok:
+            return f"Ok({repr(self.danger_ok)})"
+        elif self.is_err:
+            return f"Err({repr(self.danger_err)})"
+        return super().__repr__()
+
+    def __str__(self) -> str:
+        if self.is_ok:
+            return f"Ok({str(self.danger_ok)})"
+        elif self.is_err:
+            return f"Err({str(self.danger_err)})"
+        return super().__str__()
+
 
 # noinspection PyPep8Naming
 def Ok(ok: T, /) -> Result[T, E]:

@@ -9,71 +9,71 @@ from .manifest import ManifestCheckData, ManifestCheckError
 ProjectType: TypeAlias = Literal["CMake", "Makefile", "PyProject"]
 REQUIRED_FILES: dict[ProjectType, list[Path | str]]
 
-class CMakeProjectManifest(Manifest):
+class CMakeManifest(Manifest):
     def __init__(self, manifest: Manifest): ...
 
-class MakefileProjectManifest(Manifest):
+class MakefileManifest(Manifest):
     def __init__(self, manifest: Manifest): ...
 
-class PyProjectProjectManifest(Manifest):
+class PyProjectManifest(Manifest):
     def __init__(self, manifest: Manifest): ...
 
-class CMakeProjectCheckData(ManifestCheckData): ...
-class MakefileProjectCheckData(ManifestCheckData): ...
-class PyProjectProjectCheckData(ManifestCheckData): ...
-class CMakeProjectCheckError(ManifestCheckError): ...
-class MakefileProjectCheckError(ManifestCheckError): ...
-class PyProjectProjectCheckError(ManifestCheckError): ...
+class CMakeCheckData(ManifestCheckData): ...
+class MakefileCheckData(ManifestCheckData): ...
+class PyProjectCheckData(ManifestCheckData): ...
+class CMakeCheckError(ManifestCheckError): ...
+class MakefileCheckError(ManifestCheckError): ...
+class PyProjectCheckError(ManifestCheckError): ...
 
-class CMakeProjectManifestCheck(
+class CMakeManifestCheck(
     Check[
         Manifest,
-        CMakeProjectManifest,
-        CMakeProjectCheckError,
-        CMakeProjectCheckData,
+        CMakeManifest,
+        CMakeCheckError,
+        CMakeCheckData,
         Unreachable,
     ]
 ):
     def __call__(
         self, input: Manifest
     ) -> Generator[
-        Result[CMakeProjectCheckData, Unreachable],
+        Result[CMakeCheckData, Unreachable],
         None,
-        Result[CMakeProjectManifest, CMakeProjectCheckError],
+        Result[CMakeManifest, CMakeCheckError],
     ]: ...
 
-class MakefileProjectManifestCheck(
+class MakefileManifestCheck(
     Check[
         Manifest,
-        MakefileProjectManifest,
-        MakefileProjectCheckError,
-        MakefileProjectCheckData,
+        MakefileManifest,
+        MakefileCheckError,
+        MakefileCheckData,
         Unreachable,
     ]
 ):
     def __call__(
         self, input: Manifest
     ) -> Generator[
-        Result[MakefileProjectCheckData, Unreachable],
+        Result[MakefileCheckData, Unreachable],
         None,
-        Result[MakefileProjectManifest, MakefileProjectCheckError],
+        Result[MakefileManifest, MakefileCheckError],
     ]: ...
 
-class PyProjectProjectManifestCheck(
+class PyProjectManifestCheck(
     Check[
         Manifest,
-        PyProjectProjectManifest,
-        PyProjectProjectCheckError,
-        PyProjectProjectCheckData,
+        PyProjectManifest,
+        PyProjectCheckError,
+        PyProjectCheckData,
         Unreachable,
     ]
 ):
     def __call__(
         self, input: Manifest
     ) -> Generator[
-        Result[PyProjectProjectCheckData, Unreachable],
+        Result[PyProjectCheckData, Unreachable],
         None,
-        Result[PyProjectProjectManifest, PyProjectProjectCheckError],
+        Result[PyProjectManifest, PyProjectCheckError],
     ]: ...
 
 def get_manifest_cls(project_name: ProjectType) -> type[Manifest]: ...

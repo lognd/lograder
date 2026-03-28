@@ -48,7 +48,7 @@ def make_simple_layout_checker(
     layout_data = make_dynamic_layout(
         layout_id=f"{project_name.lower()}-check-data",
         layout_type=get_data_cls(project_name),
-        layout_cls_name=f"{project_name}ProjectManifestCheckDataLayout",
+        layout_cls_name=f"{project_name}ManifestCheckDataLayout",
         layout_like=LayoutLike(to_ansi=to_ansi_data, to_simple=to_simple_data),
     )
 
@@ -77,7 +77,7 @@ def make_simple_layout_checker(
     layout_error = make_dynamic_layout(
         layout_id=f"{project_name.lower()}-check-error",
         layout_type=get_error_cls(project_name),
-        layout_cls_name=f"{project_name}ProjectManifestCheckErrorLayout",
+        layout_cls_name=f"{project_name}ManifestCheckErrorLayout",
         layout_like=LayoutLike(to_ansi=to_ansi_error, to_simple=to_simple_error),
     )
 

@@ -1,6 +1,6 @@
 from typing import Generator, final
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from lograder.common import Err, Ok, Result, Unreachable
 from lograder.pipeline.check.check import Check, CheckData, CheckError
@@ -8,12 +8,14 @@ from lograder.pipeline.types.parcels import Manifest
 
 
 class ManifestCheckData(CheckData):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     check_name: str = Field(default="Manifest Check")
     manifest_expected: Manifest
     manifest_received: Manifest
 
 
 class ManifestCheckError(CheckError):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     check_name: str = Field(default="Manifest Check")
     manifest_expected: Manifest
     manifest_received: Manifest

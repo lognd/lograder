@@ -4,9 +4,10 @@ import traceback
 from abc import ABC, abstractmethod
 from os.path import normpath
 from pathlib import Path
-from typing import Any, Callable, Iterable, NewType, Optional, cast
+from typing import Any, Iterable, Optional, cast
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import TypeAliasType
 
 from lograder.common import Err, Ok, Result
 from lograder.exception import DeveloperException, StaffException
@@ -23,6 +24,7 @@ class Package:
 
 
 class FileError(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     path: Path
     error: Optional[Exception]
     error_type: str
@@ -102,9 +104,9 @@ class File(FileContent):
 
 # PyCharm is wrong here; it's having trouble deducing the recursive typing structure.
 # noinspection PyTypeChecker
-DirectoryDict = NewType("DirectoryDict", dict[str, "DirectoryMapping"])
-# noinspection PyTypeHints
-DirectoryMapping = list[str | DirectoryDict]
+DirectoryDict = TypeAliasType("DirectoryDict", "dict[str, DirectoryMapping]")
+# noinspection PyTypeChecker
+DirectoryMapping = TypeAliasType("DirectoryMapping", "list[str | DirectoryDict]")
 
 
 # noinspection PyTypeHints
@@ -117,7 +119,7 @@ def validate_directory_dict(x: dict[str, DirectoryMapping], /) -> DirectoryDict:
         raise DeveloperException(
             f"Tried to make a `DictionaryDict` out of a non-singleton dictionary (with keys, `{'`, `'.join(str(k) for k in x)}`, and values, `{'`, `'.join(str(k) for k in x.values())}`). Please ensure that lines before the listed calling line create a properly formatted `DictionaryDict`; a `DirectoryDict` is a dictionary with a single key corresponding to the super-directory and a value of a list containing strings (corresponding to file names) or other `DirectoryDicts` (corresponding to nested folders)."
         )
-    return cast(DirectoryDict, x)
+    return x
 
 
 # noinspection PyTypeHints
@@ -257,6 +259,7 @@ class Manifest(Package):
                 f"Manifest TOML node at `{where}` must be a list; got `{type(node).__name__}`."
             )
 
+        # noinspection PyTypeChecker
         def parse_directory_dict(node: Any, *, where: str) -> DirectoryDict:
             if not isinstance(node, dict):
                 raise StaffException(
