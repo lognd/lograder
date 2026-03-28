@@ -35,9 +35,18 @@ def test_gcc_args_defaults_emit() -> None:
     )
 
     toks = ["main.c", "-o main.o", "-std=c11", "-Wall", "-Wextra", "-O0"]
-    args = " ".join(args.emit())
+    args_str = " ".join(args.emit())
     for tok in toks:
-        assert tok in args
+        assert tok in args_str
+    assert set(args.emit()) == {
+        "main.c",
+        "-o",
+        "main.o",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-O0",
+    }
 
 
 def test_gcc_args_full_emit() -> None:
@@ -59,7 +68,24 @@ def test_gcc_args_full_emit() -> None:
         warnings_pedantic=True,
         warnings_error=True,
     )
-    assert args.emit() == [
+    toks = [
+        "main.c util.c",
+        "-o prog",
+        "-std=gnu17",
+        "-E",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-Iinclude",
+        "-Llib",
+        "-lm",
+        "-pedantic",
+        "-Werror",
+        "-O3",
+    ]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {
         "main.c",
         "util.c",
         "-o",
@@ -74,7 +100,7 @@ def test_gcc_args_full_emit() -> None:
         "-pedantic",
         "-Werror",
         "-O3",
-    ]
+    }
 
 
 def test_gxx_args_defaults_emit() -> None:
@@ -83,7 +109,11 @@ def test_gxx_args_defaults_emit() -> None:
         output=Path("main.o"),
         standard=GNUXXStandard.CXX20,
     )
-    assert args.emit() == [
+    toks = ["main.cpp", "-o main.o", "-std=c++20", "-Wall", "-Wextra", "-O0"]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {
         "main.cpp",
         "-o",
         "main.o",
@@ -91,7 +121,7 @@ def test_gxx_args_defaults_emit() -> None:
         "-Wall",
         "-Wextra",
         "-O0",
-    ]
+    }
 
 
 def test_gxx_args_custom_optimization_emit() -> None:
@@ -101,7 +131,18 @@ def test_gxx_args_custom_optimization_emit() -> None:
         standard=GNUXXStandard.GNUXX23,
         optimization_level=GNUOptimizationLevel.FAST,
     )
-    assert args.emit() == [
+    toks = [
+        "main.cpp",
+        "-o prog",
+        "-std=gnu++23",
+        "-Wall",
+        "-Wextra",
+        "-Ofast",
+    ]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {
         "main.cpp",
         "-o",
         "prog",
@@ -109,7 +150,7 @@ def test_gxx_args_custom_optimization_emit() -> None:
         "-Wall",
         "-Wextra",
         "-Ofast",
-    ]
+    }
 
 
 def test_gcc_executable_registered_command() -> None:

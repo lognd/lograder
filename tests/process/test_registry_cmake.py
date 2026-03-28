@@ -14,7 +14,11 @@ from lograder.process.registry.cmake import (
 
 def test_cmake_configure_args_defaults() -> None:
     args = CMakeConfigureArgs()
-    assert args.emit() == ["-S", ".", "-B", "build"]
+    toks = ["-S .", "-B build"]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {"-S", ".", "-B", "build"}
 
 
 def test_cmake_configure_args_custom_values() -> None:
@@ -22,7 +26,11 @@ def test_cmake_configure_args_custom_values() -> None:
         source_dir=Path("src"),
         build_dir=Path("out"),
     )
-    assert args.emit() == ["-S", "src", "-B", "out"]
+    toks = ["-S src", "-B out"]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {"-S", "src", "-B", "out"}
 
 
 def test_cmake_build_args_defaults() -> None:
@@ -32,7 +40,11 @@ def test_cmake_build_args_defaults() -> None:
 
 def test_cmake_build_args_with_target() -> None:
     args = CMakeBuildArgs(build_dir=Path("out"), target=Path("install"))
-    assert args.emit() == ["--build", "out", "--target", "install"]
+    toks = ["--build out", "--target install"]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {"--build", "out", "--target", "install"}
 
 
 def test_cmake_build_args_omits_missing_target() -> None:

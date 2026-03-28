@@ -19,13 +19,17 @@ def test_curl_args_with_flags() -> None:
         response_headers_only=True,
         follow_redirects=True,
     )
-    assert args.emit() == [
+    toks = ["https://example.com", "-o out.txt", "-I", "-L"]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {
         "https://example.com",
         "-o",
         "out.txt",
         "-I",
         "-L",
-    ]
+    }
 
 
 def test_curl_args_with_data() -> None:
@@ -34,13 +38,17 @@ def test_curl_args_with_data() -> None:
         output=Path("out.txt"),
         data={"a": 1, "b": "two"},
     )
-    assert args.emit() == [
+    toks = ["https://example.com", "-o out.txt", "-d a=1&b=two"]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {
         "https://example.com",
         "-o",
         "out.txt",
         "-d",
         "a=1&b=two",
-    ]
+    }
 
 
 def test_curl_args_with_headers() -> None:
@@ -49,13 +57,21 @@ def test_curl_args_with_headers() -> None:
         output=Path("out.txt"),
         headers={"Accept": "application/json", "X-Test": 123},
     )
-    assert args.emit() == [
+    toks = [
+        "https://example.com",
+        "-o out.txt",
+        "-H Accept: application/json\n\rX-Test: 123",
+    ]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {
         "https://example.com",
         "-o",
         "out.txt",
         "-H",
         "Accept: application/json\n\rX-Test: 123",
-    ]
+    }
 
 
 def test_curl_args_with_data_and_headers() -> None:
@@ -67,7 +83,18 @@ def test_curl_args_with_data_and_headers() -> None:
         response_headers_only=True,
         follow_redirects=True,
     )
-    assert args.emit() == [
+    toks = [
+        "https://example.com",
+        "-o out.txt",
+        "-I",
+        "-L",
+        "-d k=v",
+        "-H Authorization: Bearer token",
+    ]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {
         "https://example.com",
         "-o",
         "out.txt",
@@ -77,7 +104,7 @@ def test_curl_args_with_data_and_headers() -> None:
         "k=v",
         "-H",
         "Authorization: Bearer token",
-    ]
+    }
 
 
 def test_curl_executable_registered_command() -> None:

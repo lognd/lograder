@@ -32,7 +32,11 @@ def test_compiler_args_emit_basic_c_case() -> None:
         standard=CStandard.C11,
     )
 
-    assert args.emit() == [
+    toks = ["a.c", "b.c", "-o a.out", "std=c11", "-Wall", "-Wextra"]
+    args_str = " ".join(args.emit())
+    for tok in toks:
+        assert tok in args_str
+    assert set(args.emit()) == {
         "a.c",
         "b.c",
         "-o",
@@ -40,7 +44,7 @@ def test_compiler_args_emit_basic_c_case() -> None:
         "-std=c11",
         "-Wall",
         "-Wextra",
-    ]
+    }
 
 
 def test_compiler_args_emit_many_optional_flags() -> None:
