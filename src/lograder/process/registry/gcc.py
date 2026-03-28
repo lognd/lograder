@@ -32,7 +32,7 @@ class GNUStandard(StrEnum):
     GNU90 = "gnu90"
 
 
-if not find_missing(CStandard, GNUStandard):
+if find_missing(CStandard, GNUStandard):
     raise DeveloperException(
         f"`GNUStandard` string enum. class should be a superset of `CStandard`. The following was found missing: `{'`, `'.join(find_missing(CStandard, GNUStandard))}`"
     )
@@ -55,7 +55,7 @@ class GNUXXStandard(StrEnum):
     GNUXX98 = "gnu++98"
 
 
-if not find_missing(CXXStandard, GNUXXStandard):
+if find_missing(CXXStandard, GNUXXStandard):
     raise DeveloperException(
         f"`GNUXXStandard` string enum. class should be a superset of `CXXStandard`. The following was found missing: `{'`, `'.join(find_missing(CXXStandard, GNUXXStandard))}`"
     )

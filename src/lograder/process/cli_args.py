@@ -11,7 +11,7 @@ from typing import (
     cast,
 )
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from lograder.common import Singleton
 from lograder.exception import DeveloperException
@@ -58,16 +58,10 @@ def validate_single_specification(source: str, /, **kwargs: Any) -> None:
         if arg is not None:
             specs[kw] = arg
 
-    if len(specs) == 1:
-        return
-    elif len(specs) == 0:
+    if len(specs) == 0:
         raise DeveloperException(
             f"In `{source}`, parameters `{'`, `'.join(kwargs)}` cannot all be `None`."
         )
-
-    raise DeveloperException(
-        f"In `{source}`, only a single argument may be specified (not `None`) within the parameters of `{', '.join(f'`{k}` ({v} of type {v.__class__.__name__})' for k, v in kwargs.items())}`."
-    )
 
 
 # noinspection PyPep8Naming
@@ -200,6 +194,8 @@ def CLIFlag(
 
 
 class CLIArgs(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     @classmethod
     def get_cli_schema(cls) -> dict[str, Callable[[Any], list[str]]]:
         schema = {}
@@ -211,15 +207,20 @@ class CLIArgs(BaseModel):
             if "cli" in field.json_schema_extra:
                 cli_data = cast(_PydanticCLIExtra, field.json_schema_extra["cli"])
                 transformation: Callable[[Any], list[str]]
-                if cli_data["emit"] is not None:
+                if cli_data["emitter"] is None:
+                    emit = cli_data["emit"]
+                    # Must be true because `CLIOption` requires either `emitter` or `emit` to exist.
+                    assert emit is not None
 
-                    def transformation(v: Any) -> list[str]:
+                    # noinspection PyUnnecessaryCast
+                    def transformation(
+                        v: Any,
+                        emit: Sequence[str] = cast(Sequence[str], cli_data["emit"]),
+                    ) -> list[str]:
                         if v is CLI_ARG_MISSING():
                             return []
                         # noinspection PyUnnecessaryCast
-                        return [
-                            s.format(str(v)) for s in cast(list[str], cli_data["emit"])
-                        ]
+                        return [s.format(str(v)) for s in cast(list[str], emit)]
 
                 elif cli_data["emitter"] is not None:
                     transformation = cli_data["emitter"]
@@ -236,5 +237,17 @@ class CLIArgs(BaseModel):
         cli_schema = self.get_cli_schema()
         arguments: list[str] = []
         for name, transformation in cli_schema.items():
-            arguments.extend(transformation(getattr(self, name)))
+            new_args = transformation(getattr(self, name))
+            if isinstance(new_args, str):
+                raise DeveloperException(
+                    f"The output of field `{name}` for `{self.__class__.__name__}` was found to be a `str`. This is almost certainly not what you meant. "
+                    f"Please wrap your string in `Sequence` (like a `list` or `tuple`) because the bad default behavior would be treating each character like "
+                    f"it is a separate token."
+                )
+            if "" in new_args:
+                raise DeveloperException(
+                    f"The output of field `{name}` for `{self.__class__.__name__}` had an empty string token inside. This is almost certainly not what you meant. "
+                    f"Please ensure that you cannot output an empty string token. (For instance, output `[]` rather than `['']`."
+                )
+            arguments.extend(new_args)
         return arguments

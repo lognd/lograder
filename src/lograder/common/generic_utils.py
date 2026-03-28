@@ -66,11 +66,11 @@ def write_generic_type(
     return cls
 
 
-def get_first_bound_type(typ: type) -> Any:
+def get_first_bound_type(typ: type) -> Optional[Any]:
     for base in getattr(typ, "__orig_bases__", ()):
         origin = get_origin(base)
         args = get_args(base)
-        if origin is not None and args:
+        if origin is not None and args and not isinstance(type, TypeVar):
             return args[0]
     return None
 

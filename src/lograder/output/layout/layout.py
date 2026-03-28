@@ -13,7 +13,7 @@ from typing import (
 from ansi2html import Ansi2HTMLConverter
 from pydantic import BaseModel, Field
 
-from lograder.common import get_first_bound_type
+from lograder.common import get_bound_types
 from lograder.exception import DeveloperException
 from lograder.output.packets import PacketAuthority, PacketId
 
@@ -49,9 +49,13 @@ class Layout(ABC, Generic[T]):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        cls.bound_type = getattr(
-            cls, "__meta_bound_type__", None
-        ) or get_first_bound_type(cls)  # used by dynamic.
+
+        generic_bound_types = get_bound_types(cls, Layout)
+        generic_bound_type = generic_bound_types[0] if generic_bound_types else None
+
+        cls.bound_type = (
+            getattr(cls, "__meta_bound_type__", None) or generic_bound_type
+        )  # used by dynamic.
 
     @staticmethod
     def strip_ansi(text: str) -> str:

@@ -9,16 +9,9 @@ from pathlib import Path
 from subprocess import TimeoutExpired
 from typing import Any, Callable, Generic, Optional, TypeVar, cast
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from lograder.common import (
-    Empty,
-    Err,
-    Ok,
-    Result,
-    get_first_bound_type,
-    unwrap_union_types,
-)
+from lograder.common import Empty, Ok, Result, get_bound_types, unwrap_union_types
 from lograder.exception import DeveloperException, StaffException
 from lograder.pipeline.config import get_config
 from lograder.process.cli_args import CLIArgs
@@ -143,6 +136,7 @@ def invoke_command(inv: ExecutableInvocation, /) -> ExecutableOutput:
 
 
 class ExecutableOptions(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     cwd: Path = Field(default_factory=Path.cwd)
     timeout: float | None = Field(
         default_factory=lambda: get_config().executable_timeout
@@ -227,6 +221,7 @@ class ExecutableOutput(BaseModel):
 
 
 class ExecutableInvocation(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     command: list[str]
     cwd: Path
     env: dict[str, str]
@@ -301,8 +296,13 @@ class Executable(ABC):
         return futures
 
 
-class StaticExecutable(Executable, BaseModel):
-    command: list[str]
+class StaticExecutable(Executable):
+    def __init__(self, command: list[str]) -> None:
+        self._command = command
+
+    @property
+    def command(self) -> list[str]:
+        return self._command
 
 
 def register_typed_executable(
@@ -321,15 +321,16 @@ class TypedExecutable(Generic[T]):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        _bound_type = getattr(cls, "__meta_bound_type__", None) or get_first_bound_type(
-            cls
-        )
-        _bound_types = (
-            unwrap_union_types(_bound_type) if _bound_type is not None else None
-        )
+
+        _generic_bound_types = get_bound_types(cls, TypedExecutable)
+        _generic_bound_type = _generic_bound_types[0] if _generic_bound_types else None
+
+        _bound_type = getattr(cls, "__meta_bound_type__", None) or _generic_bound_type
+        _bound_types = unwrap_union_types(_bound_type) if _bound_type else None
+
         if _bound_types is not None:
             for typ in _bound_types:
-                if not issubclass(typ, CLIArgs):
+                if isinstance(typ, type) and not issubclass(typ, CLIArgs):
                     raise DeveloperException(
                         f"A `TypedExecutable` subclass, `{cls.__name__}`, uses `{typ.__name__}` as a generic parameter, but "
                         f"`{typ.__name__}` does not inherit from `CLIArgs`."

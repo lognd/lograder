@@ -1,5 +1,8 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, Iterable, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
+
+from pydantic import field_validator, model_validator
+from typing_extensions import Self
 
 from lograder.process.cli_args import (
     CLIArgs,
@@ -57,7 +60,7 @@ class CompilerArgs(CLIArgs, Generic[Standard]):
 
     debug_symbols: bool = CLIPresenceFlag(["-g"], default=False)
     sanitizers: list[str] = CLIOption(
-        emitter=lambda ss: (f"-fsanitize={','.join(ss)}" if ss else ""), default=()
+        emitter=lambda ss: ([f"-fsanitize={','.join(ss)}"] if ss else []), default=()
     )
     include_dirs: list[Path] = CLIMultiOption(default=(), token_emit=["-I{}"])
     library_dirs: list[Path] = CLIMultiOption(default=(), token_emit=["-L{}"])
@@ -67,3 +70,38 @@ class CompilerArgs(CLIArgs, Generic[Standard]):
     warnings_extra: bool = CLIPresenceFlag(["-Wextra"], default=True)
     warnings_pedantic: bool = CLIPresenceFlag(["-pedantic"], default=False)
     warnings_error: bool = CLIPresenceFlag(["-Werror"], default=False)
+
+    @field_validator("input", mode="after")
+    @classmethod
+    def validate_at_least_one_input(cls, input: list[Path]) -> list[Path]:
+        if not input:
+            raise ValueError(
+                f"Parameter `input` to `{cls.__name__}` should contain at least one `Path`, but was empty."
+            )
+        return input
+
+    @field_validator("output", mode="before")
+    @classmethod
+    def validate_nonempty_output_path(cls, v: Any) -> Any:
+        if isinstance(v, str) and v.strip() == "":
+            raise ValueError(
+                f"Empty string is not valid for `output` in `{cls.__name__}`."
+            )
+        return v
+
+    @field_validator("output", mode="after")
+    @classmethod
+    def validate_output_not_a_directory(cls, output: Path) -> Path:
+        if output.is_dir():
+            raise ValueError(
+                f"`Path({output.resolve()})` is a directory and thus not valid for `output` parameter of `{cls.__name__}`."
+            )
+        return output
+
+    @model_validator(mode="after")
+    def validate_pipeline_breaks_mutually_exclusive(self) -> Self:
+        if sum([self.preprocess_only, self.compile_only, self.assemble_only]) > 1:
+            raise ValueError(
+                f"In `{self.__class__.__name__}`, parameters `preprocess_only` ({self.preprocess_only}), `compile_only` ({self.compile_only}), `assemble_only` ({self.assemble_only}) are mutually exclusive; only one may be active."
+            )
+        return self
