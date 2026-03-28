@@ -4,8 +4,20 @@ import inspect
 from typing import final
 
 
-class Empty:
-    __slots__ = ()
+class EmptyMeta(type):
+    def __new__(
+        mcls,
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, object],
+        **kwargs: object,
+    ) -> type:
+        # Force zero slots.
+        namespace["__slots__"] = ()
+        return super().__new__(mcls, name, bases, namespace, **kwargs)
+
+
+class Empty(metaclass=EmptyMeta): ...
 
 
 _SINGLETON_INSTANCES: dict[type[Singleton], Singleton] = {}
@@ -13,9 +25,9 @@ _SINGLETON_INSTANCES: dict[type[Singleton], Singleton] = {}
 
 class Singleton(Empty):
     def __new__(cls) -> Singleton:
-        if cls in _SINGLETON_INSTANCES:
-            return _SINGLETON_INSTANCES[cls]
-        return super().__new__(cls)
+        if cls not in _SINGLETON_INSTANCES:
+            _SINGLETON_INSTANCES[cls] = super().__new__(cls)
+        return _SINGLETON_INSTANCES[cls]
 
 
 @final

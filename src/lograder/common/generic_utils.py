@@ -1,3 +1,4 @@
+from types import UnionType
 from typing import (
     Any,
     Optional,
@@ -67,7 +68,10 @@ def write_generic_type(
 
 def get_first_bound_type(typ: type) -> Any:
     for base in getattr(typ, "__orig_bases__", ()):
-        return get_args(base)[0]
+        origin = get_origin(base)
+        args = get_args(base)
+        if origin is not None and args:
+            return args[0]
     return None
 
 
@@ -75,10 +79,15 @@ def get_bound_types(cls: type, target_typ: type) -> Optional[tuple[Any, ...]]:
     return _get_bound_types_recursive(cls, target_typ, {})
 
 
-def unwrap_union_types(typ: type) -> set[type]:
+def unwrap_union_types(typ: Any) -> set[Any]:
     origin = get_origin(typ)
-    if origin is Union:  # type: ignore[comparison-overlap]
-        return set(get_args(typ))
+
+    if origin in (Union, UnionType):
+        out: set[Any] = set()
+        for arg in get_args(typ):
+            out.update(unwrap_union_types(arg))
+        return out
+
     return {typ}
 
 
