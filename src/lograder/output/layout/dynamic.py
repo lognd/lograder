@@ -29,12 +29,12 @@ def make_dynamic_layout(
             return {"__meta_bound_type__": layout_type}
 
     class NewLayout(Layout[_UNREACHABLE_DUMMY_MODEL], metaclass=NewLayoutMeta):
-        to_ansi = layout_like.to_ansi
-        to_simple = layout_like.to_simple
+        to_ansi = classmethod(layout_like.to_ansi)
+        to_simple = classmethod(layout_like.to_simple)
         if layout_like.to_ascii is not None:
-            to_ascii = layout_like.to_ascii
+            to_ascii = classmethod(layout_like.to_ascii)
         if layout_like.to_html is not None:
-            to_html = layout_like.to_html
+            to_html = classmethod(layout_like.to_html)
 
     NewLayout.__name__ = layout_cls_name
     NewLayout.__qualname__ = layout_cls_name
