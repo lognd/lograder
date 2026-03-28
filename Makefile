@@ -52,4 +52,4 @@ test-verbose:
 	@$(PYTEST) -v -s
 
 self-esteem:
-	@cloc --vcs=git .
+	@cloc --vcs=git src/
