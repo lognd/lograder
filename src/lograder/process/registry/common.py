@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
@@ -5,7 +7,9 @@ from pydantic import field_validator, model_validator
 from typing_extensions import Self
 
 from lograder.process.cli_args import (
+    CLI_ARG_MISSING,
     CLIArgs,
+    CLIKVOption,
     CLIMultiOption,
     CLIOption,
     CLIPresenceFlag,
@@ -59,17 +63,48 @@ class CompilerArgs(CLIArgs, Generic[Standard]):
     compile_only: bool = CLIPresenceFlag(["-c"], default=False)
 
     debug_symbols: bool = CLIPresenceFlag(["-g"], default=False)
+
     sanitizers: list[str] = CLIOption(
-        emitter=lambda ss: ([f"-fsanitize={','.join(ss)}"] if ss else []), default=()
+        emitter=lambda ss: ([f"-fsanitize={','.join(ss)}"] if ss else []),
+        default=(),
     )
+
     include_dirs: list[Path] = CLIMultiOption(default=(), token_emit=["-I{}"])
     library_dirs: list[Path] = CLIMultiOption(default=(), token_emit=["-L{}"])
     libraries: list[str] = CLIMultiOption(default=(), token_emit=["-l{}"])
+
+    defines: dict[str, str | int | bool | None | CLI_ARG_MISSING] = CLIKVOption(
+        default={},
+        token_emitter=lambda k, v: (
+            []
+            if isinstance(v, CLI_ARG_MISSING)
+            else [f"-D{k}"]
+            if v is None
+            else [f"-D{k}={_macro_value(v)}"]
+        ),
+    )
+
+    compile_options: list[str] = CLIMultiOption(default=())
+    linker_options: list[str] = CLIMultiOption(
+        default=(),
+        token_emit=["-Wl,{}"],
+    )
 
     warnings_all: bool = CLIPresenceFlag(["-Wall"], default=True)
     warnings_extra: bool = CLIPresenceFlag(["-Wextra"], default=True)
     warnings_pedantic: bool = CLIPresenceFlag(["-pedantic"], default=False)
     warnings_error: bool = CLIPresenceFlag(["-Werror"], default=False)
+
+    @field_validator("input", mode="before")
+    @classmethod
+    def validate_nonempty_raw_input_strings(cls, v: Any) -> Any:
+        if isinstance(v, (list, tuple)):
+            for i, item in enumerate(v):
+                if isinstance(item, str) and not item.strip():
+                    raise ValueError(
+                        f"Parameter `input[{i}]` to `{cls.__name__}` cannot be a blank path."
+                    )
+        return v
 
     @field_validator("input", mode="after")
     @classmethod
@@ -92,16 +127,113 @@ class CompilerArgs(CLIArgs, Generic[Standard]):
     @field_validator("output", mode="after")
     @classmethod
     def validate_output_not_a_directory(cls, output: Path) -> Path:
-        if output.is_dir():
+        if output.exists() and output.is_dir():
             raise ValueError(
                 f"`Path({output.resolve()})` is a directory and thus not valid for `output` parameter of `{cls.__name__}`."
             )
         return output
 
+    @field_validator("include_dirs", "library_dirs", mode="before")
+    @classmethod
+    def validate_nonempty_directory_strings(cls, v: Any) -> Any:
+        if isinstance(v, (list, tuple)):
+            for i, item in enumerate(v):
+                if isinstance(item, str) and not item.strip():
+                    raise ValueError(
+                        f"Blank path is not valid in `{cls.__name__}` at index `{i}`."
+                    )
+        return v
+
+    @field_validator("libraries", "compile_options", "linker_options", mode="before")
+    @classmethod
+    def validate_nonempty_string_sequences(cls, v: Any) -> Any:
+        if isinstance(v, (list, tuple)):
+            for i, item in enumerate(v):
+                if isinstance(item, str) and not item.strip():
+                    raise ValueError(
+                        f"Blank string is not valid in `{cls.__name__}` at index `{i}`."
+                    )
+        return v
+
+    @field_validator("sanitizers", mode="before")
+    @classmethod
+    def validate_nonempty_sanitizer_strings(cls, v: Any) -> Any:
+        if isinstance(v, (list, tuple)):
+            for i, item in enumerate(v):
+                if isinstance(item, str) and not item.strip():
+                    raise ValueError(
+                        f"Blank sanitizer entry is not valid in `{cls.__name__}` at index `{i}`."
+                    )
+        return v
+
+    @field_validator("sanitizers", mode="after")
+    @classmethod
+    def validate_sanitizers_normalized(cls, sanitizers: list[str]) -> list[str]:
+        normalized: list[str] = []
+        seen: set[str] = set()
+
+        for sanitizer in sanitizers:
+            s = sanitizer.strip()
+            if "," in s:
+                raise ValueError(
+                    f"Sanitizer `{sanitizer}` in `{cls.__name__}` must be specified as one logical item, not comma-expanded."
+                )
+            if s in seen:
+                raise ValueError(
+                    f"Duplicate sanitizer `{s}` is not valid in `{cls.__name__}`."
+                )
+            seen.add(s)
+            normalized.append(s)
+
+        return normalized
+
+    @field_validator("defines", mode="after")
+    @classmethod
+    def validate_define_keys(
+        cls, defines: dict[str, str | int | bool | None]
+    ) -> dict[str, str | int | bool | None]:
+        for key in defines:
+            if not key.strip():
+                raise ValueError(
+                    f"`defines` in `{cls.__name__}` cannot contain blank keys."
+                )
+            if "=" in key:
+                raise ValueError(
+                    f"`defines` key `{key}` in `{cls.__name__}` cannot contain `=`."
+                )
+        return defines
+
     @model_validator(mode="after")
     def validate_pipeline_breaks_mutually_exclusive(self) -> Self:
-        if sum([self.preprocess_only, self.compile_only, self.assemble_only]) > 1:
+        active = sum([self.preprocess_only, self.compile_only, self.assemble_only])
+        if active > 1:
             raise ValueError(
-                f"In `{self.__class__.__name__}`, parameters `preprocess_only` ({self.preprocess_only}), `compile_only` ({self.compile_only}), `assemble_only` ({self.assemble_only}) are mutually exclusive; only one may be active."
+                f"In `{self.__class__.__name__}`, parameters `preprocess_only` ({self.preprocess_only}), "
+                f"`compile_only` ({self.compile_only}), `assemble_only` ({self.assemble_only}) are mutually exclusive; "
+                f"only one may be active."
             )
         return self
+
+    @model_validator(mode="after")
+    def validate_preprocess_vs_link_inputs(self) -> Self:
+        if self.preprocess_only and self.libraries:
+            raise ValueError(
+                f"In `{self.__class__.__name__}`, `libraries` cannot be specified when `preprocess_only=True`."
+            )
+        if self.preprocess_only and self.library_dirs:
+            raise ValueError(
+                f"In `{self.__class__.__name__}`, `library_dirs` cannot be specified when `preprocess_only=True`."
+            )
+        if self.preprocess_only and self.linker_options:
+            raise ValueError(
+                f"In `{self.__class__.__name__}`, `linker_options` cannot be specified when `preprocess_only=True`."
+            )
+        return self
+
+
+def _macro_value(v: None | str | int | bool) -> str | None:
+    if v is None:
+        return None
+    if isinstance(v, bool):
+        return "1" if v else "0"
+    return str(v)

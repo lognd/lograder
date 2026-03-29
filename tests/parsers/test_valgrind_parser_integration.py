@@ -19,10 +19,13 @@ from _valgrind_integration_helpers import (
     is_program_spec_available,
 )
 
-pytestmark = pytest.mark.skipif(
-    not has_valgrind(),
-    reason="valgrind executable is not available",
-)
+pytestmark = [
+    pytest.mark.skipif(
+        not has_valgrind(),
+        reason="valgrind executable is not available",
+    ),
+    pytest.mark.slow,
+]
 
 
 def run_case(tmp_path: Path, case_name: str):

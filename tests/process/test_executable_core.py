@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
+from lograder.common import Empty, Ok
 from lograder.exception import DeveloperException, StaffException
 from lograder.process.cli_args import CLIArgs, CLIOption
 from lograder.process.executable import (
@@ -17,6 +18,7 @@ from lograder.process.executable import (
     ExecutableInvocation,
     ExecutableOptions,
     ExecutableOutput,
+    InstallationError,
     StaticExecutable,
     TypedExecutable,
     create_process,
@@ -370,32 +372,25 @@ def test_typed_executable_success_path_uses_args_emit_and_static_executable(
 ) -> None:
     captured: dict[str, Any] = {}
 
-    class FakeResult:
-        def map(self, fn):
-            captured["mapped"] = fn("ignored")
-            return "RESULT"
-
     @register_typed_executable(["tool"])
     class MyExec(TypedExecutable[ExampleArgs]):
-        def is_runnable(self):
-            return FakeResult()
+        def check_runnable(self) -> Result[Empty, InstallationError]:
+            return Ok(Empty())
 
     def fake_call(self, *, input: ExecutableInput, options: ExecutableOptions):
         captured["input_arguments"] = list(input.arguments)
         captured["options"] = options
-        return "OUTPUT"
+        return
 
     monkeypatch.setattr(StaticExecutable, "__call__", fake_call, raising=True)
 
-    result = MyExec()(
+    MyExec()(
         ExampleArgs(value="abc"),
         input=ExecutableInput(),
         options=ExecutableOptions(),
     )
 
     assert captured["input_arguments"] == ["--value", "abc"]
-    assert captured["mapped"] == "OUTPUT"
-    assert result == "RESULT"
 
 
 def test_executable_pool_rejects_length_mismatch() -> None:

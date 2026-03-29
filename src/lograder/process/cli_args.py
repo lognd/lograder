@@ -226,13 +226,13 @@ def CLIMultiOption(
         for token in base_sequence:
             if isinstance(token, EllipsisType):
                 for item in input:
-                    if token_emit is not None:
-                        new_sequence.extend(t.format(item) for t in token_emit)
+                    if token_emitter is not None:
+                        new_sequence.extend(token_emitter(item))
                         continue
                     assert (
-                        token_emitter is not None
+                        token_emit is not None
                     )  # Must be true because we validate at the beginning of the surrounding function.
-                    new_sequence.extend(token_emitter(item))
+                    new_sequence.extend(t.format(item) for t in token_emit)
             else:
                 new_sequence.append(token)
         return new_sequence
@@ -275,16 +275,16 @@ def CLIKVOption(
         for token in base_sequence:
             if isinstance(token, EllipsisType):
                 for key, value in input.items():
-                    if token_emit is not None:
-                        new_sequence.extend(
-                            t.format(k=key, v=value, key=key, value=value)
-                            for t in token_emit
-                        )
+                    if token_emitter is not None:
+                        new_sequence.extend(token_emitter(key, value))
                         continue
                     assert (
-                        token_emitter is not None
+                        token_emit is not None
                     )  # Must be true because we validate at the beginning of the surrounding function.
-                    new_sequence.extend(token_emitter(key, value))
+                    new_sequence.extend(
+                        t.format(k=key, v=value, key=key, value=value)
+                        for t in token_emit
+                    )
             else:
                 new_sequence.append(token)
         return new_sequence
@@ -361,7 +361,7 @@ class CLIArgs(BaseModel):
                         v: Any,
                         emit: Sequence[str] = cast(Sequence[str], cli_data["emit"]),
                     ) -> list[str]:
-                        if v is CLI_ARG_MISSING():
+                        if v is CLI_ARG_MISSING() or v is None:
                             return []
                         # noinspection PyUnnecessaryCast
                         return [s.format(str(v)) for s in cast(list[str], emit)]

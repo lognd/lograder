@@ -11,7 +11,7 @@ from typing import Any, Callable, Generic, Optional, TypeVar, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from lograder.common import Empty, Ok, Result, get_bound_types, unwrap_union_types
+from lograder.common import Empty, Err, Ok, Result, get_bound_types, unwrap_union_types
 from lograder.exception import DeveloperException, StaffException
 from lograder.pipeline.config import get_config
 from lograder.process.cli_args import CLIArgs
@@ -20,12 +20,14 @@ from lograder.process.os_helpers import (
     NOT_APPLICABLE,
     SIGKILL,
     StreamMode,
+    command_to_str,
     get_current_extra_groups,
     get_current_gid,
     get_current_groupname,
     get_current_uid,
     get_current_umask,
     get_current_username,
+    is_command_runnable,
     is_posix,
     is_windows,
     posix_and,
@@ -91,22 +93,29 @@ def create_process(inv: ExecutableInvocation, /) -> subprocess.Popen:
             **inv.popen_kwargs,
         )
     elif is_posix():
-        return subprocess.Popen(
-            args=inv.command,
-            stdin=stdin,
-            stdout=stdout,
-            stderr=stderr,
-            cwd=inv.cwd,
-            env=inv.env,
-            text=False,
-            start_new_session=cast(bool, inv.start_new_session),
-            restore_signals=cast(bool, inv.restore_signals),
-            umask=cast(int, inv.umask),
-            user=cast(int, inv.user_id),
-            group=cast(int, inv.group_id),
-            extra_groups=cast(list[int], inv.extra_groups),
+        kwargs: dict[str, Any] = {
+            "args": inv.command,
+            "stdin": stdin,
+            "stdout": stdout,
+            "stderr": stderr,
+            "cwd": inv.cwd,
+            "env": inv.env,
+            "text": False,
+            "start_new_session": cast(bool, inv.start_new_session),
+            "restore_signals": cast(bool, inv.restore_signals),
             **inv.popen_kwargs,
-        )
+        }
+
+        if not isinstance(inv.umask, NOT_APPLICABLE):
+            kwargs["umask"] = inv.umask
+        if not isinstance(inv.user_id, NOT_APPLICABLE):
+            kwargs["user"] = inv.user_id
+        if not isinstance(inv.group_id, NOT_APPLICABLE):
+            kwargs["group"] = inv.group_id
+        if not isinstance(inv.extra_groups, NOT_APPLICABLE):
+            kwargs["extra_groups"] = inv.extra_groups
+
+        return subprocess.Popen(**kwargs)
     else:
         raise DeveloperException(
             f"Platform is neither POSIX nor Windows ({sys.platform=}, {os.name=}); please implement a command runner."
@@ -127,11 +136,13 @@ def invoke_command(inv: ExecutableInvocation, /) -> ExecutableOutput:
             process.kill()
             raise
         retcode = process.poll()
+        if retcode is None:
+            retcode = SIGKILL
     return ExecutableOutput(
         command=inv.command,
         stdout_bytes=stdout,
         stderr_bytes=stderr,
-        return_code=retcode or SIGKILL,
+        return_code=retcode,
     )
 
 
@@ -152,13 +163,11 @@ class ExecutableOptions(BaseModel):
     # POSIX
     restore_signals: bool | NOT_APPLICABLE = posix_and(True)
     umask: int | NOT_APPLICABLE = Field(default_factory=get_current_umask)
-    user_id: int | NOT_APPLICABLE = Field(default_factory=get_current_uid)
-    user_name: str | NOT_APPLICABLE = Field(default_factory=get_current_username)
-    group_id: int | NOT_APPLICABLE = Field(default_factory=get_current_gid)
-    group_name: str | NOT_APPLICABLE = Field(default_factory=get_current_groupname)
-    extra_groups: list[int] | NOT_APPLICABLE = Field(
-        default_factory=get_current_extra_groups
-    )
+    user_id: int | NOT_APPLICABLE = Field(default_factory=NOT_APPLICABLE)
+    user_name: str | NOT_APPLICABLE = Field(default_factory=NOT_APPLICABLE)
+    group_id: int | NOT_APPLICABLE = Field(default_factory=NOT_APPLICABLE)
+    group_name: str | NOT_APPLICABLE = Field(default_factory=NOT_APPLICABLE)
+    extra_groups: list[int] | NOT_APPLICABLE = Field(default_factory=NOT_APPLICABLE)
 
     # WINDOWS
     creation_flags: int | NOT_APPLICABLE = windows_and(0)
@@ -304,20 +313,76 @@ class StaticExecutable(Executable):
     def command(self) -> list[str]:
         return self._command
 
+    @command.setter
+    def command(self, command: list[str]) -> None:
+        self._command = command
+
+
+_ORIGINAL_COMMANDS: dict[type[TypedExecutable], list[str]] = {}
+
 
 def register_typed_executable(
     base_command: list[str],
 ) -> Callable[[type[TypedExecutable]], type[TypedExecutable]]:
     def wrapper(cls: type[TypedExecutable]) -> type[TypedExecutable]:
+        _ORIGINAL_COMMANDS[cls] = base_command
         cls.executable = StaticExecutable(command=base_command)
         return cls
 
     return wrapper
 
 
+class InstallationError(BaseModel):
+    module: list[str]
+    message: str
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
+
+
+class InstallationExecutable(ABC):
+    def __init__(
+        self,
+        executable: TypedExecutable[T],
+        args: T,
+        input: ExecutableInput = ExecutableInput(),
+        options: ExecutableOptions = ExecutableOptions(),
+    ) -> None:
+        self._executable = executable
+        self._args = args
+        self._input = input
+        self._options = options
+
+    def validate_runnable(self) -> None:
+        return
+
+    @abstractmethod
+    def get_command(
+        self, output: ExecutableOutput
+    ) -> Result[Optional[list[str]], InstallationError]: ...
+
+    def __call__(self) -> Result[Optional[list[str]], InstallationError]:
+        res = self._executable(
+            args=self._args, input=self._input, options=self._options
+        )
+        if res.is_err:
+            return res.swap_ok(list[str])
+        output = res.danger_ok
+        if output.return_code != 0:
+            return Err(
+                InstallationError(
+                    module=output.command,
+                    message=f"The installation executable exited with code, `{output.return_code}`.",
+                    stdout=output.stdout_text,
+                    stderr=output.stderr_text,
+                )
+            )
+        return self.get_command(output)
+
+
 class TypedExecutable(Generic[T]):
     bound_types: Optional[set[type[CLIArgs]]] = None
     executable: Optional[StaticExecutable] = None
+    install_executable: Optional[InstallationExecutable] = None
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -338,18 +403,79 @@ class TypedExecutable(Generic[T]):
         # noinspection PyUnnecessaryCast
         cls.bound_types = cast(Optional[set[type[CLIArgs]]], _bound_types)
 
-    def is_runnable(self) -> Result[Empty, BaseModel]:
+    @classmethod
+    def get_original_command(cls) -> list[str]:
+        return _ORIGINAL_COMMANDS.get(cls, [])
+
+    @classmethod
+    def get_command(cls) -> list[str]:
+        return cls.executable.command if cls.executable is not None else []
+
+    def install(self) -> Result[list[str], InstallationError]:
+        """
+        Provides a method to install an executable. Either calls the `InstallationExecutable` at `self.install_executable`
+        or whatever overrides this method.
+        Changes `self.executable.command` to be whatever is correct.
+        """
+        if self.install_executable is not None:
+            res = self.install_executable()
+            if res.is_ok and res.danger_ok is None:
+                return Ok(self.get_command())
+            # noinspection PyUnnecessaryCast
+            return cast(Result[list[str], InstallationError], res)
+        if self.executable is None:
+            raise DeveloperException(
+                f"Cannot `.install()` a `{self.__class__.__name__}` instance because the class does not specify a bound executable with `@register_typed_executable([<command-goes-here>])`."
+            )
+        return Err(
+            InstallationError(
+                module=self.executable.command,
+                message=f"`{self.__class__.__name__}` was unable to attempt an installation because default installation method, `.install()`, was not overridden.",
+            )
+        )
+
+    def validate_existent_executable(self, source: str) -> None:
+        if self.executable is None:
+            raise DeveloperException(
+                f"Cannot `.{source}(...)` a `{self.__class__.__name__}` instance because the class does not specify a bound executable with `@register_typed_executable([<command-goes-here>])`."
+            )
+
+    def update_base_command(self, command: list[str]) -> None:
+        self.validate_existent_executable("update_base_command")
+        assert self.executable is not None
+        self.executable.command = command
+
+    def check_runnable(self) -> Result[Empty, InstallationError]:
         """
         Provides a method for platform checking or any sort of pre-run validation.
         """
+        self.validate_existent_executable("check_runnable")
+        assert self.executable is not None
+
+        if not is_command_runnable(self.executable.command):
+            original_command = self.get_original_command()
+            if self.executable.command == original_command or not original_command:
+                return Err(
+                    InstallationError(
+                        module=self.executable.command,
+                        message=f"Could not find executable `{self.executable.command[0]}`.",
+                    )
+                )
+            else:
+                return Err(
+                    InstallationError(
+                        module=self.executable.command,
+                        message=f"Could not find executable `{self.executable.command[0]}` even after installation. Original search location was `{original_command[0]}`.",
+                    )
+                )
         return Ok(Empty())
 
     def __call__(
         self,
-        args: CLIArgs,
+        args: T,
         input: ExecutableInput = ExecutableInput(),
         options: ExecutableOptions = ExecutableOptions(),
-    ) -> Result[ExecutableOutput, BaseModel]:
+    ) -> Result[ExecutableOutput, InstallationError]:
         if self.bound_types is None:
             raise DeveloperException(
                 f"Cannot call a `{self.__class__.__name__}` instance because the class does not specify a bound `CLIArgs` type or union type with `class <your-executable>(TypedExecutable[<CLIArgs-type-or-union-of-CLIArgs-type>])."
@@ -364,12 +490,18 @@ class TypedExecutable(Generic[T]):
                 f"the arguments must be provided by the `args` parameter of one of the type(s): `{'`, `'.join(t.__name__ for t in self.bound_types)}`. This is to "
                 f"enforce a single source of truth for the arguments."
             )
-        input.arguments = args.emit()
-        may_run = self.is_runnable()
-        # This cast is okay because we check if `self.executable` is None and the function runs immediately and is discarded.
         # noinspection PyUnnecessaryCast
-        return may_run.map(
-            lambda _: cast(StaticExecutable, self.executable)(
-                input=input, options=options
-            )
-        )
+        input.arguments = cast(
+            CLIArgs, args
+        ).emit()  # This is guaranteed by `__init_subclass__`
+        may_run = self.check_runnable()
+        if may_run.err:
+            install = self.install()
+            if install.err:
+                return install.swap_ok(ExecutableOutput)
+            self.update_base_command(install.danger_ok)
+            may_run = self.check_runnable()
+        if may_run.err:
+            return may_run.swap_ok(ExecutableOutput)
+
+        return Ok(self.executable(input=input, options=options))

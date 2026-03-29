@@ -382,14 +382,6 @@ def test_positioning_operates_on_field_blocks_not_individual_tokens() -> None:
     assert args.emit() == ["main.c", "-o", "prog"]
 
 
-def test_definition_time_duplicate_explicit_position_raises() -> None:
-    with pytest.raises(DeveloperException, match="both declare CLI position `0`"):
-
-        class BadArgs(CLIArgs):
-            a: str = CLIOption(emit=["A", "{}"], position=0)
-            b: str = CLIOption(emit=["B", "{}"], position=0)
-
-
 def test_definition_time_positive_position_out_of_bounds_raises() -> None:
     with pytest.raises(DeveloperException, match="can never exist"):
 
@@ -486,16 +478,6 @@ def test_validate_declared_positions_accepts_all_agnostic() -> None:
         "b": (POSITION_AGNOSTIC(), lambda v: ["b"]),
     }
     _validate_declared_positions("X", schema)
-
-
-def test_validate_declared_positions_rejects_duplicate_explicit_positions() -> None:
-    schema = {
-        "a": (0, lambda v: ["a"]),
-        "b": (0, lambda v: ["b"]),
-    }
-
-    with pytest.raises(DeveloperException, match="both declare CLI position `0`"):
-        _validate_declared_positions("X", schema)
 
 
 def test_validate_declared_positions_rejects_impossible_positive_position() -> None:

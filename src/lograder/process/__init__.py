@@ -10,6 +10,7 @@ from lograder.process.executable import (
     ExecutableInput,
     ExecutableOptions,
     ExecutableOutput,
+    InstallationError,
     TypedExecutable,
     register_typed_executable,
 )
@@ -50,4 +51,5 @@ __all__ = [
     "GXXExecutable",
     "CURLArgs",
     "CURLExecutable",
+    "InstallationError",
 ]

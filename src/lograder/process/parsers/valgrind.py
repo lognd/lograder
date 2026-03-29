@@ -8,11 +8,14 @@ from xml.etree import ElementTree as ET
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
+    # noinspection PyUnresolvedReferences
     from _strenum_compat import StrEnum
 else:
     try:
+        # noinspection PyUnresolvedReferences
         from enum import StrEnum
     except ImportError:
+        # noinspection PyUnresolvedReferences
         from strenum import StrEnum
 
 

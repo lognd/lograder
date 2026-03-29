@@ -128,6 +128,20 @@ class Result(Generic[T, E]):
         # noinspection PyUnnecessaryCast
         return cast(E, self._err)
 
+    # The unused local is used for type-hinting.
+    # noinspection PyUnusedLocal
+    def swap_err(self, err: type[F]) -> Result[T, F]:
+        assert self.is_ok
+        # noinspection PyUnnecessaryCast
+        return cast(Result[T, F], self)
+
+    # The unused local is used for type-hinting.
+    # noinspection PyUnusedLocal
+    def swap_ok(self, ok: type[V]) -> Result[V, E]:
+        assert self.is_err
+        # noinspection PyUnnecessaryCast
+        return cast(Result[V, E], self)
+
     def __repr__(self) -> str:
         if self.is_ok:
             return f"Ok({repr(self.danger_ok)})"

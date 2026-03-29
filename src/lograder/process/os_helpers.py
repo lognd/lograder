@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import shlex
+import shutil
 import sys
 from enum import Enum, auto
 from functools import lru_cache
@@ -19,6 +21,16 @@ T = TypeVar("T")
 # from winapi
 CREATE_NEW_PROCESS_GROUP: Final = 0x200
 SIGKILL = 137
+
+
+def is_command_runnable(command: list[str]) -> bool:
+    if not command:
+        return False
+    return shutil.which(command[0]) is not None
+
+
+def command_to_str(command: list[str]) -> str:
+    return shlex.join(command)
 
 
 def is_windows() -> bool:

@@ -51,5 +51,11 @@ test:
 test-verbose:
 	@$(PYTEST) -v -s
 
+test-fast:
+	@$(PYTEST) -m "not slow"
+
+test-verbose-fast:
+	@$(PYTEST) -v -s -m "not slow"
+
 self-esteem:
 	@cloc --vcs=git src/
