@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from lograder.common import Empty, Err, Ok, Result, get_bound_types, unwrap_union_types
 from lograder.exception import DeveloperException, StaffException
+from lograder.output import get_logger
 from lograder.pipeline.config import get_config
 from lograder.process.cli_args import CLIArgs
 from lograder.process.os_helpers import (
@@ -35,6 +36,9 @@ from lograder.process.os_helpers import (
 )
 
 T = TypeVar("T")
+
+
+_LOGGER = get_logger(__name__)
 
 
 def resolve_invocation(
@@ -339,6 +343,11 @@ class InstallationError(BaseModel):
     stderr: Optional[str] = None
 
 
+class InstallWarning(BaseModel):
+    command: list[str]
+    calling_object: str
+
+
 class InstallationExecutable(ABC):
     def __init__(
         self,
@@ -417,7 +426,13 @@ class TypedExecutable(Generic[T]):
         or whatever overrides this method.
         Changes `self.executable.command` to be whatever is correct.
         """
-        if self.install_executable is not None:
+        if self.install_executable is not None and self.executable is not None:
+            _LOGGER.packet(
+                InstallWarning(
+                    command=self.executable.command,
+                    calling_object=self.__class__.__name__,
+                )
+            )
             res = self.install_executable()
             if res.is_ok and res.danger_ok is None:
                 return Ok(self.get_command())
