@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal, Union
+from typing import Any, Literal, Union, Generic, TypeVar
 
 from pydantic import field_validator
 from typing_extensions import Self
@@ -12,12 +12,14 @@ from lograder.process.cli_args import (
     CLIOption,
     CLIPresenceFlag,
 )
-from lograder.process.executable import TypedExecutable, register_typed_executable
+from lograder.process.executable import TypedExecutable, register_typed_executable, nested_cli_emit
 
+T = TypeVar("T", bound=CLIArgs)
 
-class GprofngCollectArgs(CLIArgs):
-    subcommand: Literal["collect"] = CLIOption(
-        default="collect", position=0, emit=["{}"]
+class GprofngCollectArgs(CLIArgs, Generic[T]):
+    command: T = CLIOption(
+        emitter=nested_cli_emit,
+        position=-1,
     )
 
     output: Path | None = CLIOption(default=None, emit=["-o", "{}"])
@@ -33,7 +35,9 @@ class GprofngCollectArgs(CLIArgs):
 
     add_opts: list[str] = CLIMultiOption(default_factory=list)
 
-    command: list[str] = CLIMultiOption(default_factory=list, position=-1)
+    subcommand: Literal["collect"] = CLIOption(
+        default="collect", position=0, emit=["{}"]
+    )
 
     @field_validator("command", mode="after")
     @classmethod
@@ -43,9 +47,10 @@ class GprofngCollectArgs(CLIArgs):
         return v
 
 
-class GprofngDisplayArgs(CLIArgs):
-    subcommand: Literal["display"] = CLIOption(
-        default="display", position=0, emit=["{}"]
+class GprofngDisplayArgs(CLIArgs, Generic[T]):
+    command: T = CLIOption(
+        emitter=nested_cli_emit,
+        position=-1,
     )
 
     experiment: Path = CLIOption(position=1, emit=["{}"])
@@ -57,6 +62,9 @@ class GprofngDisplayArgs(CLIArgs):
     metrics: str | None = CLIOption(default=None, emit=["-metrics", "{}"])
 
     add_opts: list[str] = CLIMultiOption(default_factory=list)
+    subcommand: Literal["display"] = CLIOption(
+        default="display", position=0, emit=["{}"]
+    )
 
 
 @register_typed_executable(["gprofng"])

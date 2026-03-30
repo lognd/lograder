@@ -387,11 +387,19 @@ class InstallationExecutable(ABC):
             )
         return self.get_command(output)
 
+def nested_cli_emit(args: CLIArgs) -> list[str]:
+    return TypedExecutable.get_from_cli_arg(args.__class__).get_command() + [args.emit()]
 
 class TypedExecutable(Generic[T]):
     bound_types: Optional[set[type[CLIArgs]]] = None
     executable: Optional[StaticExecutable] = None
     install_executable: Optional[InstallationExecutable] = None
+
+    _registered_types: dict[type[CLIArgs], type[TypedExecutable]] = {}
+
+    @classmethod
+    def get_from_cli_arg(cls, typ: type[CLIArgs]) -> Optional[type[TypedExecutable]]:
+        return cls._registered_types.get(typ, None)
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -404,11 +412,19 @@ class TypedExecutable(Generic[T]):
 
         if _bound_types is not None:
             for typ in _bound_types:
-                if isinstance(typ, type) and not issubclass(typ, CLIArgs):
-                    raise DeveloperException(
-                        f"A `TypedExecutable` subclass, `{cls.__name__}`, uses `{typ.__name__}` as a generic parameter, but "
-                        f"`{typ.__name__}` does not inherit from `CLIArgs`."
-                    )
+                if isinstance(typ, type):
+                    if not issubclass(typ, CLIArgs):
+                        raise DeveloperException(
+                            f"A `TypedExecutable` subclass, `{cls.__name__}`, uses `{typ.__name__}` as a generic parameter, but "
+                            f"`{typ.__name__}` does not inherit from `CLIArgs`."
+                        )
+                    else:
+                        if typ in TypedExecutable._registered_types:
+                            raise DeveloperException(
+                                f"`{typ.__name__}` is already registered with `{TypedExecutable._registered_types[typ].__name__}`; cannot register it with `{cls.__name__}`."
+                            )
+                        TypedExecutable._registered_types[typ] = cls
+
         # noinspection PyUnnecessaryCast
         cls.bound_types = cast(Optional[set[type[CLIArgs]]], _bound_types)
 
