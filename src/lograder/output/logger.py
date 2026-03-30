@@ -49,6 +49,9 @@ def setup_logger(toml_file: Path = Path(__file__).parent / "config.toml") -> Non
 
 
 def get_logger(name: str) -> LograderLogger:
+    global _PAST_SETUP
+    if _PAST_SETUP is None:
+        setup_logger()
     logger = logging.getLogger(name)
     if not isinstance(logger, LograderLogger):
         raise StaffException(
