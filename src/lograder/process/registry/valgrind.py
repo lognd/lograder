@@ -12,7 +12,11 @@ from lograder.process.cli_args import (
     CLIOption,
     CLIPresenceFlag,
 )
-from lograder.process.executable import TypedExecutable, register_typed_executable, nested_cli_emit
+from lograder.process.executable import (
+    TypedExecutable,
+    nested_cli_emit,
+    register_typed_executable,
+)
 from lograder.process.install_script import InstallScript, PlatformInstallScript
 from lograder.process.os_helpers import is_posix
 from lograder.process.registry.bash import BashExecutable, BashScriptArgs

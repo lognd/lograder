@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Literal, Union, Generic, TypeVar
+from typing import Any, Generic, Literal, TypeVar, Union
 
 from pydantic import field_validator
 from typing_extensions import Self
@@ -12,9 +12,14 @@ from lograder.process.cli_args import (
     CLIOption,
     CLIPresenceFlag,
 )
-from lograder.process.executable import TypedExecutable, register_typed_executable, nested_cli_emit
+from lograder.process.executable import (
+    TypedExecutable,
+    nested_cli_emit,
+    register_typed_executable,
+)
 
 T = TypeVar("T", bound=CLIArgs)
+
 
 class GprofngCollectArgs(CLIArgs, Generic[T]):
     command: T = CLIOption(
