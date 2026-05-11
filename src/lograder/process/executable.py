@@ -56,6 +56,8 @@ def resolve_invocation(
         command=[*command, *input.arguments],
         cwd=options.cwd,
         env=env,
+        hide_input=input.hide_input,
+        hide_output=input.hide_output,
         stdin_bytes=input.stdin_bytes,
         encoding=input.encoding,
         timeout=options.timeout,
@@ -126,6 +128,11 @@ def create_process(inv: ExecutableInvocation, /) -> subprocess.Popen:
         )
 
 
+class ExecutableData(BaseModel):
+    input: ExecutableInvocation
+    output: ExecutableOutput
+
+
 def invoke_command(inv: ExecutableInvocation, /) -> ExecutableOutput:
     with create_process(inv) as process:
         try:  # Kind of copied from `subprocess.py`
@@ -142,12 +149,14 @@ def invoke_command(inv: ExecutableInvocation, /) -> ExecutableOutput:
         retcode = process.poll()
         if retcode is None:
             retcode = SIGKILL
-    return ExecutableOutput(
+    output = ExecutableOutput(
         command=inv.command,
         stdout_bytes=stdout,
         stderr_bytes=stderr,
         return_code=retcode,
     )
+    _LOGGER.packet(ExecutableData(input=inv, output=output))
+    return output
 
 
 class ExecutableOptions(BaseModel):
@@ -199,6 +208,8 @@ class ExecutableInput(BaseModel):
     arguments: list[str] = Field(default_factory=list)
     env: dict[str, str] = Field(default_factory=dict)
     encoding: str = "utf-8"
+    hide_input: bool = False
+    hide_output: bool = False
 
     @property
     def stdin_text(self) -> str:
@@ -241,6 +252,8 @@ class ExecutableInvocation(BaseModel):
     stdin_bytes: bytes
     encoding: str
     timeout: float | None
+    hide_input: bool
+    hide_output: bool
 
     stdin_mode: StreamMode
     stdout_mode: StreamMode
@@ -387,8 +400,12 @@ class InstallationExecutable(ABC):
             )
         return self.get_command(output)
 
+
 def nested_cli_emit(args: CLIArgs) -> list[str]:
-    return TypedExecutable.get_from_cli_arg(args.__class__).get_command() + [args.emit()]
+    return TypedExecutable.get_from_cli_arg(args.__class__).get_command() + [
+        args.emit()
+    ]
+
 
 class TypedExecutable(Generic[T]):
     bound_types: Optional[set[type[CLIArgs]]] = None
