@@ -157,10 +157,11 @@ class ManifestComparisonSummary(BaseModel):
 
 
 class Manifest(Package):
-    def __init__(self, structure: DirectoryMapping):
+    def __init__(self, structure: DirectoryMapping, *, root: Path):
         super().__init__()
         self._mapping = structure
         self._files, self._dirs = self._explore_directory(structure)
+        self._root = root
 
     # noinspection PyShadowingBuiltins
     @classmethod
@@ -193,10 +194,10 @@ class Manifest(Package):
 
             return items
 
-        return cls(build_mapping(dir))
+        return cls(build_mapping(dir), root=dir)
 
     @classmethod
-    def from_toml(cls, toml: Path) -> Manifest:
+    def from_toml(cls, toml: Path, *, root: Optional[Path] = None) -> Manifest:
         """
         Here's an example `.toml` format.
 
@@ -289,14 +290,12 @@ class Manifest(Package):
             # Treat the whole document as the manifest body if no top-level "manifest" key exists.
             mapping = parse_node(data, where="root")
 
-        return cls(mapping)
+        return cls(mapping, root=root or Path(get_config().root_directory).resolve())
 
     @classmethod
-    def from_flat(cls, flat: list[Path]) -> Manifest:
-        config = get_config()
-        root = Path(config.root_directory).resolve()
-
+    def from_flat(cls, flat: list[Path], *, root: Optional[Path] = None) -> Manifest:
         TrieNode = dict[str, Any]
+        _root = root or Path(get_config().root_directory).resolve()
 
         def make_node() -> TrieNode:
             return {"dirs": {}, "files": set()}
@@ -309,10 +308,10 @@ class Manifest(Package):
             if p.is_absolute():
                 resolved = p.resolve()
                 try:
-                    return resolved.relative_to(root)
+                    return resolved.relative_to(_root)
                 except ValueError as e:
                     raise StaffException(
-                        f"Flat manifest path `{str(path)}` is outside configured root directory, `{str(root)}`."
+                        f"Flat manifest path `{str(path)}` is outside configured root directory, `{str(_root)}`."
                     ) from e
 
             # Lexical normalization for relative paths.
@@ -379,7 +378,7 @@ class Manifest(Package):
             rel_path = normalize_rel(raw_path)
             insert_file(rel_path)
 
-        return cls(emit_mapping(trie))
+        return cls(emit_mapping(trie), root=_root)
 
     def __contains__(self, item: Any) -> bool:
         if not isinstance(item, (str, Path)):
@@ -519,6 +518,10 @@ class Manifest(Package):
     @property
     def directory_mapping(self) -> DirectoryMapping:
         return self._mapping
+
+    @property
+    def root(self) -> Path:
+        return self._root
 
     @staticmethod
     def _explore_directory(

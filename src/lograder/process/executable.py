@@ -402,9 +402,7 @@ class InstallationExecutable(ABC):
 
 
 def nested_cli_emit(args: CLIArgs) -> list[str]:
-    return TypedExecutable.get_from_cli_arg(args.__class__).get_command() + [
-        args.emit()
-    ]
+    return TypedExecutable.get_from_cli_arg(args.__class__).get_command() + args.emit()
 
 
 class TypedExecutable(Generic[T]):
@@ -415,8 +413,8 @@ class TypedExecutable(Generic[T]):
     _registered_types: dict[type[CLIArgs], type[TypedExecutable]] = {}
 
     @classmethod
-    def get_from_cli_arg(cls, typ: type[CLIArgs]) -> Optional[type[TypedExecutable]]:
-        return cls._registered_types.get(typ, None)
+    def get_from_cli_arg(cls, typ: type[CLIArgs]) -> type[TypedExecutable]:
+        return cls._registered_types[typ]
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
