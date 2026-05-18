@@ -1,16 +1,12 @@
 from typing import final, Generator
+from pathlib import Path
 
-from lograder.common import Unreachable, Result
+
+from lograder.common import Unreachable, Result, Ok, Err
 from lograder.process.registry.makefile import MakefileArgs, MakefileExecutable
-from lograder.pipeline.build.build import Build, BuildData, BuildError
+from lograder.pipeline.build.build import Build, BuildOutput, make_build_output
 from lograder.pipeline.check.project.simple_project import MakefileManifest
 from lograder.pipeline.types.artifacts import Artifact
-
-
-class MakefileBuildError(BuildError): ...
-
-
-class MakefileBuildData(BuildData): ...
 
 
 @final
@@ -18,8 +14,8 @@ class MakefileBuild(
     Build[
         MakefileManifest,
         list[Artifact],
-        MakefileBuildError,
-        MakefileBuildData,
+        BuildOutput,
+        BuildOutput,
         Unreachable,
     ]
 ):
@@ -32,10 +28,21 @@ class MakefileBuild(
     def __call__(
         self, input: MakefileManifest
     ) -> Generator[
-        Result[MakefileBuildData, Unreachable],
+        Result[BuildOutput, Unreachable],
         None,
-        Result[list[Artifact], MakefileBuildError],
+        Result[list[Artifact], BuildOutput],
     ]:
+        makefile = Path(
+            input.root / "Makefile"
+        )  # This must exist because of MakefileManifest check.
+
         make_args = MakefileArgs(directory=input.root)
         make_output = self.executable(make_args)
-        # TODO: Error handling for make output.
+        make_info = make_build_output(make_output, input, makefile)
+
+        if make_info.is_err:
+            return make_info.swap_ok(list[Artifact])
+        yield make_info.swap_err(Unreachable)
+
+        # TODO: create Makefile parsing.
+        return Ok([])
