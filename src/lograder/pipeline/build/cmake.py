@@ -1,4 +1,4 @@
-from typing import final, Generator
+from typing import final, Generator, Sequence, cast
 
 from lograder.common import Unreachable, Result, Ok, Err
 from lograder.process.registry.cmake import (
@@ -7,6 +7,7 @@ from lograder.process.registry.cmake import (
     CMakeInstallArgs,
     CMakeExecutable,
 )
+from lograder.process.parsers.cmake import cmake_artifacts_from_file_api
 from lograder.pipeline.build.build import Build, BuildOutput, make_build_output
 from lograder.pipeline.check.project.simple_project import CMakeManifest
 from lograder.pipeline.types.artifacts import Artifact
@@ -14,7 +15,7 @@ from lograder.pipeline.types.artifacts import Artifact
 
 @final
 class CMakeBuild(
-    Build[CMakeManifest, list[Artifact], BuildOutput, BuildOutput, Unreachable]
+    Build[CMakeManifest, Sequence[Artifact], BuildOutput, BuildOutput, Unreachable]
 ):
     _executable: CMakeExecutable = CMakeExecutable()
 
@@ -27,7 +28,7 @@ class CMakeBuild(
     ) -> Generator[
         Result[BuildOutput, Unreachable],
         None,
-        Result[list[Artifact], BuildOutput],
+        Result[Sequence[Artifact], BuildOutput],
     ]:
         cmake_file = (
             input.root / "CMakeLists.txt"
@@ -49,5 +50,4 @@ class CMakeBuild(
             return cmake_info.swap_ok(list[Artifact])
         yield cmake_info.swap_err(Unreachable)
 
-        # TODO: create CMake parsing.
-        return Ok([])
+        return Ok(cmake_artifacts_from_file_api(conf_args.build_dir))

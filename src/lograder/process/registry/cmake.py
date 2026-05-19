@@ -6,6 +6,7 @@ from typing import Any
 from pydantic import field_validator, model_validator
 from typing_extensions import Self
 
+from lograder.common import Err, Ok, Result
 from lograder.process.cli_args import (
     CLI_ARG_MISSING,
     CLIArgs,
@@ -14,7 +15,14 @@ from lograder.process.cli_args import (
     CLIOption,
     CLIPresenceFlag,
 )
-from lograder.process.executable import TypedExecutable, register_typed_executable
+from lograder.process.executable import (
+    ExecutableInput,
+    ExecutableOptions,
+    ExecutableOutput,
+    InstallationError,
+    TypedExecutable,
+    register_typed_executable,
+)
 from lograder.process.install_script import InstallScript, PlatformInstallScript
 from lograder.process.os_helpers import is_posix
 from lograder.process.registry.bash import BashExecutable, BashScriptArgs
@@ -281,6 +289,22 @@ class CMakeExecutable(
             )
         }
     )
+
+    def __call__(
+        self,
+        args: CMakeConfigureArgs | CMakeBuildArgs | CMakeInstallArgs,
+        input: ExecutableInput = ExecutableInput(),
+        options: ExecutableOptions = ExecutableOptions(),
+    ) -> Result[ExecutableOutput, InstallationError]:
+        if isinstance(args, CMakeConfigureArgs):
+            api_base = (
+                args.build_dir / ".cmake" / "api" / "v1" / "query" / "client-lograder"
+            )
+            queries = [Path("codemodel-v2")]  # Used for artifact parsing.
+            for query in queries:
+                (api_base / query).parent.mkdir(parents=True, exist_ok=True)
+                (api_base / query).touch()
+        return super().__call__(args, input, options)
 
 
 def _cmake_cache_value(v: str | int | bool) -> str:
