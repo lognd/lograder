@@ -12,7 +12,7 @@ try:
 except ImportError:
     # This block was added for tomli backwards compatibility.
     # Note that the mypy-suppression is done intentionally because it is wrong.
-    import tomli as tomllib  # type: ignore[no-redef]
+    import tomli as tomllib  # type: ignore[no-redef, import-not-found]
 
 
 class EnvironmentConfig(BaseModel):

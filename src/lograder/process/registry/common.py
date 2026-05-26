@@ -65,7 +65,7 @@ class CompilerArgs(CLIArgs, Generic[Standard]):
     debug_symbols: bool = CLIPresenceFlag(["-g"], default=False)
 
     sanitizers: list[str] = CLIOption(
-        emitter=lambda ss: ([f"-fsanitize={','.join(ss)}"] if ss else []),
+        emitter=lambda ss: [f"-fsanitize={','.join(ss)}"] if ss else [],
         default=(),
     )
 

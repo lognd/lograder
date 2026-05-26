@@ -186,7 +186,7 @@ class CMakeBuildArgs(CLIArgs):
     # Pass through to underlying native build tool
     native_args: list[str] = CLIMultiOption(
         default_factory=list,
-        sequence_emitter=lambda l: (["--", ...] if l else []),
+        sequence_emitter=lambda l: ["--", ...] if l else [],
     )
 
     @field_validator("target", "config", mode="before")
