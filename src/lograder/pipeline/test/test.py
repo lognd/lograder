@@ -23,4 +23,5 @@ class TestSuccess(BaseModel):
     __test__: bool = False
 
 
-class Build(Step[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC): ...
+class Test(Step[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC):
+    __test__: bool = False
