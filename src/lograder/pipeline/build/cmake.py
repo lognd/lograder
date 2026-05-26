@@ -15,7 +15,7 @@ from lograder.pipeline.types.artifacts import Artifact
 
 @final
 class CMakeBuild(
-    Build[CMakeManifest, Sequence[Artifact], BuildOutput, BuildOutput, Unreachable]
+    Build[CMakeManifest, dict[str, Artifact], BuildOutput, BuildOutput, Unreachable]
 ):
     _executable: CMakeExecutable = CMakeExecutable()
 
@@ -28,7 +28,7 @@ class CMakeBuild(
     ) -> Generator[
         Result[BuildOutput, Unreachable],
         None,
-        Result[Sequence[Artifact], BuildOutput],
+        Result[dict[str, Artifact], BuildOutput],
     ]:
         cmake_file = (
             input.root / "CMakeLists.txt"
@@ -39,7 +39,7 @@ class CMakeBuild(
         cmake_info = make_build_output(conf_output, input, cmake_file)
 
         if cmake_info.is_err:
-            return cmake_info.swap_ok(list[Artifact])
+            return cmake_info.swap_ok(dict[str, Artifact])
         yield cmake_info.swap_err(Unreachable)
 
         build_args = CMakeBuildArgs()
@@ -47,7 +47,7 @@ class CMakeBuild(
         cmake_info = make_build_output(build_output, input, cmake_file)
 
         if cmake_info.is_err:
-            return cmake_info.swap_ok(list[Artifact])
+            return cmake_info.swap_ok(dict[str, Artifact])
         yield cmake_info.swap_err(Unreachable)
 
-        return Ok(cmake_artifacts_from_file_api(conf_args.build_dir))
+        return Ok({art.name: art for art in cmake_artifacts_from_file_api(conf_args.build_dir)})
