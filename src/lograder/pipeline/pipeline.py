@@ -16,8 +16,8 @@ _LOGGER = get_logger(__name__)
 class Pipeline:
     """Executes a sequence of Steps, threading each step's Ok output into the next step's input."""
 
-    def __init__(self) -> None:
-        self.steps: list[Step] = []
+    def __init__(self, steps: list[Step] | None = None) -> None:
+        self.steps: list[Step] = list(steps) if steps else []
         self.datum: Any = PIPELINE_START()
         # TODO: implement validation for pipeline.
 
@@ -46,7 +46,7 @@ class Pipeline:
             while True:
                 try:
                     display: Result = next(gen)
-                    if display.ok:
+                    if display.is_ok:
                         # TODO: I know the duplicate branches look real stupid, but I'm likely going to add more logic in here.
                         _LOGGER.packet(display.danger_ok)
                     else:
@@ -59,7 +59,7 @@ class Pipeline:
             if step.scorer is not None:
                 step.scorer.on_complete(output)
                 score.add(step, step.scorer.contribution())
-            if output.ok:
+            if output.is_ok:
                 self.datum = output.danger_ok
             else:
                 # TODO: Same here.
