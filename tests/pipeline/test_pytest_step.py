@@ -243,10 +243,10 @@ def test_warn_no_tests_true_empty_directory(tmp_path):
         options=ExecutableOptions(cwd=tmp_path),
         warn_no_tests=True,
     )
-    # Empty tmp_path — no test files
+    # Empty tmp_path -- no test files
     packets, result = _run_step(step)
     # Either fatal error (no tests) OR pytest exits with no-tests-collected
-    # which may not produce valid XML — either way result is an error
+    # which may not produce valid XML -- either way result is an error
     assert result.is_err
 
 

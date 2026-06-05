@@ -121,7 +121,7 @@ def _expand_vars(value: str, variables: dict[str, str], depth: int = 0) -> str:
         if next_ch == "(":
             close_idx = _find_close(value, i + 2, ")")
             if close_idx < 0:
-                # Unclosed — emit literally
+                # Unclosed -- emit literally
                 result.append(value[i])
                 i += 1
                 continue
@@ -140,7 +140,7 @@ def _expand_vars(value: str, variables: dict[str, str], depth: int = 0) -> str:
             result.append(_eval_ref(inner, variables))
             i = close_idx + 1
         else:
-            # Single-char automatic variable — leave unexpanded
+            # Single-char automatic variable -- leave unexpanded
             result.append(value[i : i + 2])
             i += 2
 
@@ -223,7 +223,7 @@ def _expand_func(func: str, args: str, variables: dict[str, str]) -> str:
         if func in ("shell", "eval", "call", "value", "origin", "flavor"):
             return ""
 
-        # Unknown — try simple variable lookup
+        # Unknown -- try simple variable lookup
         return variables.get(func, "")
 
     except (ValueError, IndexError):
@@ -380,7 +380,7 @@ def parse_makefile(path: Path) -> ParsedMakefile:
     define_lines: list[str] = []
 
     for raw_line in logical_lines:
-        # Recipe lines (tab-indented) — skip entirely
+        # Recipe lines (tab-indented) -- skip entirely
         if raw_line.startswith("\t"):
             continue
 
@@ -405,7 +405,7 @@ def parse_makefile(path: Path) -> ParsedMakefile:
             in_define = True
             continue
 
-        # ifeq / ifdef / else / endif — skip (treat as transparent)
+        # ifeq / ifdef / else / endif -- skip (treat as transparent)
         if re.match(
             r"^(ifeq|ifneq|ifdef|ifndef|else|endif|include|-include)\b", stripped
         ):
@@ -460,7 +460,7 @@ def parse_makefile(path: Path) -> ParsedMakefile:
             phony.update(prereqs)
             continue
 
-        # Other special targets — register what they declare but don't add as rules
+        # Other special targets -- register what they declare but don't add as rules
         if targets[0] in _SPECIAL_TARGETS:
             continue
 
@@ -482,10 +482,10 @@ def artifacts_from_makefile(
     source_files: list[Path],
 ) -> dict[str, Path]:
     """
-    Parse *makefile_path* and return a mapping of ``target_name → expected_path``
+    Parse *makefile_path* and return a mapping of ``target_name -> expected_path``
     for all non-phony, non-special targets.
 
-    Pattern rules (e.g. ``%.o: %.c``) are expanded against *source_files* —
+    Pattern rules (e.g. ``%.o: %.c``) are expanded against *source_files* --
     each source file whose name matches the prerequisite pattern produces one
     output artifact at the same directory level as the Makefile.
 
@@ -520,7 +520,7 @@ def artifacts_from_makefile(
                             if expanded not in result:
                                 result[expanded] = candidate
             else:
-                # Explicit target — may contain path separators
+                # Explicit target -- may contain path separators
                 candidate = (base_dir / target).resolve()
                 key = Path(target).name if "/" in target or "\\" in target else target
                 if key not in result:

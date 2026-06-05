@@ -92,7 +92,7 @@ class GraderMetadata:
     course
         Course identifier, e.g. ``"CSCI 101"``.
     assignment
-        Assignment name, e.g. ``"Lab 3 — Sorting"``.
+        Assignment name, e.g. ``"Lab 3 -- Sorting"``.
     version
         Autograder version string. Useful when you ship multiple iterations.
     authors
@@ -211,7 +211,7 @@ class GraderMetadata:
         inclusion in the Gradescope ``output`` field.
         """
         lines: list[str] = []
-        sep = "─" * 50
+        sep = "-" * 50
 
         lines.append(sep)
 
@@ -233,7 +233,7 @@ class GraderMetadata:
             late = self.is_late
             suffix = ""
             if late is True and self.due_date:
-                suffix = f"  ⚠  LATE  (due {_fmt_dt(self.due_date)})"
+                suffix = f"  !  LATE  (due {_fmt_dt(self.due_date)})"
             elif late is False and self.due_date:
                 suffix = f"  (due {_fmt_dt(self.due_date)})"
             lines.append(f"  Submitted:   {ts}{suffix}")
@@ -267,7 +267,7 @@ class GraderMetadata:
         # lograder attribution
         if self.show_lograder_attribution:
             ver = _lograder_version()
-            lines.append(f"  Built with:  lograder {ver} — {LOGRADER_AUTHOR}")
+            lines.append(f"  Built with:  lograder {ver} -- {LOGRADER_AUTHOR}")
 
         lines.append(sep)
         return "\n".join(lines)

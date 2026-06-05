@@ -14,7 +14,7 @@ from lograder.process.executable import (
 
 
 class OracleInput(BaseModel):
-    """Partial test case spec — expected output is derived by running the oracle binary."""
+    """Partial test case spec -- expected output is derived by running the oracle binary."""
 
     name: str
     args: list[str] = Field(default_factory=list)
@@ -79,7 +79,7 @@ def cases_from_matrix(
 
     Composes directly with ``oracle_cases`` and ``DifferentialTest``::
 
-        # 3 × 4 = 12 cases, expected outputs filled in by oracle
+        # 3 * 4 = 12 cases, expected outputs filled in by oracle
         cases = oracle_cases(
             reference_binary,
             cases_from_matrix(["add", "sub", "mul"], ["1", "2", "10", "100"]),
@@ -94,7 +94,7 @@ def cases_from_matrix(
         return []
     total = math.prod(len(p) for p in pools)
     if total > max_cases:
-        sizes = " × ".join(str(len(p)) for p in pools)
+        sizes = " * ".join(str(len(p)) for p in pools)
         raise ValueError(
             f"cases_from_matrix would generate {total} cases ({sizes}) but "
             f"max_cases={max_cases}. Pass max_cases=N to allow it if intentional."

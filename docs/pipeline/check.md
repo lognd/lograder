@@ -55,7 +55,7 @@ make_simple_manifest_checker(
 
 ## Source checks
 
-`SourceCheck` validates that the student's source code follows certain constraints — forbidding specific language features, requiring include directives, and so on.
+`SourceCheck` validates that the student's source code follows certain constraints -- forbidding specific language features, requiring include directives, and so on.
 
 ```python
 from lograder.pipeline.check.source.source_check import SourceCheck
@@ -177,7 +177,7 @@ source_check.scorer = CleanRunScorer(
     label="No forbidden operations",
 )
 
-# Extra credit variant — doesn't hurt the base score if it fails
+# Extra credit variant -- doesn't hurt the base score if it fails
 source_check.scorer = CleanRunScorer(
     0.0,
     extra_credit=5.0,

@@ -6,7 +6,7 @@ This example shows how to write a step from scratch, wire it into a pipeline, an
 
 We want a step that checks whether the student's binary exits with code 0 on every test case and records each result. It goes between the build step and any existing test steps.
 
-## Step 1 — Define your data models
+## Step 1 -- Define your data models
 
 Steps yield and return `Result`-wrapped Pydantic models. Define one model for success and one for failure:
 
@@ -29,7 +29,7 @@ class ExitCodeError(BaseModel):
     message: str
 ```
 
-## Step 2 — Register a layout
+## Step 2 -- Register a layout
 
 Every model you log via `logger.packet()` needs a `Layout`. Register it in its own module so importing it registers the layout automatically:
 
@@ -85,7 +85,7 @@ class ExitCodeErrorLayout(Layout[ExitCodeError]):
         return f"ERROR {data.message}"
 ```
 
-## Step 3 — Write the step
+## Step 3 -- Write the step
 
 ```python
 # mygrader/steps/exit_code.py
@@ -125,10 +125,10 @@ class ExitCodeError(TestError):
 class ExitCodeTest(
     Test[
         dict[str, Artifact],  # InputT
-        dict[str, Artifact],  # OkOutputT  — pass-through
-        ExitCodeError,        # ErrOutputT — fatal error
-        ExitCodeSuccess,      # OkDisplayT — yielded on pass
-        ExitCodeFailure,      # ErrDisplayT — yielded on fail
+        dict[str, Artifact],  # OkOutputT  -- pass-through
+        ExitCodeError,        # ErrOutputT -- fatal error
+        ExitCodeSuccess,      # OkDisplayT -- yielded on pass
+        ExitCodeFailure,      # ErrDisplayT -- yielded on fail
     ]
 ):
     def __init__(
@@ -182,7 +182,7 @@ class ExitCodeTest(
         return Ok(artifacts)
 ```
 
-## Step 4 — Use it in a pipeline
+## Step 4 -- Use it in a pipeline
 
 ```python
 # autograder.py
@@ -205,15 +205,15 @@ exit_check.scorer = TestCaseScorer(
 
 ## Key points
 
-- **Extend `Test`**, not `Step` directly — `Test` already wires in the 5 generic params correctly and handles the `dict[str, Artifact]` pass-through contract.
+- **Extend `Test`**, not `Step` directly -- `Test` already wires in the 5 generic params correctly and handles the `dict[str, Artifact]` pass-through contract.
 - **Yield non-fatal results**, return the final result. Yielded values are logged; the returned `Ok`/`Err` controls pipeline flow.
-- **Register layouts** in a separate module. Import that module at the top of your autograder — layout registration is an import-time side effect.
+- **Register layouts** in a separate module. Import that module at the top of your autograder -- layout registration is an import-time side effect.
 - **`TestSuccess` and `TestFailure`** provide `test_name` and `artifact_name` fields that `TestCaseScorer` hooks into via `isinstance`. Your success/failure models should extend them.
 - **`TestError`** is for fatal errors (artifact missing, process crashed unexpectedly). Returning `Err(TestError(...))` stops the pipeline.
 
 ## Type checking
 
-Add `# type: ignore` to the class definition or run mypy with the project's config — the 5 generic parameter constraint is enforced at runtime by `Pipeline.validate_step_types()` and at static analysis time by mypy if you annotate correctly.
+Add `# type: ignore` to the class definition or run mypy with the project's config -- the 5 generic parameter constraint is enforced at runtime by `Pipeline.validate_step_types()` and at static analysis time by mypy if you annotate correctly.
 
 ```bash
 mypy mygrader/ src/

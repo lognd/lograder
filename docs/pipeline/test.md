@@ -8,7 +8,7 @@ Test steps take `dict[str, Artifact]` in and return it unmodified on success, so
 
 Runs the artifact with a set of arguments and compares stdout (and optionally exit code) against expected values.
 
-All `cases` arguments across every test step accept any `Iterable` — lists, generators, and comprehensions all work. The iterable is consumed once per pipeline run.
+All `cases` arguments across every test step accept any `Iterable` -- lists, generators, and comprehensions all work. The iterable is consumed once per pipeline run.
 
 ```python
 from lograder.pipeline.test.output_compare import (
@@ -149,7 +149,7 @@ pipeline.add(perf := PerformanceTest("my_binary", cases))
 perf.scorer = TestCaseScorer({"small": 5.0, "medium": 5.0, "large": 10.0}, label="Performance")
 ```
 
-Safety kill fires at `time_limit + 30s` — the process is killed and the test fails. Wall time is measured with `perf_counter`.
+Safety kill fires at `time_limit + 30s` -- the process is killed and the test fails. Wall time is measured with `perf_counter`.
 
 ### `PerformanceCase` fields
 
@@ -270,7 +270,7 @@ PytestTest runs `pytest --junit-xml=results.xml` and parses the output. Test IDs
 
 ### `OracleInput` / `oracle_cases`
 
-When you have a staff solution, use `oracle_cases` to run it and capture its stdout as expected output — no hand-coded expected strings needed.
+When you have a staff solution, use `oracle_cases` to run it and capture its stdout as expected output -- no hand-coded expected strings needed.
 
 ```python
 from lograder.pipeline.test.oracle import OracleInput, oracle_cases
@@ -281,7 +281,7 @@ cases = oracle_cases(
         OracleInput(name="empty",    args=[]),
         OracleInput(name="small",    args=["5"]),
         OracleInput(name="negative", args=["-3"], comparison=ComparisonMode.EXACT),
-        # generators work too — runs oracle fresh for every submission build
+        # generators work too -- runs oracle fresh for every submission build
         *(OracleInput(name=f"rand_{i}", args=[str(random.randint(1, 1000))]) for i in range(50)),
     ],
 )
@@ -297,7 +297,7 @@ Generate test cases from the cartesian product of argument pools. Raises `ValueE
 ```python
 from lograder.pipeline.test.oracle import cases_from_matrix
 
-# 3 × 4 = 12 cases, names like "add_1", "sub_10", "mul_100"
+# 3 * 4 = 12 cases, names like "add_1", "sub_10", "mul_100"
 inputs = cases_from_matrix(["add", "sub", "mul"], ["1", "10", "100", "999"])
 
 # custom name function
@@ -326,7 +326,7 @@ pipeline.add(DifferentialTest("myprogram", Path("staff/bin/solution"), cases_fro
 
 ## `DifferentialTest`
 
-Runs both the student binary and a reference binary for each case and compares their stdout. Unlike `OutputCompareTest`, no expected output is pre-computed — the reference binary runs live per submission.
+Runs both the student binary and a reference binary for each case and compares their stdout. Unlike `OutputCompareTest`, no expected output is pre-computed -- the reference binary runs live per submission.
 
 ```python
 from lograder.pipeline.test.differential import DifferentialTest

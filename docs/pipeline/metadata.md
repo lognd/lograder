@@ -2,7 +2,7 @@
 
 `GraderMetadata` lets you record who built the autograder, when the submission arrived, whether it was late, and any other context you want shown to students in the Gradescope output block.
 
-Pass it to `pipeline(metadata=...)` — the pipeline auto-stamps `submission_time` and carries the object into the returned `PipelineScore`. `write_results_json()` automatically prepends the metadata block to the `output` field.
+Pass it to `pipeline(metadata=...)` -- the pipeline auto-stamps `submission_time` and carries the object into the returned `PipelineScore`. `write_results_json()` automatically prepends the metadata block to the `output` field.
 
 ## Quick example
 
@@ -10,7 +10,7 @@ Pass it to `pipeline(metadata=...)` — the pipeline auto-stamps `submission_tim
 from lograder.pipeline.metadata import GraderMetadata, StaffAuthor
 
 metadata = GraderMetadata(
-    grader_name="CS101 Lab 3 — Sorting",
+    grader_name="CS101 Lab 3 -- Sorting",
     course="CSCI 101",
     version="2024.1",
     authors=[
@@ -30,17 +30,17 @@ score.write_results_json(config=GradescopeConfig(visibility="visible"))
 Output block shown to students:
 
 ```
-──────────────────────────────────────────────────
-  CS101 Lab 3 — Sorting  (v2024.1)
-──────────────────────────────────────────────────
+--------------------------------------------------
+  CS101 Lab 3 -- Sorting  (v2024.1)
+--------------------------------------------------
   Course:      CSCI 101
-  Submitted:   2024-03-16 01:00 UTC  ⚠  LATE  (due 2024-03-15 23:59 UTC)
+  Submitted:   2024-03-16 01:00 UTC  !  LATE  (due 2024-03-15 23:59 UTC)
   Student(s):  Alice (12345678) <alice@uni.edu>
   Author(s):   Prof. Smith <smith@uni.edu> (Instructor)
                Jane Doe (Teaching Assistant)
   Notes:       Contact course staff if you believe there is a grading error.
-  Built with:  lograder 0.2.0 — Logan Dapp
-──────────────────────────────────────────────────
+  Built with:  lograder 0.2.0 -- Logan Dapp
+--------------------------------------------------
 ```
 
 ## Reading submission metadata from Gradescope
@@ -72,7 +72,7 @@ If the file is missing or malformed, the call succeeds silently with those field
 |-------|------|-------------|
 | `grader_name` | `str \| None` | Name for this autograder, e.g. `"CS101 Lab 3"` |
 | `course` | `str \| None` | Course identifier, e.g. `"CSCI 101"` |
-| `assignment` | `str \| None` | Assignment name, e.g. `"Lab 3 — Sorting"` |
+| `assignment` | `str \| None` | Assignment name, e.g. `"Lab 3 -- Sorting"` |
 | `version` | `str \| None` | Autograder version for tracking iterations |
 | `authors` | `list[StaffAuthor]` | People who wrote this autograder |
 | `due_date` | `datetime \| None` | Deadline (display only; used to flag late submissions) |
@@ -102,11 +102,11 @@ Populated automatically by `from_gradescope()`.
 ## Late detection
 
 `GraderMetadata.is_late` returns:
-- `True` — submission arrived after `due_date`
-- `False` — submission arrived on or before `due_date`
-- `None` — either `submission_time` or `due_date` is `None`
+- `True` -- submission arrived after `due_date`
+- `False` -- submission arrived on or before `due_date`
+- `None` -- either `submission_time` or `due_date` is `None`
 
-The display block shows `⚠ LATE (due ...)` automatically when `is_late is True`.
+The display block shows `!  LATE (due ...)` automatically when `is_late is True`.
 
 ## Combining with `GradescopeConfig.output`
 
@@ -123,7 +123,7 @@ score.write_results_json(
 
 Output:
 ```
-──────── ... metadata block ... ────────
+-------- ... metadata block ... --------
 
 Please attend office hours if you have questions.
 ```
@@ -161,7 +161,7 @@ from lograder.pipeline.config import config
 from lograder.pipeline.score import GradescopeConfig
 
 metadata = GraderMetadata.from_gradescope(
-    grader_name="CS101 Lab 3 — Sorting",
+    grader_name="CS101 Lab 3 -- Sorting",
     course="CSCI 101",
     version="2024.2",
     authors=[

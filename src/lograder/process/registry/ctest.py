@@ -15,7 +15,7 @@ from lograder.process.registry.bash import BashExecutable, BashScriptArgs
 
 
 class CTestArgs(CLIArgs):
-    # ── Test selection ─────────────────────────────────────────────────────────
+    # -- Test selection ---------------------------------------------------------
     test_regex: str | CLI_ARG_MISSING = CLIOption(
         default=CLI_ARG_MISSING(),
         emit=["-R", "{}"],
@@ -40,7 +40,7 @@ class CTestArgs(CLIArgs):
     rerun_failed: bool = CLIPresenceFlag(["--rerun-failed"], default=False)
     run_disabled: bool = CLIPresenceFlag(["--run-disabled"], default=False)
 
-    # ── Execution ──────────────────────────────────────────────────────────────
+    # -- Execution --------------------------------------------------------------
     parallel: int | CLI_ARG_MISSING = CLIOption(
         default=CLI_ARG_MISSING(),
         emit=["-j", "{}"],
@@ -56,7 +56,7 @@ class CTestArgs(CLIArgs):
         emit=["--repeat", "{}"],
     )
 
-    # ── Build/configuration ────────────────────────────────────────────────────
+    # -- Build/configuration ----------------------------------------------------
     build_config: str | CLI_ARG_MISSING = CLIOption(
         default=CLI_ARG_MISSING(),
         emit=["-C", "{}"],
@@ -72,7 +72,7 @@ class CTestArgs(CLIArgs):
         emit=["--overwrite", "{}"],
     )
 
-    # ── Output ─────────────────────────────────────────────────────────────────
+    # -- Output -----------------------------------------------------------------
     output_junit: Path | CLI_ARG_MISSING = CLIOption(
         default=CLI_ARG_MISSING(),
         emit=["--output-junit", "{}"],
@@ -83,7 +83,7 @@ class CTestArgs(CLIArgs):
     extra_verbose: bool = CLIPresenceFlag(["-VV"], default=False)
     quiet: bool = CLIPresenceFlag(["-Q"], default=False)
 
-    # ── Informational ──────────────────────────────────────────────────────────
+    # -- Informational ----------------------------------------------------------
     show_only: bool = CLIPresenceFlag(["-N"], default=False)
     print_labels: bool = CLIPresenceFlag(["--print-labels"], default=False)
 

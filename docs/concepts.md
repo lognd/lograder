@@ -7,8 +7,8 @@ This page explains the mental model behind lograder. Once these five ideas click
 A `Pipeline` is an ordered list of `Step` instances. Calling `pipeline()` runs each step in sequence, threading results from one step into the next.
 
 ```
-LocalDirectory → CMakeManifestCheck →     CMakeBuild     → OutputCompareTest  → ValgrindTest
-    Manifest   →    CMakeManifest   → dict[str,Artifact] → dict[str,Artifact] → dict[str,Artifact]
+LocalDirectory -> CMakeManifestCheck ->     CMakeBuild     -> OutputCompareTest  -> ValgrindTest
+    Manifest   ->    CMakeManifest   -> dict[str,Artifact] -> dict[str,Artifact] -> dict[str,Artifact]
 ```
 
 The type annotation above each arrow shows what flows between steps. The pipeline validates these types before running (via `pipeline.validate_step_types()`).
@@ -24,18 +24,18 @@ class MyStep(SomeBase[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT]):
     def __call__(self, input: InputT) -> Generator[
         Result[OkDisplayT, ErrDisplayT], None, Result[OkOutputT, ErrOutputT]
     ]:
-        yield Ok(OkDisplayT(...))    # non-fatal — logged, pipeline continues
-        yield Err(ErrDisplayT(...))  # non-fatal — logged, pipeline continues
+        yield Ok(OkDisplayT(...))    # non-fatal -- logged, pipeline continues
+        yield Err(ErrDisplayT(...))  # non-fatal -- logged, pipeline continues
         return Ok(OkOutputT(...))    # passed as input to the next step
-        # return Err(ErrOutputT(...)) → logged, pipeline STOPS
+        # return Err(ErrOutputT(...)) -> logged, pipeline STOPS
 ```
 
 The 5 generic parameters are:
-- `InputT` — what the step receives
-- `OkOutputT` — what it returns on success (next step's input)
-- `ErrOutputT` — what it returns on fatal failure (pipeline stops)
-- `OkDisplayT` — what it yields as non-fatal success packets (logged)
-- `ErrDisplayT` — what it yields as non-fatal error packets (logged)
+- `InputT` -- what the step receives
+- `OkOutputT` -- what it returns on success (next step's input)
+- `ErrOutputT` -- what it returns on fatal failure (pipeline stops)
+- `OkDisplayT` -- what it yields as non-fatal success packets (logged)
+- `ErrDisplayT` -- what it yields as non-fatal error packets (logged)
 
 **Yielded values** are logged immediately and don't affect control flow. They let the step report partial results (e.g. "test A passed, test B failed") while continuing.
 
@@ -43,7 +43,7 @@ The 5 generic parameters are:
 
 ## Result
 
-`Result[T, E]` is lograder's error type. It's either `Ok(value)` or `Err(error)` — never both.
+`Result[T, E]` is lograder's error type. It's either `Ok(value)` or `Err(error)` -- never both.
 
 ```python
 from lograder.common import Ok, Err, Result
@@ -63,7 +63,7 @@ r.and_then(lambda x: Ok(x + 1)) # Ok(43)
 r.swap_ok(float)   # Ok(42) but typed as Result[float, str]
 ```
 
-There are no exceptions inside lograder's pipeline logic — everything is `Ok` or `Err`.
+There are no exceptions inside lograder's pipeline logic -- everything is `Ok` or `Err`.
 
 ## Manifest
 
@@ -76,7 +76,7 @@ m = Manifest.from_directory(Path("/submission"))
 m.root          # Path("/submission")
 m["main.cpp"]   # Path to the file (relative to root)
 
-# Subset check — does the manifest contain at least these files?
+# Subset check -- does the manifest contain at least these files?
 required = Manifest.from_flat(["CMakeLists.txt", "main.cpp"])
 assert required <= m
 ```
@@ -85,7 +85,7 @@ Check steps transform a `Manifest` into a more specific manifest type (e.g. `CMa
 
 ## Artifact
 
-An `Artifact` represents a built output. After a successful build, steps receive `dict[str, Artifact]` — a mapping from artifact name to artifact.
+An `Artifact` represents a built output. After a successful build, steps receive `dict[str, Artifact]` -- a mapping from artifact name to artifact.
 
 ```python
 from lograder.pipeline.types.artifacts import CMakeArtifact, FileArtifact
@@ -94,7 +94,7 @@ from lograder.pipeline.types.artifacts import CMakeArtifact, FileArtifact
 artifact: CMakeArtifact
 
 # Turn it into a runnable executable
-exe = artifact.executable  # → StaticExecutable
+exe = artifact.executable  # -> StaticExecutable
 
 # Run it
 output = exe(
@@ -111,23 +111,23 @@ Test steps take `dict[str, Artifact]` in and return it unmodified on success, so
 
 ```
 PIPELINE_START
-  → LocalDirectory(root_directory=config.root_directory)
+  -> LocalDirectory(root_directory=config.root_directory)
       returns Ok(Manifest) or Err(LocalDirectoryError)
 
-  → CMakeManifestCheck(required=["CMakeLists.txt", "main.cpp"])
+  -> CMakeManifestCheck(required=["CMakeLists.txt", "main.cpp"])
       receives Manifest
-      returns Ok(CMakeManifest) or Err(CMakeManifestCheckError)  ← STOP if Err
+      returns Ok(CMakeManifest) or Err(CMakeManifestCheckError)  <- STOP if Err
 
-  → CMakeBuild()
+  -> CMakeBuild()
       receives CMakeManifest
-      returns Ok(dict[str,Artifact]) or Err(BuildOutput)  ← STOP if Err
+      returns Ok(dict[str,Artifact]) or Err(BuildOutput)  <- STOP if Err
 
-  → OutputCompareTest("binary", cases)
+  -> OutputCompareTest("binary", cases)
       receives dict[str,Artifact]
       yields Ok(OutputCompareSuccess) or Err(OutputCompareFailure) per case
-      returns Ok(dict[str,Artifact]) pass-through or Err(OutputCompareError) ← STOP
+      returns Ok(dict[str,Artifact]) pass-through or Err(OutputCompareError) <- STOP
 
-  → ValgrindTest("binary", cases)
+  -> ValgrindTest("binary", cases)
       receives dict[str,Artifact]
       (same pattern)
 ```

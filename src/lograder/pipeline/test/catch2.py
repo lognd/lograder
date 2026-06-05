@@ -33,7 +33,7 @@ class Catch2Args(CLIArgs):
     only when constructing args for manual invocation outside the step.
     """
 
-    # ── Reporting ──────────────────────────────────────────────────────────────
+    # -- Reporting --------------------------------------------------------------
     reporter: str | CLI_ARG_MISSING = CLIOption(
         default=CLI_ARG_MISSING(), emit=["--reporter", "{}"]
     )
@@ -41,14 +41,14 @@ class Catch2Args(CLIArgs):
         default=CLI_ARG_MISSING(), emit=["--out", "{}"]
     )
 
-    # ── Test selection ─────────────────────────────────────────────────────────
+    # -- Test selection ---------------------------------------------------------
     # Free-form test spec: test name glob, tag expression, or combination.
     # e.g. "[math]", "my test name", "[unit] ~[slow]"
     test_spec: str | CLI_ARG_MISSING = CLIOption(
         default=CLI_ARG_MISSING(), emit=["{}"], position=-1
     )
 
-    # ── Execution ──────────────────────────────────────────────────────────────
+    # -- Execution --------------------------------------------------------------
     abort: bool = CLIPresenceFlag(["--abort"], default=False)
     abortx: int | CLI_ARG_MISSING = CLIOption(
         default=CLI_ARG_MISSING(), emit=["--abortx", "{}"]
@@ -64,7 +64,7 @@ class Catch2Args(CLIArgs):
         default=CLI_ARG_MISSING(), emit=["--warn", "{}"]
     )
 
-    # ── Output ─────────────────────────────────────────────────────────────────
+    # -- Output -----------------------------------------------------------------
     durations: bool = CLIPresenceFlag(["--durations", "yes"], default=False)
     min_duration: float | CLI_ARG_MISSING = CLIOption(
         default=CLI_ARG_MISSING(), emit=["--min-duration", "{}"]
@@ -73,7 +73,7 @@ class Catch2Args(CLIArgs):
         default=CLI_ARG_MISSING(), emit=["--verbosity", "{}"]
     )
 
-    # ── Sharding (v3.3+) ───────────────────────────────────────────────────────
+    # -- Sharding (v3.3+) -------------------------------------------------------
     shard_count: int | CLI_ARG_MISSING = CLIOption(
         default=CLI_ARG_MISSING(), emit=["--shard-count", "{}"]
     )
@@ -81,7 +81,7 @@ class Catch2Args(CLIArgs):
         default=CLI_ARG_MISSING(), emit=["--shard-index", "{}"]
     )
 
-    # ── Informational ──────────────────────────────────────────────────────────
+    # -- Informational ----------------------------------------------------------
     list_tests: bool = CLIPresenceFlag(["--list-tests"], default=False)
     list_tags: bool = CLIPresenceFlag(["--list-tags"], default=False)
     list_reporters: bool = CLIPresenceFlag(["--list-reporters"], default=False)

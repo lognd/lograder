@@ -83,7 +83,7 @@ def test_nm_executable_is_instantiable():
 def test_nm_check_runnable_returns_result():
     exe = NmExecutable()
     result = exe.check_runnable()
-    # Either ok (nm installed) or err (not installed) — both valid outcomes
+    # Either ok (nm installed) or err (not installed) -- both valid outcomes
     assert result.is_ok or result.is_err
 
 

@@ -1,6 +1,6 @@
 # Build
 
-Build steps take a validated manifest (from a check step) and produce a `dict[str, Artifact]` — a map from artifact name to built output.
+Build steps take a validated manifest (from a check step) and produce a `dict[str, Artifact]` -- a map from artifact name to built output.
 
 ## `CMakeBuild`
 
@@ -13,8 +13,8 @@ pipeline.add(build := CMakeBuild())
 ```
 
 `CMakeBuild` uses the CMake file API to discover build targets. It returns:
-- `Ok(dict[str, Artifact])` — one `CMakeArtifact` per discovered target
-- `Err(BuildOutput)` — if configure or build fails (pipeline stops)
+- `Ok(dict[str, Artifact])` -- one `CMakeArtifact` per discovered target
+- `Err(BuildOutput)` -- if configure or build fails (pipeline stops)
 
 ### Options
 
@@ -57,7 +57,7 @@ from lograder.pipeline.build.makefile import MakefileBuild
 pipeline.add(build := MakefileBuild())
 ```
 
-> **Note:** `MakefileBuild` currently returns `Ok({})` — artifact discovery from Makefile projects is not yet implemented. Use it with `PrebuiltArtifacts` to manually specify what was built.
+> **Note:** `MakefileBuild` currently returns `Ok({})` -- artifact discovery from Makefile projects is not yet implemented. Use it with `PrebuiltArtifacts` to manually specify what was built.
 
 ```python
 from lograder.pipeline.build.makefile import MakefileBuild
@@ -95,7 +95,7 @@ from lograder.pipeline.build.bash_script import BashScriptBuild
 pipeline.add(build := BashScriptBuild(script=Path("build.sh")))
 ```
 
-`build.sh` receives the submission directory as its working directory. On success it returns `Ok(dict[str, Artifact])` (empty — use `PrebuiltArtifacts` to populate the artifact dict).
+`build.sh` receives the submission directory as its working directory. On success it returns `Ok(dict[str, Artifact])` (empty -- use `PrebuiltArtifacts` to populate the artifact dict).
 
 ```python
 from lograder.pipeline.build.bash_script import BashScriptBuild
@@ -136,7 +136,7 @@ pipeline.add(PrebuiltArtifacts({
 | `CMakeArtifact(name, target_type, build_dir)` | A CMake build target | `CMakeBuild` |
 | `CMakeFileArtifact` | CMake target with a resolved file path | `CMakeBuild` (most targets) |
 
-All artifact types expose `.executable → StaticExecutable` for running.
+All artifact types expose `.executable -> StaticExecutable` for running.
 
 ## Full CMake pipeline example
 

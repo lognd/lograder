@@ -6,10 +6,10 @@ Every `logger.packet(model)` call serializes the model, dispatches it to a `Layo
 
 ```
 logger.packet(MyModel(...))
-   → wrap_packet → {"header": "my-packet-id", "payload": {...}}
-   → stdout handler:  Layout.to_simple(data)
-   → HTML handler:    Layout.to_html(data)  → collected in memory
-   → atexit:          write out.html
+   -> wrap_packet -> {"header": "my-packet-id", "payload": {...}}
+   -> stdout handler:  Layout.to_simple(data)
+   -> HTML handler:    Layout.to_html(data)  -> collected in memory
+   -> atexit:          write out.html
 ```
 
 ## Built-in layout imports
@@ -52,7 +52,7 @@ class MyResultLayout(Layout[MyResult]):
         from colorama import Fore as F, Style as S
         return f"{S.BRIGHT}{F.GREEN}Result:{F.RESET}{S.RESET_ALL} {data.value}"
 
-    # to_html: auto-converts to_ansi() via ansi2html — override only for custom HTML
+    # to_html: auto-converts to_ansi() via ansi2html -- override only for custom HTML
     # to_ascii: auto-strips ANSI from to_ansi()
 ```
 
@@ -102,5 +102,5 @@ setup_logger(Path("my_config.toml"))
 ```
 
 Key things to customize:
-- `[handlers.student]` → `output_file` — path for the HTML report (default `out.html`)
-- Handler log level — control which packets appear in which output
+- `[handlers.student]` -> `output_file` -- path for the HTML report (default `out.html`)
+- Handler log level -- control which packets appear in which output

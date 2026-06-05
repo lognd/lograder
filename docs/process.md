@@ -4,7 +4,7 @@ The process layer wraps all subprocess calls with validated arguments, platform 
 
 ## Running a command
 
-### `StaticExecutable` — for arbitrary commands
+### `StaticExecutable` -- for arbitrary commands
 
 ```python
 from lograder.process.executable import StaticExecutable, ExecutableInput, ExecutableOptions
@@ -19,7 +19,7 @@ output = exe(
 
 `arguments` in `ExecutableInput` are appended to the base command.
 
-### `TypedExecutable` — for validated commands
+### `TypedExecutable` -- for validated commands
 
 ```python
 from lograder.process.registry.cmake import CMakeExecutable, CMakeConfigureArgs
@@ -33,7 +33,7 @@ else:
     print(result.danger_ok.stdout_text)
 ```
 
-`TypedExecutable` rejects non-empty `input.arguments` — all args come from the `CLIArgs` subclass.
+`TypedExecutable` rejects non-empty `input.arguments` -- all args come from the `CLIArgs` subclass.
 
 ## Defining a new `TypedExecutable`
 
@@ -107,7 +107,7 @@ Check platform fields with `isinstance(val, NOT_APPLICABLE)`.
 ## `ExecutableOutput`
 
 ```python
-output.command       # list[str] — full command that was run
+output.command       # list[str] -- full command that was run
 output.stdout_bytes  # bytes
 output.stderr_bytes  # bytes
 output.return_code   # int (negative = killed by signal on POSIX)

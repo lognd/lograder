@@ -16,7 +16,7 @@ pipeline.add(inp := LocalDirectory())
 
 1. Reads `config().root_directory` to find the submission.
 2. Recursively scans the directory tree.
-3. Returns `Ok(Manifest)` — an immutable snapshot of all files in the submission.
+3. Returns `Ok(Manifest)` -- an immutable snapshot of all files in the submission.
 
 On error (directory missing, unreadable) it returns a fatal `Err`.
 
@@ -104,7 +104,7 @@ with config(root_directory=Path("/autograder/submission")):
 from lograder.pipeline.types.parcels import Manifest
 
 m = Manifest.from_directory(Path("/submission"))
-m.root            # Path — the directory the manifest was built from
+m.root            # Path -- the directory the manifest was built from
 m["main.cpp"]     # Path to the file, relative to root
 "main.cpp" in m   # True/False
 

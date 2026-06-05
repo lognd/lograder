@@ -2,7 +2,7 @@
 
 ## Where to start
 
-- **New to lograder?** Read [Getting started](getting-started.md) — a complete autograder in under 60 lines.
+- **New to lograder?** Read [Getting started](getting-started.md) -- a complete autograder in under 60 lines.
 - **Understand the model?** Jump straight to the doc for the layer you need.
 
 ## Reference

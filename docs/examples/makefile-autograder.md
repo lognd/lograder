@@ -5,8 +5,8 @@ A complete grader for a C Makefile project.
 ## Assignment spec
 
 Students submit:
-- `Makefile` — builds a `wordcount` binary
-- `wordcount.c` — implementation
+- `Makefile` -- builds a `wordcount` binary
+- `wordcount.c` -- implementation
 
 The binary reads lines from stdin and prints word count per line plus a total.
 
@@ -39,14 +39,14 @@ from lograder.pipeline.score import (
 )
 from lograder.pipeline.pipeline import Pipeline
 
-# ── Manifest ──────────────────────────────────────────────────────────────────
+# -- Manifest ------------------------------------------------------------------
 
 make_simple_manifest_checker(
     "wordcount",
     required_files=["Makefile", "wordcount.c"],
 )
 
-# ── Test cases ────────────────────────────────────────────────────────────────
+# -- Test cases ----------------------------------------------------------------
 
 OUTPUT_CASES = [
     OutputCompareCase(
@@ -85,18 +85,18 @@ VALGRIND_CASES = [
     ValgrindCase(name="no_leaks", args=[], stdin=b"hello world\n", check_leaks=True),
 ]
 
-# ── Pipeline ──────────────────────────────────────────────────────────────────
+# -- Pipeline ------------------------------------------------------------------
 
 pipeline = Pipeline()
 pipeline.add(LocalDirectory())
 pipeline.add(MakefileManifestCheck())
 pipeline.add(build := MakefileBuild())
-# MakefileBuild returns Ok({}) — inject the binary manually
+# MakefileBuild returns Ok({}) -- inject the binary manually
 pipeline.add(PrebuiltArtifacts({"wordcount": FileArtifact(path=Path("wordcount"))}))
 pipeline.add(tests := OutputCompareTest("wordcount", OUTPUT_CASES))
 pipeline.add(vg    := ValgrindTest("wordcount", VALGRIND_CASES))
 
-# ── Scorers ───────────────────────────────────────────────────────────────────
+# -- Scorers -------------------------------------------------------------------
 
 build.scorer = AllOrNothingScorer(15.0, label="Build")
 tests.scorer = TestCaseScorer(
@@ -112,7 +112,7 @@ tests.scorer = TestCaseScorer(
 )
 vg.scorer = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory leaks")
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+# -- Entry point ---------------------------------------------------------------
 
 if __name__ == "__main__":
     with config(root_directory=Path("/autograder/submission"), executable_timeout=30.0):

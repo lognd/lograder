@@ -92,7 +92,7 @@ TestCaseScorer(
 
 #### Extra credit cases
 
-Cases in `extra_credit_cases` don't count toward `possible` — they're pure bonus:
+Cases in `extra_credit_cases` don't count toward `possible` -- they're pure bonus:
 
 ```python
 TestCaseScorer(
@@ -125,9 +125,9 @@ Cases skipped due to a fatal `TestError` don't count against the student in the 
 Each scorer produces a `ScoreContribution`:
 
 ```python
-contribution.earned        # float — base points earned
-contribution.possible      # float — maximum possible base points
-contribution.extra_credit  # float — bonus earned
+contribution.earned        # float -- base points earned
+contribution.possible      # float -- maximum possible base points
+contribution.extra_credit  # float -- bonus earned
 contribution.total         # earned + extra_credit
 ```
 
@@ -171,7 +171,7 @@ with config(root_directory=Path("/autograder/submission")):
     score = pipeline(metadata=metadata)   # auto-stamps submission_time
 
 score.write_results_json(config=GradescopeConfig(visibility="visible"))
-# → metadata block is prepended to the output field automatically
+# -> metadata block is prepended to the output field automatically
 ```
 
 ---

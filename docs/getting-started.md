@@ -22,7 +22,7 @@ cd lograder
 pip install -e ".[dev]"
 ```
 
-## Step 1 — Create the autograder script
+## Step 1 -- Create the autograder script
 
 Create `autograder.py`:
 
@@ -39,7 +39,7 @@ from lograder.pipeline.score import AllOrNothingScorer, TestCaseScorer, Gradesco
 from lograder.pipeline.pipeline import Pipeline
 ```
 
-## Step 2 — Declare what files you expect
+## Step 2 -- Declare what files you expect
 
 ```python
 # Generates CMakeManifest, CMakeManifestCheck, etc. in this module's globals
@@ -50,7 +50,7 @@ make_simple_manifest_checker(
 # After this call you can use CMakeManifestCheck directly
 ```
 
-## Step 3 — Define your test cases
+## Step 3 -- Define your test cases
 
 ```python
 OUTPUT_CASES = [
@@ -65,7 +65,7 @@ VALGRIND_CASES = [
 ]
 ```
 
-## Step 4 — Assemble the pipeline
+## Step 4 -- Assemble the pipeline
 
 ```python
 pipeline = Pipeline()
@@ -76,7 +76,7 @@ pipeline.add(tests  := OutputCompareTest("hello_world", OUTPUT_CASES))
 pipeline.add(vg     := ValgrindTest("hello_world", VALGRIND_CASES))
 ```
 
-## Step 5 — Attach scorers
+## Step 5 -- Attach scorers
 
 ```python
 build.scorer = AllOrNothingScorer(10.0, label="Build")
@@ -87,7 +87,7 @@ tests.scorer = TestCaseScorer(
 vg.scorer = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory leaks")
 ```
 
-## Step 6 — Run it
+## Step 6 -- Run it
 
 ```python
 if __name__ == "__main__":

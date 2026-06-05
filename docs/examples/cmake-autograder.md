@@ -47,14 +47,14 @@ from lograder.pipeline.score import (
 from lograder.pipeline.metadata import GraderMetadata, StaffAuthor
 from lograder.pipeline.pipeline import Pipeline
 
-# ── Manifest ──────────────────────────────────────────────────────────────────
+# -- Manifest ------------------------------------------------------------------
 
 make_simple_manifest_checker(
     "sorter",
     required_files=["CMakeLists.txt", "src/sorter.cpp", "src/sorter.h"],
 )
 
-# ── Test cases ────────────────────────────────────────────────────────────────
+# -- Test cases ----------------------------------------------------------------
 
 OUTPUT_CASES = [
     OutputCompareCase(
@@ -106,7 +106,7 @@ PERF_CASES = [
     PerformanceCase(name="perf_100k", args=[], stdin="\n".join(str(i) for i in range(100000, 0, -1)).encode() + b"\n", time_limit=5.0),
 ]
 
-# ── Pipeline ──────────────────────────────────────────────────────────────────
+# -- Pipeline ------------------------------------------------------------------
 
 pipeline = Pipeline()
 pipeline.add(inp    := LocalDirectory())
@@ -126,7 +126,7 @@ pipeline.add(tests  := OutputCompareTest("sorter", OUTPUT_CASES))
 pipeline.add(vg     := ValgrindTest("sorter", VALGRIND_CASES))
 pipeline.add(perf   := PerformanceTest("sorter", PERF_CASES))
 
-# ── Scorers ───────────────────────────────────────────────────────────────────
+# -- Scorers -------------------------------------------------------------------
 
 check.scorer  = AllOrNothingScorer(0.0, label="Files present")
 source.scorer = CleanRunScorer(10.0, label="No forbidden operations")
@@ -149,11 +149,11 @@ perf.scorer   = TestCaseScorer(
     label="Performance",
 )
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+# -- Entry point ---------------------------------------------------------------
 
 if __name__ == "__main__":
     metadata = GraderMetadata.from_gradescope(
-        grader_name="CS101 Lab 3 — Sorter",
+        grader_name="CS101 Lab 3 -- Sorter",
         course="CSCI 101",
         version="2024.1",
         authors=[StaffAuthor(name="Prof. Smith", email="smith@uni.edu", role="Instructor")],
@@ -190,7 +190,7 @@ total = score.total()
 print(f"Score: {total.earned}/{total.possible} + {total.extra_credit} EC")
 
 for step, contrib in score.contributions:
-    status = "✓" if contrib.earned >= contrib.possible else "✗"
+    status = "check" if contrib.earned >= contrib.possible else "x"
     print(f"  {status} {type(step).__name__}: {contrib.earned}/{contrib.possible}")
 ```
 

@@ -1,6 +1,6 @@
 # lograder
 
-A Python library for building programming assignment autograders. The central abstraction is a `Pipeline` of `Step` instances — each step validates input, runs a process, and passes results forward.
+A Python library for building programming assignment autograders. The central abstraction is a `Pipeline` of `Step` instances -- each step validates input, runs a process, and passes results forward.
 
 ```
 Input -> Check -> Mixin -> Build -> Test

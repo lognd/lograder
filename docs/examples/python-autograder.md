@@ -5,8 +5,8 @@ A complete grader for a Python project with pytest integration, source checks, a
 ## Assignment spec
 
 Students submit a Python project with:
-- `graph.py` — a `Graph` class implementing BFS and DFS
-- `tests/test_graph.py` — their own tests (ignored for grading)
+- `graph.py` -- a `Graph` class implementing BFS and DFS
+- `tests/test_graph.py` -- their own tests (ignored for grading)
 
 ## Score breakdown
 
@@ -37,14 +37,14 @@ from lograder.pipeline.score import (
 )
 from lograder.pipeline.pipeline import Pipeline
 
-# ── Manifest ──────────────────────────────────────────────────────────────────
+# -- Manifest ------------------------------------------------------------------
 
 make_simple_manifest_checker(
     "graph",
     required_files=["graph.py"],
 )
 
-# ── Test cases ────────────────────────────────────────────────────────────────
+# -- Test cases ----------------------------------------------------------------
 
 # Instructor test cases live in /autograder/source/instructor_tests/
 INSTRUCTOR_TESTS = Path("/autograder/source/instructor_tests")
@@ -65,7 +65,7 @@ CLI_CASES = [
     ),
 ]
 
-# ── Pipeline ──────────────────────────────────────────────────────────────────
+# -- Pipeline ------------------------------------------------------------------
 
 pipeline = Pipeline()
 pipeline.add(inp    := LocalDirectory())
@@ -81,7 +81,7 @@ pipeline.add(pytest_step := PytestTest(
     test_paths=[INSTRUCTOR_TESTS],
 ))
 
-# ── Scorers ───────────────────────────────────────────────────────────────────
+# -- Scorers -------------------------------------------------------------------
 
 check.scorer  = AllOrNothingScorer(0.0, label="Files present")
 source.scorer = CleanRunScorer(5.0, label="No forbidden imports")
@@ -106,7 +106,7 @@ pytest_step.scorer = TestCaseScorer(
     label="Correctness",
 )
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+# -- Entry point ---------------------------------------------------------------
 
 if __name__ == "__main__":
     with config(root_directory=Path("/autograder/submission"), executable_timeout=30.0):
