@@ -7,8 +7,8 @@ This page explains the mental model behind lograder. Once these five ideas click
 A `Pipeline` is an ordered list of `Step` instances. Calling `pipeline()` runs each step in sequence, threading results from one step into the next.
 
 ```
-LocalDirectory → CMakeManifestCheck → CMakeBuild → OutputCompareTest → ValgrindTest
-    Manifest   →    CMakeManifest   → dict[str,Artifact] → dict[str,Artifact]
+LocalDirectory → CMakeManifestCheck →     CMakeBuild     → OutputCompareTest  → ValgrindTest
+    Manifest   →    CMakeManifest   → dict[str,Artifact] → dict[str,Artifact] → dict[str,Artifact]
 ```
 
 The type annotation above each arrow shows what flows between steps. The pipeline validates these types before running (via `pipeline.validate_step_types()`).
