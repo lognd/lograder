@@ -11,6 +11,13 @@ from lograder.pipeline.check.project import (
     PyProjectManifest,
     PyProjectManifestCheck,
 )
+from lograder.pipeline.check.source import (
+    OperatorCheckData,
+    OperatorCheckError,
+    OperatorConstraint,
+    OperatorViolation,
+    SourceOperatorCheck,
+)
 
 __all__ = [
     "Check",
@@ -26,4 +33,9 @@ __all__ = [
     "CMakeManifest",
     "MakefileManifest",
     "PyProjectManifest",
+    "SourceOperatorCheck",
+    "OperatorConstraint",
+    "OperatorCheckData",
+    "OperatorCheckError",
+    "OperatorViolation",
 ]
