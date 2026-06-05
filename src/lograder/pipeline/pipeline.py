@@ -5,6 +5,7 @@ from typing import Any
 from lograder.common import Result
 from lograder.exception import DeveloperException, StaffException
 from lograder.output import get_logger
+from lograder.output.layout import dispatch_layout
 from lograder.pipeline.metadata import GraderMetadata
 from lograder.pipeline.score import PipelineScore
 from lograder.pipeline.step import Step
@@ -42,28 +43,52 @@ class Pipeline:
         score = PipelineScore(metadata=metadata)
         stop_index = len(self.steps)
         for i, step in enumerate(self.steps):
+            captured: list[str] = []
             gen = step(self.datum)
             while True:
                 try:
                     display: Result = next(gen)
                     if display.is_ok:
                         # TODO: I know the duplicate branches look real stupid, but I'm likely going to add more logic in here.
-                        _LOGGER.packet(display.danger_ok)
+                        val = display.danger_ok
+                        _LOGGER.packet(val)
                     else:
-                        _LOGGER.packet(display.danger_err)
+                        val = display.danger_err
+                        _LOGGER.packet(val)
                     if step.scorer is not None:
                         step.scorer.on_packet(display)
+                    try:
+                        captured.append(dispatch_layout(val).ansi)
+                    except Exception:
+                        pass
                 except StopIteration as exc:
                     output: Result = exc.value
                     break
+            # Capture and log the fatal Err return before scoring so the full
+            # step output (including the terminating error) is included.
+            if not output.is_ok:
+                fatal_val = output.danger_err
+                _LOGGER.packet(fatal_val)
+                try:
+                    captured.append(dispatch_layout(fatal_val).ansi)
+                except Exception:
+                    pass
             if step.scorer is not None:
                 step.scorer.on_complete(output)
                 score.add(step, step.scorer.contribution())
+                tc = step.scorer.gradescope
+                if (
+                    tc is not None
+                    and not tc.output
+                    and captured
+                    and tc.visibility in (None, "visible")
+                ):
+                    tc.output = "\n".join(captured)
+                    if tc.output_format is None:
+                        tc.output_format = "ansi"
             if output.is_ok:
                 self.datum = output.danger_ok
             else:
-                # TODO: Same here.
-                _LOGGER.packet(output.danger_err)
                 stop_index = i + 1
                 break
         # Steps skipped by early exit contribute 0/possible so total.possible stays accurate.
