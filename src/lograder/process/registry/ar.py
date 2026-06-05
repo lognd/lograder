@@ -153,8 +153,8 @@ class ArExecutable(TypedExecutable[ArArgs]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_binutils.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_binutils.sh"
                 ),
             )
         }

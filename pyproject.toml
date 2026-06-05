@@ -45,7 +45,7 @@ Issues = "https://github.com/lognd/lograder/issues"
 packages = { find = { where = ["src"] } }
 
 [tool.setuptools.package-data]
-calgen = ["py.typed"]
+lograder = ["py.typed", "data/install_scripts/*.sh"]
 
 [tool.ruff]
 line-length = 88

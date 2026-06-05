@@ -64,8 +64,8 @@ class GprofngExecutable(TypedExecutable[GprofngArgs]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_gprofng.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_gprofng.sh"
                 ),
                 install_location=Path.cwd() / ".gprofng/bin/gprofng",
             )

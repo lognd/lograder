@@ -134,8 +134,8 @@ class MakefileExecutable(TypedExecutable[MakefileArgs]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_make.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_make.sh"
                 ),
             )
         }

@@ -177,8 +177,8 @@ class ClangExecutable(TypedExecutable[ClangArgs]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_clang.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_clang.sh"
                 ),
             )
         }
@@ -192,8 +192,8 @@ class ClangXXExecutable(TypedExecutable[ClangXXArgs]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_clang.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_clang.sh"
                 ),
             )
         }

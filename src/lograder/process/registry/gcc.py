@@ -113,8 +113,8 @@ class GCCExecutable(TypedExecutable[GCCArgs]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_gcc.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_gcc.sh"
                 ),
             )
         }
@@ -128,8 +128,8 @@ class GXXExecutable(TypedExecutable[GXXArgs]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_gxx.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_gxx.sh"
                 ),
             )
         }

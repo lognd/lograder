@@ -119,8 +119,8 @@ class ValgrindExecutable(TypedExecutable[ValgrindArgs[CLIArgs]]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_valgrind.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_valgrind.sh"
                 ),
                 install_location=Path.cwd() / ".valgrind/bin/valgrind",
             )

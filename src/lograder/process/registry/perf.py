@@ -87,8 +87,8 @@ class PerfExecutable(TypedExecutable[PerfArgs]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_perf.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_perf.sh"
                 ),
             )
         }

@@ -114,8 +114,8 @@ class CURLExecutable(TypedExecutable[CURLArgs]):
             is_posix: PlatformInstallScript(
                 executable=BashExecutable(),
                 args=BashScriptArgs(
-                    script=Path(__file__).parent
-                    / "install_scripts/posix/install_curl.sh"
+                    script=Path(__file__).parents[2]
+                    / "data/install_scripts/install_curl.sh"
                 ),
             )
         }
