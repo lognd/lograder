@@ -7,7 +7,10 @@ from lograder.output.layout.format_helpers.manifest import (
     render_manifest_tree,
 )
 from lograder.output.layout.layout import Layout, register_layout
-from lograder.pipeline.check import ManifestCheckData, ManifestCheckError
+from lograder.pipeline.check.project.manifest import (
+    ManifestCheckData,
+    ManifestCheckError,
+)
 
 
 # noinspection DuplicatedCode

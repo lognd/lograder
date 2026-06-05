@@ -86,3 +86,6 @@ class PrebuiltArtifacts(
 
         yield Ok(PrebuiltArtifactsData(artifact_names=list(artifacts.keys())))
         return Ok(artifacts)
+
+
+import lograder.output.layout.pipeline.prebuilt  # noqa: E402, F401

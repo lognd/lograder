@@ -53,3 +53,6 @@ class ManifestCheck(
                 manifest_received=received,
             )
         )
+
+
+import lograder.output.layout.project.manifest  # noqa: E402, F401

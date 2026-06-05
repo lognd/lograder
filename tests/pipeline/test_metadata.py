@@ -15,7 +15,6 @@ from lograder.pipeline.metadata import (
     _parse_iso,
 )
 
-
 # ---------------------------------------------------------------------------
 # _parse_iso
 # ---------------------------------------------------------------------------
@@ -192,9 +191,7 @@ def test_from_gradescope_reads_file(tmp_path):
             "due_date": "2024-03-15T23:59:00Z",
             "title": "Lab 3",
         },
-        "submitters": [
-            {"name": "Alice", "email": "alice@uni.edu", "sid": "12345"}
-        ],
+        "submitters": [{"name": "Alice", "email": "alice@uni.edu", "sid": "12345"}],
     }
     mf = tmp_path / "submission_metadata.json"
     mf.write_text(json.dumps(data))
@@ -235,7 +232,7 @@ def test_from_gradescope_kwargs_override_title(tmp_path):
 
 
 def test_pipeline_score_carries_metadata():
-    from lograder.pipeline.score import PipelineScore, GradescopeConfig
+    from lograder.pipeline.score import GradescopeConfig, PipelineScore
 
     m = GraderMetadata(grader_name="TestGrader")
     score = PipelineScore(metadata=m)
@@ -244,7 +241,7 @@ def test_pipeline_score_carries_metadata():
 
 
 def test_pipeline_score_metadata_kwarg_override():
-    from lograder.pipeline.score import PipelineScore, GradescopeConfig
+    from lograder.pipeline.score import GradescopeConfig, PipelineScore
 
     m1 = GraderMetadata(grader_name="Grader1")
     m2 = GraderMetadata(grader_name="Grader2")
@@ -255,7 +252,7 @@ def test_pipeline_score_metadata_kwarg_override():
 
 
 def test_pipeline_score_output_combines_with_config_output():
-    from lograder.pipeline.score import PipelineScore, GradescopeConfig
+    from lograder.pipeline.score import GradescopeConfig, PipelineScore
 
     m = GraderMetadata(grader_name="MyGrader")
     score = PipelineScore(metadata=m)

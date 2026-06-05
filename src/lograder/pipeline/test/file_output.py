@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Generator, final
 
@@ -57,7 +58,7 @@ class FileOutputTest(
     def __init__(
         self,
         artifact_name: str,
-        test_cases: list[FileOutputCase],
+        test_cases: Iterable[FileOutputCase],
         options: ExecutableOptions | None = None,
     ) -> None:
         self._artifact_name = artifact_name
@@ -147,3 +148,6 @@ class FileOutputTest(
                 )
 
         return Ok(artifacts)
+
+
+import lograder.output.layout.test.file_output  # noqa: E402, F401

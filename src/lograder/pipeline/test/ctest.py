@@ -241,3 +241,6 @@ def _full_name(tc: "JUnitTestCase") -> str:
     if tc.suite_name and tc.suite_name != tc.test_name:
         return f"{tc.suite_name}/{tc.test_name}"
     return tc.test_name
+
+
+import lograder.output.layout.test.ctest  # noqa: E402, F401

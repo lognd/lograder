@@ -163,6 +163,7 @@ class PipelineScore:
             meta_block = effective_metadata.to_display_string()
             combined = meta_block + ("\n\n" + cfg.output if cfg.output else "")
             from dataclasses import replace as _replace
+
             cfg = _replace(cfg, output=combined)
 
         tests = []

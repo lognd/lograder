@@ -2,27 +2,13 @@
 
 Test steps take `dict[str, Artifact]` in and return it unmodified on success, so multiple test steps chain on the same artifact dictionary. Each step `yield`s one `Ok` or `Err` per test case and `return`s `Ok(artifacts)` or a fatal `Err` if something goes catastrophically wrong.
 
-## Layout imports
-
-Every test step requires its layout module to be imported before it runs:
-
-```python
-import lograder.output.layout.test.output_compare
-import lograder.output.layout.test.valgrind
-import lograder.output.layout.test.file_output
-import lograder.output.layout.test.performance
-import lograder.output.layout.test.symbol
-import lograder.output.layout.test.catch2
-import lograder.output.layout.test.gtest
-import lograder.output.layout.test.ctest
-import lograder.output.layout.test.pytest
-```
-
 ---
 
 ## `OutputCompareTest`
 
 Runs the artifact with a set of arguments and compares stdout (and optionally exit code) against expected values.
+
+All `cases` arguments across every test step accept any `Iterable` — lists, generators, and comprehensions all work. The iterable is consumed once per pipeline run.
 
 ```python
 from lograder.pipeline.test.output_compare import (
@@ -280,6 +266,123 @@ PytestTest runs `pytest --junit-xml=results.xml` and parses the output. Test IDs
 
 ---
 
+## Test case helpers
+
+### `OracleInput` / `oracle_cases`
+
+When you have a staff solution, use `oracle_cases` to run it and capture its stdout as expected output — no hand-coded expected strings needed.
+
+```python
+from lograder.pipeline.test.oracle import OracleInput, oracle_cases
+
+cases = oracle_cases(
+    Path("staff/bin/solution"),
+    [
+        OracleInput(name="empty",    args=[]),
+        OracleInput(name="small",    args=["5"]),
+        OracleInput(name="negative", args=["-3"], comparison=ComparisonMode.EXACT),
+        # generators work too — runs oracle fresh for every submission build
+        *(OracleInput(name=f"rand_{i}", args=[str(random.randint(1, 1000))]) for i in range(50)),
+    ],
+)
+pipeline.add(OutputCompareTest("myprogram", cases))
+```
+
+`oracle_cases` returns `list[OutputCompareCase]` with `expected_stdout` and `expected_exit_code` filled in from the oracle run.
+
+### `cases_from_matrix`
+
+Generate test cases from the cartesian product of argument pools. Raises `ValueError` if the total would exceed `max_cases` (default 500) to catch accidental combinatorial explosions.
+
+```python
+from lograder.pipeline.test.oracle import cases_from_matrix
+
+# 3 × 4 = 12 cases, names like "add_1", "sub_10", "mul_100"
+inputs = cases_from_matrix(["add", "sub", "mul"], ["1", "10", "100", "999"])
+
+# custom name function
+inputs = cases_from_matrix(
+    ["insert", "delete", "search"],
+    ["empty", "small", "large"],
+    name_fn=lambda args: f"{args[0]}_{args[1]}",
+)
+
+# increase the guard for intentionally large suites
+inputs = cases_from_matrix(range_pool, value_pool, max_cases=2000)
+```
+
+`cases_from_matrix` returns `list[OracleInput]`, which feeds directly into `oracle_cases` or `DifferentialTest`:
+
+```python
+# pre-capture expected outputs
+cases = oracle_cases(Path("staff/bin/solution"), cases_from_matrix(...))
+pipeline.add(OutputCompareTest("myprogram", cases))
+
+# or compare live at grading time
+pipeline.add(DifferentialTest("myprogram", Path("staff/bin/solution"), cases_from_matrix(...)))
+```
+
+---
+
+## `DifferentialTest`
+
+Runs both the student binary and a reference binary for each case and compares their stdout. Unlike `OutputCompareTest`, no expected output is pre-computed — the reference binary runs live per submission.
+
+```python
+from lograder.pipeline.test.differential import DifferentialTest
+from lograder.pipeline.test.oracle import OracleInput, cases_from_matrix
+
+pipeline.add(diff := DifferentialTest(
+    "myprogram",
+    Path("staff/bin/solution"),
+    cases_from_matrix(["add", "sub", "mul"], ["1", "10", "100"]),  # 9 cases
+))
+diff.scorer = TestCaseScorer(
+    {f"{op}_{n}": 5.0 for op in ["add", "sub", "mul"] for n in ["1", "10", "100"]},
+    label="Correctness",
+)
+```
+
+Exit codes are not compared by default. Pass `check_exit_codes=True` to require the student's exit code to match the reference:
+
+```python
+DifferentialTest("myprogram", reference, cases, check_exit_codes=True)
+```
+
+Use `reference_options` to give the reference binary a different working directory or timeout from the student binary:
+
+```python
+DifferentialTest(
+    "myprogram",
+    Path("staff/bin/solution"),
+    cases,
+    options=ExecutableOptions(timeout=10.0),
+    reference_options=ExecutableOptions(timeout=60.0),  # generous timeout for reference
+)
+```
+
+### `OracleInput` fields (used by both `oracle_cases` and `DifferentialTest`)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `str` | required | Unique test case name |
+| `args` | `list[str]` | `[]` | Command-line arguments |
+| `stdin` | `bytes` | `b""` | Data to feed to stdin |
+| `comparison` | `ComparisonMode` | `STRIP` | How to compare outputs |
+
+### `DifferentialTest` parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `artifact_name` | `str` | required | Key in `artifacts` dict for the student binary |
+| `reference` | `Path \| str` | required | Path to the reference binary |
+| `test_cases` | `Iterable[OracleInput]` | required | Cases to run |
+| `options` | `ExecutableOptions \| None` | `None` | Options for the student binary |
+| `reference_options` | `ExecutableOptions \| None` | `None` | Options for the reference binary (defaults to `options`) |
+| `check_exit_codes` | `bool` | `False` | Whether to also require matching exit codes |
+
+---
+
 ## Chaining test steps
 
 All test steps take and return `dict[str, Artifact]`, so they chain naturally:
@@ -287,7 +390,7 @@ All test steps take and return `dict[str, Artifact]`, so they chain naturally:
 ```python
 pipeline.add(LocalDirectory())
 pipeline.add(CMakeManifestCheck())
-pipeline.add(build    := CMakeBuild())
+pipeline.add(build       := CMakeBuild())
 pipeline.add(correctness := OutputCompareTest("sorter", output_cases))
 pipeline.add(leaks       := ValgrindTest("sorter", valgrind_cases))
 pipeline.add(perf        := PerformanceTest("sorter", perf_cases))

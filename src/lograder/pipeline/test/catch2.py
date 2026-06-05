@@ -274,3 +274,6 @@ class Catch2Test(
             out_path.unlink(missing_ok=True)
 
         return Ok(artifacts)
+
+
+import lograder.output.layout.test.catch2  # noqa: E402, F401

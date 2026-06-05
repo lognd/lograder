@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from importlib.metadata import version as _pkg_version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _pkg_version
 
     def _lograder_version() -> str:
         try:
@@ -26,7 +27,8 @@ try:
             return "unknown"
 
 except ImportError:  # Python < 3.8 fallback
-    def _lograder_version() -> str:  # type: ignore[misc]
+
+    def _lograder_version() -> str:
         return "unknown"
 
 
@@ -265,10 +267,7 @@ class GraderMetadata:
         # lograder attribution
         if self.show_lograder_attribution:
             ver = _lograder_version()
-            lines.append(
-                f"  Built with:  lograder {ver}"
-                f" — {LOGRADER_AUTHOR}"
-            )
+            lines.append(f"  Built with:  lograder {ver} — {LOGRADER_AUTHOR}")
 
         lines.append(sep)
         return "\n".join(lines)

@@ -554,3 +554,6 @@ class TypedExecutable(Generic[T]):
             return may_run.swap_ok(ExecutableOutput)
 
         return Ok(self.executable(input=effective_input, options=options))
+
+
+import lograder.output.layout.process.executable  # noqa: E402, F401

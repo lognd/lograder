@@ -1,4 +1,5 @@
 import tempfile
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Generator, final
 
@@ -86,7 +87,7 @@ class ValgrindTest(
     def __init__(
         self,
         artifact_name: str,
-        test_cases: list[ValgrindCase],
+        test_cases: Iterable[ValgrindCase],
         options: ExecutableOptions | None = None,
     ) -> None:
         self._artifact_name = artifact_name
@@ -209,3 +210,6 @@ class ValgrindTest(
                 )
 
         return Ok(artifacts)
+
+
+import lograder.output.layout.test.valgrind  # noqa: E402, F401

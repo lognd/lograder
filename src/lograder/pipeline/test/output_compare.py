@@ -1,4 +1,5 @@
 import difflib
+from collections.abc import Iterable
 from enum import Enum
 from typing import Generator, final
 
@@ -78,7 +79,7 @@ class OutputCompareTest(
     def __init__(
         self,
         artifact_name: str,
-        test_cases: list[OutputCompareCase],
+        test_cases: Iterable[OutputCompareCase],
         options: ExecutableOptions | None = None,
     ) -> None:
         self._artifact_name = artifact_name
@@ -153,3 +154,6 @@ class OutputCompareTest(
                 )
 
         return Ok(artifacts)
+
+
+import lograder.output.layout.test.output_compare  # noqa: E402, F401

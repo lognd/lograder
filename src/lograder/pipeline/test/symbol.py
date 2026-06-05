@@ -159,3 +159,6 @@ class SymbolTest(
                 )
 
         return Ok(artifacts)
+
+
+import lograder.output.layout.test.symbol  # noqa: E402, F401

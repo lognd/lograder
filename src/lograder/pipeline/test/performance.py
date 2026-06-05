@@ -1,4 +1,5 @@
 import time
+from collections.abc import Iterable
 from typing import Generator, final
 
 from pydantic import BaseModel, Field, field_validator
@@ -54,7 +55,7 @@ class PerformanceTest(
     def __init__(
         self,
         artifact_name: str,
-        test_cases: list[PerformanceCase],
+        test_cases: Iterable[PerformanceCase],
         base_options: ExecutableOptions | None = None,
     ) -> None:
         self._artifact_name = artifact_name
@@ -127,3 +128,6 @@ class PerformanceTest(
                 )
 
         return Ok(artifacts)
+
+
+import lograder.output.layout.test.performance  # noqa: E402, F401
