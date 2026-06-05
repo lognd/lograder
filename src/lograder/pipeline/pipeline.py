@@ -77,12 +77,11 @@ class Pipeline:
                 step.scorer.on_complete(output)
                 score.add(step, step.scorer.contribution())
                 tc = step.scorer.gradescope
-                if (
-                    tc is not None
-                    and not tc.output
-                    and captured
-                    and tc.visibility in (None, "visible")
-                ):
+                if captured and (tc is None or (not tc.output and tc.visibility in (None, "visible"))):
+                    if tc is None:
+                        from lograder.pipeline.score import GradescopeTestConfig
+                        tc = GradescopeTestConfig()
+                        step.scorer.gradescope = tc
                     tc.output = "\n".join(captured)
                     if tc.output_format is None:
                         tc.output_format = "ansi"
