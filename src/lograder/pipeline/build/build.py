@@ -4,7 +4,7 @@ from typing import Optional
 from typing_extensions import Self
 from pathlib import Path
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from lograder.common import Result, Ok, Err
 from lograder.pipeline.types.parcels import Manifest
@@ -22,6 +22,8 @@ ErrDisplayT = TypeVar("ErrDisplayT")
 
 
 class BuildOutput(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     manifest: Manifest
     config_file: Path
     executable_output: Optional[ExecutableOutput] = None

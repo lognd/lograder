@@ -12,8 +12,8 @@ from lograder.pipeline.types.sentinel import PIPELINE_START
 class LocalDirectory(
     Input[PIPELINE_START, Manifest, UncaughtException, Unreachable, Unreachable]
 ):
-    def __init__(self, root: Path = get_config().root_directory) -> None:
-        self.root = root
+    def __init__(self, root: Path | None = None) -> None:
+        self.root = root if root is not None else get_config().root_directory
 
     def __call__(
         self, _: PIPELINE_START

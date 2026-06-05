@@ -139,10 +139,7 @@ def invoke_command(inv: ExecutableInvocation, /) -> ExecutableOutput:
             stdout, stderr = process.communicate(inv.stdin_bytes, timeout=inv.timeout)
         except TimeoutExpired:
             process.kill()
-            if is_windows():
-                stdout, stderr = process.communicate()
-            else:
-                process.wait()
+            stdout, stderr = process.communicate()
         except:
             process.kill()
             raise
@@ -407,6 +404,7 @@ def nested_cli_emit(args: CLIArgs) -> list[str]:
 
 class TypedExecutable(Generic[T]):
     """Executable bound to a specific CLIArgs type. Validates args, attempts auto-install if not found, and returns Result[ExecutableOutput, InstallationError]."""
+
     bound_types: Optional[set[type[CLIArgs]]] = None
     executable: Optional[StaticExecutable] = None
     install_executable: Optional[InstallationExecutable] = None
@@ -538,17 +536,21 @@ class TypedExecutable(Generic[T]):
                 f"enforce a single source of truth for the arguments."
             )
         # noinspection PyUnnecessaryCast
-        input.arguments = cast(
-            CLIArgs, args
-        ).emit()  # This is guaranteed by `__init_subclass__`
+        # Use model_copy to avoid mutating the (possibly shared) default ExecutableInput.
+        effective_input = input.model_copy(
+            update={"arguments": cast(CLIArgs, args).emit()}
+        )
         may_run = self.check_runnable()
         if may_run.err:
-            install = self.install()
-            if install.err:
-                return install.swap_ok(ExecutableOutput)
-            self.update_base_command(install.danger_ok)
-            may_run = self.check_runnable()
+            if get_config().allow_auto_install:
+                install = self.install()
+                if install.err:
+                    return install.swap_ok(ExecutableOutput)
+                self.update_base_command(install.danger_ok)
+                may_run = self.check_runnable()
+            else:
+                return may_run.swap_ok(ExecutableOutput)
         if may_run.err:
             return may_run.swap_ok(ExecutableOutput)
 
-        return Ok(self.executable(input=input, options=options))
+        return Ok(self.executable(input=effective_input, options=options))

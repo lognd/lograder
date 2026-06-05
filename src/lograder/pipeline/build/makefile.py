@@ -13,7 +13,7 @@ from lograder.pipeline.types.artifacts import Artifact
 class MakefileBuild(
     Build[
         MakefileManifest,
-        list[Artifact],
+        dict[str, Artifact],
         BuildOutput,
         BuildOutput,
         Unreachable,
@@ -30,7 +30,7 @@ class MakefileBuild(
     ) -> Generator[
         Result[BuildOutput, Unreachable],
         None,
-        Result[list[Artifact], BuildOutput],
+        Result[dict[str, Artifact], BuildOutput],
     ]:
         makefile = Path(
             input.root / "Makefile"
@@ -41,8 +41,8 @@ class MakefileBuild(
         make_info = make_build_output(make_output, input, makefile)
 
         if make_info.is_err:
-            return make_info.swap_ok(list[Artifact])
+            return make_info.swap_ok(dict[str, Artifact])
         yield make_info.swap_err(Unreachable)
 
         # TODO: create Makefile parsing.
-        return Ok([])
+        return Ok({})

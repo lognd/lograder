@@ -15,12 +15,22 @@ OkDisplayT = TypeVar("OkDisplayT")
 ErrDisplayT = TypeVar("ErrDisplayT")
 
 
-class TestFailure(BaseModel):
-    __test__: bool = False
-
-
 class TestSuccess(BaseModel):
     __test__: bool = False
+    test_name: str
+    artifact_name: str
 
 
-class Build(Step[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC): ...
+class TestFailure(BaseModel):
+    __test__: bool = False
+    test_name: str
+    artifact_name: str
+
+
+class TestError(BaseModel):
+    __test__: bool = False
+    artifact_name: str
+    message: str
+
+
+class Test(Step[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC): ...

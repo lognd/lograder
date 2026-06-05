@@ -46,14 +46,14 @@ class ExecutableDataLayout(Layout[ExecutableData]):
         else:
             output.append(f"STDIN was empty. ")
 
-        if data.input.stdin_bytes:
+        if data.output.stderr_bytes:
             output.append(
                 f"STDERR was `{repr(data.output.stderr_bytes.decode('utf-8', errors='ignore'))}`. "
             )
         else:
             output.append(f"STDERR was empty. ")
 
-        if data.input.stdin_bytes:
+        if data.output.stdout_bytes:
             output.append(
                 f"STDOUT was `{repr(data.output.stdout_bytes.decode('utf-8', errors='ignore'))}`. "
             )

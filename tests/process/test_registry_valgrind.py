@@ -8,6 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from lograder.process.cli_args import CLI_ARG_MISSING, CLIArgs, CLIOption
+from lograder.process.executable import TypedExecutable, register_typed_executable
 from lograder.process.registry.valgrind import (
     ValgrindArgs,
     ValgrindExecutable,
@@ -22,6 +23,11 @@ class EchoArgs(CLIArgs):
         emit=["{}"],
         position=1,
     )
+
+
+@register_typed_executable(["echo"])
+class _EchoExecutable(TypedExecutable[EchoArgs]):
+    pass
 
 
 def test_valgrind_args_defaults() -> None:

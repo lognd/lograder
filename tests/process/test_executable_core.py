@@ -36,6 +36,14 @@ class ExampleArgs(CLIArgs):
     value: str = CLIOption(emit=["--value", "{}"])
 
 
+@pytest.fixture(autouse=True)
+def isolate_registry():
+    original = dict(TypedExecutable._registered_types)
+    yield
+    TypedExecutable._registered_types.clear()
+    TypedExecutable._registered_types.update(original)
+
+
 def test_executable_input_stdin_text_round_trip() -> None:
     inp = ExecutableInput(encoding="utf-8")
     inp.stdin_text = "hello"
@@ -190,6 +198,8 @@ def test_create_process_windows_branch(monkeypatch: pytest.MonkeyPatch) -> None:
         stdin_bytes=b"",
         encoding="utf-8",
         timeout=1.0,
+        hide_input=False,
+        hide_output=False,
         stdin_mode=StreamMode.PIPE,
         stdout_mode=StreamMode.NULL,
         stderr_mode=StreamMode.INHERIT,
@@ -236,6 +246,8 @@ def test_create_process_posix_branch(monkeypatch: pytest.MonkeyPatch) -> None:
         stdin_bytes=b"",
         encoding="utf-8",
         timeout=1.0,
+        hide_input=False,
+        hide_output=False,
         stdin_mode=StreamMode.PIPE,
         stdout_mode=StreamMode.NULL,
         stderr_mode=StreamMode.INHERIT,
@@ -282,6 +294,8 @@ def test_create_process_raises_on_unknown_platform(
         stdin_bytes=b"",
         encoding="utf-8",
         timeout=1.0,
+        hide_input=False,
+        hide_output=False,
         stdin_mode=StreamMode.PIPE,
         stdout_mode=StreamMode.PIPE,
         stderr_mode=StreamMode.PIPE,

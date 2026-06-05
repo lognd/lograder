@@ -35,7 +35,7 @@ def make_simple_manifest_checker(
 
     class ProjectManifest(Manifest):
         def __init__(self, manifest: Manifest):
-            super().__init__(manifest._mapping)
+            super().__init__(manifest._mapping, root=manifest.root)
 
     ProjectManifest.__name__ = manifest_name
     ProjectManifest.__qualname__ = manifest_name

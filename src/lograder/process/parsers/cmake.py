@@ -119,12 +119,12 @@ def _find_codemodel_ref(index: dict[str, Any], client_name: str) -> dict[str, An
             f"Available clients: {available or '<none>'}"
         )
 
-    for query_reply in client_reply.values():
-        for response in query_reply.get("responses", []):
-            if (
-                response.get("kind") == "codemodel"
-                and response.get("version", {}).get("major") == 2
-            ):
-                return cast(dict[str, Any], response)
+    # cmake index format: reply[client][query_name] = {kind, version, jsonFile}
+    for response in client_reply.values():
+        if (
+            response.get("kind") == "codemodel"
+            and response.get("version", {}).get("major") == 2
+        ):
+            return cast(dict[str, Any], response)
 
     raise KeyError(f"No codemodel-v2 response found for {client_name!r}")

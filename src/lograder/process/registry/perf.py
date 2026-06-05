@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Generic, Literal, TypeVar, Union
-
-from pydantic import field_validator
-from typing_extensions import Self
+from typing import Literal, Union
 
 from lograder.process.cli_args import (
     CLIArgs,
@@ -14,15 +11,12 @@ from lograder.process.cli_args import (
 )
 from lograder.process.executable import (
     TypedExecutable,
-    nested_cli_emit,
     register_typed_executable,
 )
 
-T = TypeVar("T", bound=CLIArgs)
 
-
-class PerfRecordArgs(CLIArgs, Generic[T]):
-    command: T = CLIMultiOption(position=-1, emitter=nested_cli_emit)
+class PerfRecordArgs(CLIArgs):
+    subcommand: Literal["record"] = CLIOption(default="record", position=0, emit=["{}"])
 
     output: Path | None = CLIOption(default=None, emit=["-o", "{}"])
     frequency: int | None = CLIOption(default=None, emit=["-F", "{}"])
@@ -37,36 +31,23 @@ class PerfRecordArgs(CLIArgs, Generic[T]):
     event: list[str] = CLIMultiOption(default_factory=list, token_emit=["-e{}"])
 
     add_opts: list[str] = CLIMultiOption(default_factory=list)
-    subcommand: Literal["record"] = CLIOption(default="record", position=0, emit=["{}"])
-
-    @field_validator("command", mode="after")
-    @classmethod
-    def validate_command(cls, v: list[str]) -> list[str]:
-        if not v and cls is PerfRecordArgs:
-            raise ValueError("`command` must be provided for perf record.")
-        return v
+    command: list[str] = CLIMultiOption(default_factory=list, position=-1)
 
 
-class PerfStatArgs(CLIArgs, Generic[T]):
-    command: T = CLIMultiOption(position=-1, emitter=nested_cli_emit)
+class PerfStatArgs(CLIArgs):
+    subcommand: Literal["stat"] = CLIOption(default="stat", position=0, emit=["{}"])
+
     event: list[str] = CLIMultiOption(default_factory=list, token_emit=["-e{}"])
     system_wide: bool = CLIPresenceFlag(["-a"], default=False)
     verbose: bool = CLIPresenceFlag(["-v"], default=False)
     repeat: int | None = CLIOption(default=None, emit=["-r", "{}"])
     output: Path | None = CLIOption(default=None, emit=["-o", "{}"])
 
-    subcommand: Literal["stat"] = CLIOption(default="stat", position=0, emit=["{}"])
-
-    @field_validator("command", mode="after")
-    @classmethod
-    def validate_command(cls, v: list[str]) -> list[str]:
-        if not v:
-            raise ValueError("`command` must be provided for perf stat.")
-        return v
+    command: list[str] = CLIMultiOption(default_factory=list, position=-1)
 
 
-class PerfReportArgs(CLIArgs, Generic[T]):
-    command: T = CLIMultiOption(position=-1, emitter=nested_cli_emit)
+class PerfReportArgs(CLIArgs):
+    subcommand: Literal["report"] = CLIOption(default="report", position=0, emit=["{}"])
 
     input_file: Path | None = CLIOption(default=None, emit=["-i", "{}"])
 
@@ -76,18 +57,16 @@ class PerfReportArgs(CLIArgs, Generic[T]):
     sort: str | None = CLIOption(default=None, emit=["--sort", "{}"])
 
     add_opts: list[str] = CLIMultiOption(default_factory=list)
-    subcommand: Literal["report"] = CLIOption(default="report", position=0, emit=["{}"])
 
 
-class PerfScriptArgs(CLIArgs, Generic[T]):
-    command: T = CLIMultiOption(position=-1, emitter=nested_cli_emit)
+class PerfScriptArgs(CLIArgs):
+    subcommand: Literal["script"] = CLIOption(default="script", position=0, emit=["{}"])
 
     input_file: Path | None = CLIOption(default=None, emit=["-i", "{}"])
 
     fields: str | None = CLIOption(default=None, emit=["-F", "{}"])
 
     add_opts: list[str] = CLIMultiOption(default_factory=list)
-    subcommand: Literal["script"] = CLIOption(default="script", position=0, emit=["{}"])
 
 
 PerfArgs = Union[

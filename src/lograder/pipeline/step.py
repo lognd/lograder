@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from inspect import isabstract
-from typing import Any, Generator, Generic, TypeVar, cast, final
+from typing import TYPE_CHECKING, Any, Generator, Generic, TypeVar, cast, final
 
 from lograder.common import Empty, Result, get_bound_types, unwrap_union_types
 from lograder.exception import DeveloperException, LograderException
+
+if TYPE_CHECKING:
+    from lograder.pipeline.score import Scorer
 
 InputT = TypeVar("InputT")
 OkOutputT = TypeVar("OkOutputT")
@@ -24,8 +27,10 @@ class _IS_ABSTRACT(Empty): ...
 # to include the plugin.
 class Step(Generic[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC):
     """Base for pipeline stages. __call__ is a generator: yield display packets, return the final Result."""
+
     _valid_input_types: set[type] | type[_IS_ABSTRACT] = _IS_ABSTRACT
     _valid_output_type: type[OkOutputT] | type[_IS_ABSTRACT] = _IS_ABSTRACT
+    scorer: Scorer | None = None
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -106,7 +111,7 @@ class Step(Generic[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC)
             raise DeveloperException(
                 f"Tried to call `{cls.__name__}.is_follow(`{prev.__name__}`)` even though `{prev.__name__}` is abstract."
             )
-        if cls.get_valid_output() in prev.get_valid_inputs():
+        if prev.get_valid_output() in cls.get_valid_inputs():
             return True
         return False
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from colorama import Fore as F
 from colorama import Style as S
 
@@ -17,7 +19,7 @@ from lograder.pipeline.types.parcels import Manifest
 
 
 def make_manifest(*items: str | dict) -> Manifest:
-    return Manifest(list(items))
+    return Manifest(list(items), root=Path("/"))
 
 
 def test_manifest_check_data_layout_to_ansi(monkeypatch):

@@ -30,7 +30,11 @@ class DummyTypedExecutable(TypedExecutable[DummyArgs]):
     pass
 
 
-class SpyTypedExecutable(TypedExecutable[DummyArgs]):
+class SpyArgs(CLIArgs):
+    token: str = CLIOption(default="hello", emit=["{}"])
+
+
+class SpyTypedExecutable(TypedExecutable[SpyArgs]):
     def __init__(self, result):
         self._result = result
 

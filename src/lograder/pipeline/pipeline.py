@@ -5,6 +5,7 @@ from typing import Any
 from lograder.common import Result
 from lograder.exception import DeveloperException, StaffException
 from lograder.output import get_logger
+from lograder.pipeline.score import PipelineScore
 from lograder.pipeline.step import Step
 from lograder.pipeline.types.sentinel import PIPELINE_START
 
@@ -29,8 +30,10 @@ class Pipeline:
                 prev_step.__class__, origin_exception_type=StaffException
             )
 
-    def __call__(self) -> None:
-        for step in self.steps:
+    def __call__(self) -> PipelineScore:
+        score = PipelineScore()
+        stop_index = len(self.steps)
+        for i, step in enumerate(self.steps):
             gen = step(self.datum)
             while True:
                 try:
@@ -40,12 +43,23 @@ class Pipeline:
                         _LOGGER.packet(display.danger_ok)
                     else:
                         _LOGGER.packet(display.danger_err)
+                    if step.scorer is not None:
+                        step.scorer.on_packet(display)
                 except StopIteration as exc:
                     output: Result = exc.value
                     break
+            if step.scorer is not None:
+                step.scorer.on_complete(output)
+                score.add(step, step.scorer.contribution())
             if output.ok:
                 self.datum = output.danger_ok
             else:
                 # TODO: Same here.
                 _LOGGER.packet(output.danger_err)
+                stop_index = i + 1
                 break
+        # Steps skipped by early exit contribute 0/possible so total.possible stays accurate.
+        for skipped in self.steps[stop_index:]:
+            if skipped.scorer is not None:
+                score.add(skipped, skipped.scorer.contribution())
+        return score

@@ -162,7 +162,7 @@ class Manifest(Package):
     def __init__(self, structure: DirectoryMapping, *, root: Path):
         super().__init__()
         self._mapping = structure
-        self._files, self._dirs = self._explore_directory(structure)
+        self._files, self._dirs = self._explore_directory(structure, root=root)
         self._root = root
 
     # noinspection PyShadowingBuiltins
@@ -389,7 +389,7 @@ class Manifest(Package):
         current = self._mapping
         for i, sub in enumerate(path):
             current_keys = [p for p in current if directory_key(p) == sub]
-            if sub not in current_keys:
+            if not current_keys:
                 return False
             sub_item: dict | str = current_keys[0]
             final_item: bool = i == len(path) - 1
