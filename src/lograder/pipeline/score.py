@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from lograder.common import Result
+from lograder.output.capture import CapturedOutput
 from lograder.pipeline.test.test import TestFailure, TestSuccess
 
 if TYPE_CHECKING:
@@ -178,9 +179,13 @@ class PipelineScore:
                 "max_score": c.possible,
             }
 
+            effective_vis = (
+                tc.visibility
+                if tc is not None and tc.visibility is not None
+                else cfg.visibility
+            )
+
             if tc is not None:
-                if tc.output:
-                    test["output"] = tc.output
                 if tc.visibility is not None:
                     test["visibility"] = tc.visibility
                 if tc.status is not None:
@@ -189,12 +194,29 @@ class PipelineScore:
                     test["number"] = tc.number
                 if tc.tags:
                     test["tags"] = tc.tags
-                if tc.output_format is not None:
-                    test["output_format"] = tc.output_format
                 if tc.name_format is not None:
                     test["name_format"] = tc.name_format
                 if tc.extra_data:
                     test["extra_data"] = tc.extra_data
+
+            # Output: grader-set tc.output always wins; fall back to pipeline-
+            # captured output only for tests whose effective visibility is "visible".
+            if tc is not None and tc.output:
+                test["output"] = tc.output
+                if tc.output_format is not None:
+                    test["output_format"] = tc.output_format
+            elif (
+                scorer is not None
+                and scorer.captured_output is not None
+                and effective_vis == "visible"
+            ):
+                fmt = (
+                    tc.output_format
+                    if tc is not None and tc.output_format is not None
+                    else cfg.test_output_format
+                )
+                test["output"] = scorer.captured_output.for_format(fmt)
+                test["output_format"] = fmt
 
             tests.append(test)
 
@@ -248,6 +270,9 @@ class Scorer(ABC):
 
     label: str | None = None
     gradescope: GradescopeTestConfig | None = None
+    captured_output: CapturedOutput | None = (
+        None  # populated by Pipeline; consumed by serializers
+    )
 
     @abstractmethod
     def on_packet(self, result: Result) -> None:

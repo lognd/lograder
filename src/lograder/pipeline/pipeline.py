@@ -4,7 +4,7 @@ from typing import Any
 
 from lograder.common import Result
 from lograder.exception import DeveloperException, StaffException
-from lograder.output import get_logger
+from lograder.output import CapturedOutput, get_logger
 from lograder.output.layout import dispatch_layout
 from lograder.pipeline.metadata import GraderMetadata
 from lograder.pipeline.score import PipelineScore
@@ -43,7 +43,12 @@ class Pipeline:
         score = PipelineScore(metadata=metadata)
         stop_index = len(self.steps)
         for i, step in enumerate(self.steps):
-            captured: list[str] = []
+            captured: dict[str, list[str]] = {
+                "simple": [],
+                "ascii": [],
+                "ansi": [],
+                "html": [],
+            }
             gen = step(self.datum)
             while True:
                 try:
@@ -58,7 +63,11 @@ class Pipeline:
                     if step.scorer is not None:
                         step.scorer.on_packet(display)
                     try:
-                        captured.append(dispatch_layout(val).ansi)
+                        layout = dispatch_layout(val)
+                        captured["simple"].append(layout.simple)
+                        captured["ascii"].append(layout.ascii)
+                        captured["ansi"].append(layout.ansi)
+                        captured["html"].append(layout.html)
                     except Exception:
                         pass
                 except StopIteration as exc:
@@ -70,21 +79,23 @@ class Pipeline:
                 fatal_val = output.danger_err
                 _LOGGER.packet(fatal_val)
                 try:
-                    captured.append(dispatch_layout(fatal_val).ansi)
+                    layout = dispatch_layout(fatal_val)
+                    captured["simple"].append(layout.simple)
+                    captured["ascii"].append(layout.ascii)
+                    captured["ansi"].append(layout.ansi)
+                    captured["html"].append(layout.html)
                 except Exception:
                     pass
             if step.scorer is not None:
                 step.scorer.on_complete(output)
                 score.add(step, step.scorer.contribution())
-                tc = step.scorer.gradescope
-                if captured and (tc is None or (not tc.output and tc.visibility in (None, "visible"))):
-                    if tc is None:
-                        from lograder.pipeline.score import GradescopeTestConfig
-                        tc = GradescopeTestConfig()
-                        step.scorer.gradescope = tc
-                    tc.output = "\n".join(captured)
-                    if tc.output_format is None:
-                        tc.output_format = "ansi"
+                if any(captured.values()):
+                    step.scorer.captured_output = CapturedOutput(
+                        simple="\n".join(captured["simple"]),
+                        ascii="\n".join(captured["ascii"]),
+                        ansi="\n".join(captured["ansi"]),
+                        html="\n".join(captured["html"]),
+                    )
             if output.is_ok:
                 self.datum = output.danger_ok
             else:
