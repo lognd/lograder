@@ -1,0 +1,318 @@
+# Test
+
+Test steps take `dict[str, Artifact]` in and return it unmodified on success, so multiple test steps chain on the same artifact dictionary. Each step `yield`s one `Ok` or `Err` per test case and `return`s `Ok(artifacts)` or a fatal `Err` if something goes catastrophically wrong.
+
+## Layout imports
+
+Every test step requires its layout module to be imported before it runs:
+
+```python
+import lograder.output.layout.test.output_compare
+import lograder.output.layout.test.valgrind
+import lograder.output.layout.test.file_output
+import lograder.output.layout.test.performance
+import lograder.output.layout.test.symbol
+import lograder.output.layout.test.catch2
+import lograder.output.layout.test.gtest
+import lograder.output.layout.test.ctest
+import lograder.output.layout.test.pytest
+```
+
+---
+
+## `OutputCompareTest`
+
+Runs the artifact with a set of arguments and compares stdout (and optionally exit code) against expected values.
+
+```python
+from lograder.pipeline.test.output_compare import (
+    OutputCompareTest, OutputCompareCase, ComparisonMode,
+)
+
+cases = [
+    OutputCompareCase(
+        name="hello",
+        args=[],
+        expected_stdout="Hello, World!\n",
+    ),
+    OutputCompareCase(
+        name="echo",
+        args=["foo", "bar"],
+        stdin=b"ignored\n",
+        expected_stdout="foo bar\n",
+        comparison=ComparisonMode.EXACT,     # STRIP (default), EXACT, IGNORE_TRAILING_WHITESPACE
+        expected_exit_code=0,                # None = don't check
+    ),
+]
+
+pipeline.add(tests := OutputCompareTest("my_binary", cases))
+tests.scorer = TestCaseScorer({"hello": 20.0, "echo": 30.0}, label="Correctness")
+```
+
+### `ComparisonMode`
+
+| Mode | What it does |
+|------|-------------|
+| `STRIP` (default) | Compare after stripping leading/trailing whitespace from both |
+| `EXACT` | Byte-for-byte equality |
+| `IGNORE_TRAILING_WHITESPACE` | Strip trailing whitespace from each line, then compare |
+
+### `OutputCompareCase` fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `str` | required | Unique test case name |
+| `args` | `list[str]` | `[]` | Command-line arguments |
+| `stdin` | `bytes` | `b""` | Data to feed to stdin |
+| `expected_stdout` | `str` | `""` | Expected program output |
+| `comparison` | `ComparisonMode` | `STRIP` | How to compare outputs |
+| `expected_exit_code` | `int \| None` | `None` | Expected exit code (None = don't check) |
+
+---
+
+## `ValgrindTest`
+
+Re-runs the artifact under Valgrind, checking for memory errors and optionally memory leaks.
+
+```python
+from lograder.pipeline.test.valgrind import ValgrindTest, ValgrindCase
+
+cases = [
+    ValgrindCase(name="basic",  args=[],          check_leaks=True),
+    ValgrindCase(name="input",  args=["foo"],     check_leaks=True),
+    ValgrindCase(name="stress", args=["1000"],    check_leaks=False),  # don't check leaks
+]
+
+pipeline.add(vg := ValgrindTest("my_binary", cases))
+vg.scorer = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory errors")
+```
+
+`ValgrindTest` skips gracefully if Valgrind is not installed. If you want it to auto-install:
+
+```python
+from lograder.process.registry.valgrind import ValgrindExecutable
+
+vg_exe = ValgrindExecutable()
+if vg_exe.check_runnable().is_err:
+    result = vg_exe.install()
+    if result.is_ok:
+        vg_exe.update_base_command(result.danger_ok)
+```
+
+### `ValgrindCase` fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `str` | required | Unique test case name |
+| `args` | `list[str]` | `[]` | Arguments to pass to the binary |
+| `stdin` | `bytes` | `b""` | Data to feed to stdin |
+| `check_leaks` | `bool` | `True` | Whether to fail on memory leaks |
+
+---
+
+## `FileOutputTest`
+
+Runs the artifact and checks a file it writes to disk, rather than its stdout.
+
+```python
+from lograder.pipeline.test.file_output import FileOutputTest, FileOutputCase
+
+cases = [
+    FileOutputCase(
+        name="write_sorted",
+        args=["input.txt", "output.txt"],
+        stdin=b"",
+        output_file=Path("output.txt"),      # relative to cwd
+        expected_content="1\n2\n3\n",
+        comparison=ComparisonMode.STRIP,
+        expected_exit_code=0,
+    ),
+]
+
+pipeline.add(FileOutputTest("my_binary", cases))
+```
+
+### `FileOutputCase` fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `str` | required | Unique test case name |
+| `args` | `list[str]` | `[]` | Command-line arguments |
+| `stdin` | `bytes` | `b""` | Data to feed to stdin |
+| `output_file` | `Path` | required | Path to the file the program writes |
+| `expected_content` | `str` | required | Expected file contents |
+| `comparison` | `ComparisonMode` | `STRIP` | How to compare |
+| `expected_exit_code` | `int \| None` | `None` | Expected exit code |
+
+---
+
+## `PerformanceTest`
+
+Runs the artifact and checks that it completes within a time limit.
+
+```python
+from lograder.pipeline.test.performance import PerformanceTest, PerformanceCase
+
+cases = [
+    PerformanceCase(name="small",  args=["100"],   time_limit=1.0),   # seconds
+    PerformanceCase(name="medium", args=["10000"], time_limit=5.0),
+    PerformanceCase(name="large",  args=["1000000"], time_limit=30.0),
+]
+
+pipeline.add(perf := PerformanceTest("my_binary", cases))
+perf.scorer = TestCaseScorer({"small": 5.0, "medium": 5.0, "large": 10.0}, label="Performance")
+```
+
+Safety kill fires at `time_limit + 30s` — the process is killed and the test fails. Wall time is measured with `perf_counter`.
+
+### `PerformanceCase` fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `str` | required | Unique test case name |
+| `args` | `list[str]` | `[]` | Command-line arguments |
+| `stdin` | `bytes` | `b""` | Data to feed to stdin |
+| `time_limit` | `float` | required | Maximum wall time in seconds |
+
+---
+
+## `SymbolTest`
+
+Checks that specific symbols are (or are not) present in a compiled binary/library.
+
+```python
+from lograder.pipeline.test.symbol import SymbolTest, SymbolCase
+
+cases = [
+    SymbolCase(name="has_sort",       symbol="my_sort",   must_exist=True),
+    SymbolCase(name="no_std_sort",    symbol="_ZSt4sortI", must_exist=False),  # mangled
+    SymbolCase(name="dynamic_malloc", symbol="malloc",    dynamic=True, must_exist=False),
+]
+
+pipeline.add(sym := SymbolTest("my_binary", cases))
+sym.scorer = CleanRunScorer(10.0, label="No forbidden symbols")
+```
+
+Uses `nm` under the hood to inspect the symbol table.
+
+### `SymbolCase` fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `str` | required | Unique test case name |
+| `symbol` | `str` | required | Symbol name or prefix to search for |
+| `must_exist` | `bool` | `True` | Whether the symbol must be present |
+| `dynamic` | `bool` | `False` | Check dynamic symbols only (`nm -D`) |
+
+---
+
+## `Catch2Test`
+
+Runs a Catch2 test binary and parses its XML output.
+
+```python
+from lograder.pipeline.test.catch2 import Catch2Test
+
+pipeline.add(catch2 := Catch2Test("my_tests"))
+catch2.scorer = TestCaseScorer(
+    {"[unit] my_function": 10.0, "[unit] edge_case": 5.0},
+    label="Unit tests",
+)
+```
+
+The artifact must be a Catch2 test binary (compiled with Catch2 and a `main` that calls `Catch::Session().run(argc, argv)`). Catch2Test runs it with `--reporter xml` to parse structured output.
+
+Test case names in the scorer map to Catch2 test names (the string you pass to `TEST_CASE`).
+
+---
+
+## `GTestTest`
+
+Runs a Google Test binary and parses its XML output.
+
+```python
+from lograder.pipeline.test.gtest import GTestTest
+
+pipeline.add(gtest := GTestTest("my_tests"))
+gtest.scorer = TestCaseScorer(
+    {"MyTest.BasicCase": 10.0, "MyTest.EdgeCase": 10.0},
+    label="Unit tests",
+)
+```
+
+GTestTest runs the binary with `--gtest_output=xml:results.xml` and parses the JUnit-format XML. Test case names in the scorer map match `<ClassName>.<TestName>` from Google Test.
+
+---
+
+## `CTestTest`
+
+Runs CMake's CTest test runner on the build directory.
+
+```python
+from lograder.pipeline.test.ctest import CTestTest
+
+pipeline.add(ctest := CTestTest())
+ctest.scorer = TestCaseScorer(
+    {"test_basic": 10.0, "test_advanced": 20.0},
+    label="CTest suite",
+)
+```
+
+CTestTest runs `ctest --output-on-failure` in the CMake build directory and parses the results. Requires that CMake tests are registered with `add_test()` in `CMakeLists.txt`.
+
+---
+
+## `PytestTest`
+
+Runs pytest on a Python project and parses the JUnit XML output.
+
+```python
+from lograder.pipeline.test.pytest import PytestTest
+
+pipeline.add(pytest_step := PytestTest(test_paths=[Path("tests/")]))
+pytest_step.scorer = TestCaseScorer(
+    {"tests/test_graph.py::test_bfs": 10.0, "tests/test_graph.py::test_dfs": 10.0},
+    label="Python tests",
+)
+```
+
+PytestTest runs `pytest --junit-xml=results.xml` and parses the output. Test IDs in the scorer map match pytest's `<file>::<function>` format.
+
+---
+
+## Chaining test steps
+
+All test steps take and return `dict[str, Artifact]`, so they chain naturally:
+
+```python
+pipeline.add(LocalDirectory())
+pipeline.add(CMakeManifestCheck())
+pipeline.add(build    := CMakeBuild())
+pipeline.add(correctness := OutputCompareTest("sorter", output_cases))
+pipeline.add(leaks       := ValgrindTest("sorter", valgrind_cases))
+pipeline.add(perf        := PerformanceTest("sorter", perf_cases))
+pipeline.add(symbols     := SymbolTest("sorter", symbol_cases))
+
+correctness.scorer = TestCaseScorer({"case1": 20.0, "case2": 20.0}, label="Correctness")
+leaks.scorer       = AllOrNothingScorer(0.0, extra_credit=10.0, label="No leaks")
+perf.scorer        = TestCaseScorer({"small": 5.0, "large": 10.0}, label="Performance")
+symbols.scorer     = CleanRunScorer(5.0, label="Symbol check")
+```
+
+## `ExecutableOptions` for test steps
+
+All test steps accept an `options` parameter to configure how the artifact is run:
+
+```python
+from lograder.process.executable import ExecutableOptions
+
+pipeline.add(OutputCompareTest(
+    "my_binary",
+    cases,
+    options=ExecutableOptions(
+        timeout=10.0,           # override per-step timeout
+        cwd=Path("/sandbox"),   # working directory
+        inherit_parent_env=False,
+    ),
+))
+```

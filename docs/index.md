@@ -1,35 +1,40 @@
-# lograder docs
+# lograder documentation
 
-Python library for building autograders. Not a CLI tool — you write a Python script that uses lograder as a library.
+## Where to start
 
-## Core idea
+- **New to lograder?** Read [Getting started](getting-started.md) — a complete autograder in under 60 lines.
+- **Understand the model?** Jump straight to the doc for the layer you need.
 
-```
-Pipeline: LocalDirectory → Check → Build → Test → Test → ...
-          Manifest       → CMakeManifest → dict[str,Artifact] → dict[str,Artifact]
-```
+## Reference
 
-Each `Step` is a generator. It `yield`s non-fatal display packets (logged to HTML/stdout) and `return`s either the next step's input (`Ok`) or a fatal error (`Err`). Test steps chain: they all speak `dict[str, Artifact]`.
+### Pipeline layer
 
-## Docs
+| Doc | What it covers |
+|-----|----------------|
+| [Concepts](concepts.md) | Mental model: Pipeline, Step, Result, Manifest, Artifact |
+| [Input](pipeline/input.md) | `LocalDirectory`, `EnvironmentConfig`, the `config()` context manager |
+| [Check](pipeline/check.md) | Manifest checks (CMake/Makefile/PyProject), `SourceCheck`, all constraints |
+| [Build](pipeline/build.md) | `CMakeBuild`, `MakefileBuild`, `BashScriptBuild`, `PrebuiltArtifacts` |
+| [Test](pipeline/test.md) | `OutputCompareTest`, `ValgrindTest`, `FileOutputTest`, `PerformanceTest`, `SymbolTest`, `Catch2Test`, `GTestTest`, `CTestTest`, `PytestTest` |
+| [Scoring](pipeline/scoring.md) | `AllOrNothingScorer`, `CleanRunScorer`, `TestCaseScorer`, gimme floors, Gradescope output |
 
-| File | What's in it |
-|------|-------------|
-| [quickstart.md](quickstart.md) | Complete working example in 30 lines |
-| [pipeline.md](pipeline.md) | Pipeline, Step protocol, Result type, EnvironmentConfig |
-| [steps.md](steps.md) | All built-in steps: Input, Check, Build, Test |
-| [scoring.md](scoring.md) | Scorers, GradescopeConfig, write_results_json |
-| [output.md](output.md) | Layout registration, logging, HTML output |
-| [process.md](process.md) | TypedExecutable, CLIArgs, StaticExecutable, ExecutableOptions |
-| [examples.md](examples.md) | More complete examples |
+### Supporting layers
 
-## Install
+| Doc | What it covers |
+|-----|----------------|
+| [Process layer](process.md) | `TypedExecutable`, `CLIArgs`, the executable registry |
+| [Output / layouts](output.md) | Logging packets, HTML report, writing custom layouts |
 
-```bash
-pip install -e ".[dev]"
-```
+## Examples
 
-## Quick reference
+| Example | Description |
+|---------|-------------|
+| [CMake autograder](examples/cmake-autograder.md) | Full grader for a C++ CMake project with output tests, valgrind, and scoring |
+| [Python autograder](examples/python-autograder.md) | Full grader for a Python project with pytest integration and source checks |
+| [Makefile autograder](examples/makefile-autograder.md) | Full grader for a C Makefile project |
+| [Custom step](examples/custom-step.md) | Writing, typing, and registering your own pipeline step |
+
+## Quick import reference
 
 ```python
 # Config
@@ -37,44 +42,45 @@ from lograder.pipeline.config import config
 with config(root_directory=Path("/submissions/s42"), executable_timeout=30.0):
     pipeline()
 
-# Steps — Input
+# Input
 from lograder.pipeline.input.local_directory import LocalDirectory
 
-# Steps — Check
+# Check
 from lograder.pipeline.check.project.simple_project import CMakeManifestCheck
-from lograder.pipeline.check.source import (
+from lograder.pipeline.check.source.source_check import (
     SourceCheck, OperatorConstraint, IdentifierConstraint,
     QualifiedNameConstraint, IncludeConstraint, ImportConstraint,
 )
 
-# Steps — Build
+# Build
 from lograder.pipeline.build.cmake import CMakeBuild
+from lograder.pipeline.build.makefile import MakefileBuild
 from lograder.pipeline.build.bash_script import BashScriptBuild
 from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
 
-# Steps — Test
-from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase
+# Test
+from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase, ComparisonMode
 from lograder.pipeline.test.valgrind import ValgrindTest, ValgrindCase
 from lograder.pipeline.test.file_output import FileOutputTest, FileOutputCase
 from lograder.pipeline.test.performance import PerformanceTest, PerformanceCase
 from lograder.pipeline.test.symbol import SymbolTest, SymbolCase
-from lograder.pipeline.test.catch2 import Catch2Test, Catch2Args
+from lograder.pipeline.test.catch2 import Catch2Test
 from lograder.pipeline.test.gtest import GTestTest
-from lograder.process.registry.gtest import GTestArgs
 from lograder.pipeline.test.ctest import CTestTest
-from lograder.process.registry.ctest import CTestArgs
 from lograder.pipeline.test.pytest import PytestTest
-from lograder.process.registry.pytest import PytestArgs
+
+# Scoring
+from lograder.pipeline.score import (
+    TestCaseScorer, AllOrNothingScorer, CleanRunScorer,
+    GimmeConfig, GradescopeConfig, GradescopeTestConfig,
+)
 
 # Result
 from lograder.common import Ok, Err, Result
 
-# Layouts (must import to register before any logger.packet() call)
+# Layout imports (must import to register before any logger.packet() call)
 import lograder.output.layout.process.executable
 import lograder.output.layout.project.simple_project
-import lograder.output.layout.check.source
-import lograder.output.layout.pipeline.bash_script
-import lograder.output.layout.pipeline.prebuilt
 import lograder.output.layout.test.output_compare
 import lograder.output.layout.test.valgrind
 import lograder.output.layout.test.file_output

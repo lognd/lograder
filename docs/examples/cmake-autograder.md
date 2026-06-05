@@ -1,0 +1,212 @@
+# Example: CMake autograder
+
+A complete grader for a C++ CMake project with output tests, Valgrind memory checking, performance tests, and source code checks.
+
+## Assignment spec
+
+Students submit a CMake project with:
+- `CMakeLists.txt`
+- `src/sorter.cpp`
+- `src/sorter.h`
+
+The project builds a `sorter` binary that reads integers from stdin and prints them sorted.
+
+## Score breakdown
+
+| Component | Points |
+|-----------|--------|
+| Files present | 0 (required gate) |
+| No forbidden operations | 10 |
+| Build | 10 |
+| Correctness | 60 |
+| Performance | 20 |
+| No memory leaks (extra credit) | +10 |
+| **Total** | **100 + 10 EC** |
+
+## Full autograder
+
+```python
+# autograder.py
+from pathlib import Path
+
+# Layout registrations — must come before any pipeline.add() or logger.packet() calls
+import lograder.output.layout.process.executable
+import lograder.output.layout.project.simple_project
+import lograder.output.layout.check.source
+import lograder.output.layout.test.output_compare
+import lograder.output.layout.test.valgrind
+import lograder.output.layout.test.performance
+
+from lograder.pipeline.config import config
+from lograder.pipeline.input.local_directory import LocalDirectory
+from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
+from lograder.pipeline.check.source.source_check import (
+    SourceCheck, OperatorConstraint, IdentifierConstraint, QualifiedNameConstraint,
+    IncludeConstraint,
+)
+from lograder.pipeline.build.cmake import CMakeBuild
+from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase, ComparisonMode
+from lograder.pipeline.test.valgrind import ValgrindTest, ValgrindCase
+from lograder.pipeline.test.performance import PerformanceTest, PerformanceCase
+from lograder.pipeline.score import (
+    AllOrNothingScorer, CleanRunScorer, TestCaseScorer,
+    GimmeConfig, GradescopeConfig,
+)
+from lograder.pipeline.pipeline import Pipeline
+
+# ── Manifest ──────────────────────────────────────────────────────────────────
+
+make_simple_manifest_checker(
+    "sorter",
+    required_files=["CMakeLists.txt", "src/sorter.cpp", "src/sorter.h"],
+)
+
+# ── Test cases ────────────────────────────────────────────────────────────────
+
+OUTPUT_CASES = [
+    OutputCompareCase(
+        name="empty",
+        args=[],
+        stdin=b"",
+        expected_stdout="",
+    ),
+    OutputCompareCase(
+        name="single",
+        args=[],
+        stdin=b"42\n",
+        expected_stdout="42\n",
+    ),
+    OutputCompareCase(
+        name="already_sorted",
+        args=[],
+        stdin=b"1\n2\n3\n",
+        expected_stdout="1\n2\n3\n",
+    ),
+    OutputCompareCase(
+        name="reverse_sorted",
+        args=[],
+        stdin=b"3\n2\n1\n",
+        expected_stdout="1\n2\n3\n",
+    ),
+    OutputCompareCase(
+        name="duplicates",
+        args=[],
+        stdin=b"5\n3\n3\n1\n",
+        expected_stdout="1\n3\n3\n5\n",
+    ),
+    OutputCompareCase(
+        name="negatives",
+        args=[],
+        stdin=b"-2\n0\n-1\n",
+        expected_stdout="-2\n-1\n0\n",
+        comparison=ComparisonMode.EXACT,
+    ),
+]
+
+VALGRIND_CASES = [
+    ValgrindCase(name="no_leaks_empty",  args=[], stdin=b"",        check_leaks=True),
+    ValgrindCase(name="no_leaks_normal", args=[], stdin=b"3\n1\n2\n", check_leaks=True),
+]
+
+PERF_CASES = [
+    PerformanceCase(name="perf_1k",   args=[], stdin="\n".join(str(i) for i in range(1000, 0, -1)).encode() + b"\n",  time_limit=1.0),
+    PerformanceCase(name="perf_100k", args=[], stdin="\n".join(str(i) for i in range(100000, 0, -1)).encode() + b"\n", time_limit=5.0),
+]
+
+# ── Pipeline ──────────────────────────────────────────────────────────────────
+
+pipeline = Pipeline()
+pipeline.add(inp    := LocalDirectory())
+pipeline.add(check  := CMakeManifestCheck())
+pipeline.add(source := SourceCheck(
+    files=["src/sorter.cpp"],
+    constraints=[
+        OperatorConstraint(operator="goto",      forbidden=True),
+        IdentifierConstraint(name="malloc",      forbidden=True),
+        IdentifierConstraint(name="free",        forbidden=True),
+        QualifiedNameConstraint(name="std::sort", forbidden=True),
+        IncludeConstraint(header="algorithm",    forbidden=True),
+    ],
+))
+pipeline.add(build  := CMakeBuild())
+pipeline.add(tests  := OutputCompareTest("sorter", OUTPUT_CASES))
+pipeline.add(vg     := ValgrindTest("sorter", VALGRIND_CASES))
+pipeline.add(perf   := PerformanceTest("sorter", PERF_CASES))
+
+# ── Scorers ───────────────────────────────────────────────────────────────────
+
+check.scorer  = AllOrNothingScorer(0.0, label="Files present")
+source.scorer = CleanRunScorer(10.0, label="No forbidden operations")
+build.scorer  = AllOrNothingScorer(10.0, label="Build")
+tests.scorer  = TestCaseScorer(
+    {
+        "empty":          10.0,
+        "single":         10.0,
+        "already_sorted": 10.0,
+        "reverse_sorted": 10.0,
+        "duplicates":     10.0,
+        "negatives":      10.0,
+    },
+    gimme=GimmeConfig(min_pass_fraction=0.25, points=10.0),
+    label="Correctness",
+)
+vg.scorer     = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory leaks")
+perf.scorer   = TestCaseScorer(
+    {"perf_1k": 10.0, "perf_100k": 10.0},
+    label="Performance",
+)
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    with config(root_directory=Path("/autograder/submission"), executable_timeout=60.0):
+        score = pipeline()
+
+    score.write_results_json(
+        config=GradescopeConfig(
+            visibility="visible",
+            stdout_visibility="hidden",
+        ),
+        output="Graded automatically. Contact course staff if you believe there is an error.",
+    )
+```
+
+## Testing locally
+
+Run against an instructor reference solution:
+
+```python
+# test_local.py
+from pathlib import Path
+from lograder.pipeline.config import config
+
+# Import the autograder (all the pipeline setup runs at module level)
+import autograder
+
+with config(root_directory=Path("/path/to/reference_solution")):
+    score = autograder.pipeline()
+
+total = score.total()
+print(f"Score: {total.earned}/{total.possible} + {total.extra_credit} EC")
+
+for step, contrib in score.contributions:
+    status = "✓" if contrib.earned >= contrib.possible else "✗"
+    print(f"  {status} {type(step).__name__}: {contrib.earned}/{contrib.possible}")
+```
+
+## Gradescope `setup.sh`
+
+```bash
+#!/usr/bin/env bash
+apt-get update -qq
+apt-get install -y cmake g++ valgrind python3 python3-pip
+pip3 install lograder
+```
+
+## Gradescope `run_autograder`
+
+```bash
+#!/usr/bin/env bash
+cd /autograder/source
+python3 autograder.py
+```
