@@ -6,8 +6,6 @@ from pathlib import Path
 
 import pytest
 
-import lograder.output.layout.process.executable
-import lograder.output.layout.test.gtest
 from lograder.pipeline.config import config
 from lograder.pipeline.test.gtest import (
     GTestError,

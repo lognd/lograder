@@ -29,14 +29,6 @@ The project builds a `sorter` binary that reads integers from stdin and prints t
 # autograder.py
 from pathlib import Path
 
-# Layout registrations — must come before any pipeline.add() or logger.packet() calls
-import lograder.output.layout.process.executable
-import lograder.output.layout.project.simple_project
-import lograder.output.layout.check.source
-import lograder.output.layout.test.output_compare
-import lograder.output.layout.test.valgrind
-import lograder.output.layout.test.performance
-
 from lograder.pipeline.config import config
 from lograder.pipeline.input.local_directory import LocalDirectory
 from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker

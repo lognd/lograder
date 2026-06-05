@@ -29,12 +29,6 @@ Create `autograder.py`:
 ```python
 from pathlib import Path
 
-# Layout imports must come first — they register packet types
-import lograder.output.layout.process.executable
-import lograder.output.layout.project.simple_project
-import lograder.output.layout.test.output_compare
-import lograder.output.layout.test.valgrind
-
 from lograder.pipeline.config import config
 from lograder.pipeline.input.local_directory import LocalDirectory
 from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
@@ -109,11 +103,6 @@ if __name__ == "__main__":
 
 ```python
 from pathlib import Path
-
-import lograder.output.layout.process.executable
-import lograder.output.layout.project.simple_project
-import lograder.output.layout.test.output_compare
-import lograder.output.layout.test.valgrind
 
 from lograder.pipeline.config import config
 from lograder.pipeline.input.local_directory import LocalDirectory

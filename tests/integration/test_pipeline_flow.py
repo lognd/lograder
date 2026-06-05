@@ -4,7 +4,6 @@ from typing import Generator
 import pytest
 from pydantic import BaseModel
 
-import lograder.output.layout.test.output_compare  # registers OutputCompare* layouts
 from lograder.common import Err, Ok, Result
 from lograder.output.layout.layout import Layout, register_layout
 from lograder.pipeline.pipeline import Pipeline

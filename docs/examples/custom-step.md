@@ -188,10 +188,6 @@ class ExitCodeTest(
 # autograder.py
 import mygrader.layouts.exit_code  # registers the layouts
 
-import lograder.output.layout.process.executable
-import lograder.output.layout.project.simple_project
-import lograder.output.layout.test.output_compare
-
 from mygrader.steps.exit_code import ExitCodeTest, ExitCodeCase
 from lograder.pipeline.score import TestCaseScorer
 

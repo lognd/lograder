@@ -81,17 +81,4 @@ from lograder.pipeline.metadata import GraderMetadata, StaffAuthor, Submitter
 
 # Result
 from lograder.common import Ok, Err, Result
-
-# Layout imports (must import to register before any logger.packet() call)
-import lograder.output.layout.process.executable
-import lograder.output.layout.project.simple_project
-import lograder.output.layout.test.output_compare
-import lograder.output.layout.test.valgrind
-import lograder.output.layout.test.file_output
-import lograder.output.layout.test.performance
-import lograder.output.layout.test.symbol
-import lograder.output.layout.test.catch2
-import lograder.output.layout.test.gtest
-import lograder.output.layout.test.ctest
-import lograder.output.layout.test.pytest
 ```

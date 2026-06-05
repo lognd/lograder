@@ -4,8 +4,6 @@ from pathlib import Path
 
 import pytest
 
-import lograder.output.layout.process.executable  # register ExecutableData layout
-import lograder.output.layout.test.differential  # register Differential* layouts
 from lograder.common import Err, Ok
 from lograder.pipeline.config import config
 from lograder.pipeline.test.differential import (

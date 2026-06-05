@@ -5,8 +5,6 @@ from __future__ import annotations
 
 import pytest
 
-import lograder.output.layout.process.executable
-import lograder.output.layout.test.pytest
 from lograder.pipeline.config import config
 from lograder.pipeline.test.pytest import (
     PytestError,

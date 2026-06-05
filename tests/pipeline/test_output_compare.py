@@ -5,8 +5,6 @@ from typing import Generator
 
 import pytest
 
-import lograder.output.layout.process.executable  # register ExecutableData layout
-import lograder.output.layout.test.output_compare  # register OutputCompare* layouts
 from lograder.common import Err, Ok, Result
 from lograder.pipeline.config import config
 from lograder.pipeline.test.output_compare import (

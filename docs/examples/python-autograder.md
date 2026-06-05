@@ -24,12 +24,6 @@ Students submit a Python project with:
 # autograder.py
 from pathlib import Path
 
-import lograder.output.layout.process.executable
-import lograder.output.layout.project.simple_project
-import lograder.output.layout.check.source
-import lograder.output.layout.test.output_compare
-import lograder.output.layout.test.pytest
-
 from lograder.pipeline.config import config
 from lograder.pipeline.input.local_directory import LocalDirectory
 from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker

@@ -6,8 +6,6 @@ from pathlib import Path
 
 import pytest
 
-import lograder.output.layout.process.executable
-import lograder.output.layout.test.catch2
 from lograder.pipeline.config import config
 from lograder.pipeline.test.catch2 import (
     Catch2Args,

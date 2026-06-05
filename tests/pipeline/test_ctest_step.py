@@ -6,8 +6,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import lograder.output.layout.process.executable
-import lograder.output.layout.test.ctest
 from lograder.common import Empty, Ok
 from lograder.common.empty import Empty as EmptyClass
 from lograder.pipeline.config import config

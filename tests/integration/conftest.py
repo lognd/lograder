@@ -4,14 +4,6 @@ from pathlib import Path
 
 import pytest
 
-import lograder.output.layout.pipeline.build  # noqa: F401
-import lograder.output.layout.pipeline.mixin  # noqa: F401
-import lograder.output.layout.process.executable  # noqa: F401
-import lograder.output.layout.project.simple_project  # noqa: F401
-import lograder.output.layout.test.file_output  # noqa: F401
-import lograder.output.layout.test.output_compare  # noqa: F401
-import lograder.output.layout.test.performance  # noqa: F401
-import lograder.output.layout.test.valgrind  # noqa: F401
 from lograder.common import Ok, Unreachable
 from lograder.pipeline.build.build import make_build_output
 from lograder.pipeline.build.cmake import CMakeBuild

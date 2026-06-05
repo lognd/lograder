@@ -3,10 +3,6 @@
 
 from __future__ import annotations
 
-import lograder.output.layout.test.catch2
-import lograder.output.layout.test.ctest
-import lograder.output.layout.test.gtest
-import lograder.output.layout.test.pytest
 from lograder.output.layout.layout import dispatch_layout
 from lograder.pipeline.test.catch2 import Catch2Error, Catch2Failure, Catch2Success
 from lograder.pipeline.test.ctest import CTestError, CTestFailure, CTestSuccess

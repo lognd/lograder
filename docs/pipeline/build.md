@@ -150,10 +150,6 @@ from lograder.pipeline.build.cmake import CMakeBuild
 from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase
 from lograder.pipeline.score import AllOrNothingScorer
 
-import lograder.output.layout.process.executable
-import lograder.output.layout.project.simple_project
-import lograder.output.layout.test.output_compare
-
 make_simple_manifest_checker("sorter", required_files=["CMakeLists.txt", "sorter.cpp"])
 
 cases = [
@@ -176,10 +172,6 @@ with config(root_directory=Path("/autograder/submission")):
 ## Full Makefile pipeline example
 
 ```python
-import lograder.output.layout.process.executable
-import lograder.output.layout.project.simple_project
-import lograder.output.layout.test.output_compare
-
 from lograder.pipeline.build.makefile import MakefileBuild
 from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
 from lograder.pipeline.types.artifacts import FileArtifact
