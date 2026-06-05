@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lograder"
-version = "0.2.3"
+version = "0.2.4"
 description = "A general-purpose autograder written primarily in Python 3."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -45,7 +45,7 @@ Issues = "https://github.com/lognd/lograder/issues"
 packages = { find = { where = ["src"] } }
 
 [tool.setuptools.package-data]
-lograder = ["py.typed", "data/install_scripts/*.sh", "data/html/*"]
+lograder = ["py.typed", "data/html/*", "data/install_scripts/*.sh", "output/config.toml"]
 
 [tool.ruff]
 line-length = 88
