@@ -56,7 +56,7 @@ r.danger_err  # AssertionError
 
 # Transform
 r.map(lambda x: x * 2)          # Ok(84)
-r.map_err(lambda e: e.upper())   # Ok(42) unchanged
+r.map_err(lambda e: e.upper())  # Ok(42) unchanged
 r.and_then(lambda x: Ok(x + 1)) # Ok(43)
 
 # Swap the contained type without changing Ok/Err

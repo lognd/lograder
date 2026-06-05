@@ -6,7 +6,8 @@ from lograder.common import Unreachable, Result, Ok, Err
 from lograder.process.registry.makefile import MakefileArgs, MakefileExecutable
 from lograder.pipeline.build.build import Build, BuildOutput, make_build_output
 from lograder.pipeline.check.project.simple_project import MakefileManifest
-from lograder.pipeline.types.artifacts import Artifact
+from lograder.pipeline.types.artifacts import Artifact, FileArtifact
+from lograder.process.parsers.makefile import artifacts_from_makefile
 
 
 @final
@@ -32,9 +33,7 @@ class MakefileBuild(
         None,
         Result[dict[str, Artifact], BuildOutput],
     ]:
-        makefile = Path(
-            input.root / "Makefile"
-        )  # This must exist because of MakefileManifest check.
+        makefile = input.root / "Makefile"
 
         make_args = MakefileArgs(directory=input.root)
         make_output = self.executable(make_args)
@@ -44,5 +43,13 @@ class MakefileBuild(
             return make_info.swap_ok(dict[str, Artifact])
         yield make_info.swap_err(Unreachable)
 
-        # TODO: create Makefile parsing.
-        return Ok({})
+        # Parse the Makefile to discover built artifacts
+        source_files = input._files  # list[Path], absolute
+        expected = artifacts_from_makefile(makefile, source_files)
+
+        artifacts: dict[str, Artifact] = {}
+        for name, path in expected.items():
+            if path.is_file():
+                artifacts[name] = FileArtifact(path=path)
+
+        return Ok(artifacts)
