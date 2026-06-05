@@ -154,6 +154,28 @@ total.total    # earned + extra_credit
 
 ---
 
+## Metadata block
+
+Attach a `GraderMetadata` to automatically include authorship, submission time, late detection, and library attribution in the Gradescope output. See [Metadata](metadata.md) for the full reference.
+
+```python
+from lograder.pipeline.metadata import GraderMetadata, StaffAuthor
+
+metadata = GraderMetadata(
+    grader_name="CS101 Lab 3",
+    authors=[StaffAuthor(name="Prof. Smith", role="Instructor")],
+    due_date=datetime(2024, 3, 15, 23, 59, tzinfo=timezone.utc),
+)
+
+with config(root_directory=Path("/autograder/submission")):
+    score = pipeline(metadata=metadata)   # auto-stamps submission_time
+
+score.write_results_json(config=GradescopeConfig(visibility="visible"))
+# → metadata block is prepended to the output field automatically
+```
+
+---
+
 ## Gradescope output
 
 ### `GradescopeConfig`

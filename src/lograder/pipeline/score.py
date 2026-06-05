@@ -10,6 +10,7 @@ from lograder.common import Result
 from lograder.pipeline.test.test import TestFailure, TestSuccess
 
 if TYPE_CHECKING:
+    from lograder.pipeline.metadata import GraderMetadata
     from lograder.pipeline.step import Step
 
 
@@ -105,9 +106,13 @@ class PipelineScore:
 
     ``contributions`` includes ALL scored steps  -  both completed and skipped due to early
     exit. Skipped steps contribute 0/possible so the total ``possible`` is always accurate.
+
+    ``metadata`` is carried from ``Pipeline.__call__(metadata=...)`` and is automatically
+    included in the ``output`` block of ``to_gradescope_dict()`` / ``write_results_json()``.
     """
 
     contributions: list[tuple[Step, ScoreContribution]] = field(default_factory=list)
+    metadata: GraderMetadata | None = None
 
     def add(self, step: Step, contribution: ScoreContribution) -> None:
         self.contributions.append((step, contribution))
@@ -124,6 +129,7 @@ class PipelineScore:
         *,
         config: GradescopeConfig | None = None,
         output: str = "",
+        metadata: GraderMetadata | None = None,
     ) -> dict[str, Any]:
         """Return a Gradescope-compatible results dict.
 
@@ -133,7 +139,11 @@ class PipelineScore:
 
         ``output`` is a shorthand for ``config.output`` when you only need
         to set the top-level message and nothing else.
+
+        ``metadata`` overrides ``self.metadata`` if supplied. The metadata
+        block is prepended to ``output`` automatically.
         """
+        effective_metadata = metadata if metadata is not None else self.metadata
         cfg = config or GradescopeConfig(output=output)
         if output and not cfg.output:
             cfg = GradescopeConfig(
@@ -147,6 +157,13 @@ class PipelineScore:
                 extra_data=cfg.extra_data,
                 leaderboard=cfg.leaderboard,
             )
+
+        # Prepend metadata block to output
+        if effective_metadata is not None:
+            meta_block = effective_metadata.to_display_string()
+            combined = meta_block + ("\n\n" + cfg.output if cfg.output else "")
+            from dataclasses import replace as _replace
+            cfg = _replace(cfg, output=combined)
 
         tests = []
         for step, c in self.contributions:
@@ -206,14 +223,17 @@ class PipelineScore:
         config: GradescopeConfig | None = None,
         output: str = "",
         path: Path | None = None,
+        metadata: GraderMetadata | None = None,
     ) -> None:
         """Serialize results to a JSON file (default: ``/autograder/results/results.json``).
 
         Creates parent directories if they do not exist.
+
+        ``metadata`` overrides ``self.metadata`` if supplied.
         """
         dest = path or GRADESCOPE_RESULTS_PATH
         dest.parent.mkdir(parents=True, exist_ok=True)
-        data = self.to_gradescope_dict(config=config, output=output)
+        data = self.to_gradescope_dict(config=config, output=output, metadata=metadata)
         dest.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from lograder.common import Result
 from lograder.exception import DeveloperException, StaffException
 from lograder.output import get_logger
+from lograder.pipeline.metadata import GraderMetadata
 from lograder.pipeline.score import PipelineScore
 from lograder.pipeline.step import Step
 from lograder.pipeline.types.sentinel import PIPELINE_START
@@ -20,6 +22,9 @@ class Pipeline:
         self.datum: Any = PIPELINE_START()
         # TODO: implement validation for pipeline.
 
+    def add(self, step: Step) -> None:
+        self.steps.append(step)
+
     def validate_step_types(self) -> None:
         if len(self.steps) == 0:
             raise DeveloperException(
@@ -30,8 +35,12 @@ class Pipeline:
                 prev_step.__class__, origin_exception_type=StaffException
             )
 
-    def __call__(self) -> PipelineScore:
-        score = PipelineScore()
+    def __call__(self, metadata: GraderMetadata | None = None) -> PipelineScore:
+        # Auto-stamp submission_time if not already set
+        if metadata is not None and metadata.submission_time is None:
+            metadata = metadata.with_submission_time_now()
+
+        score = PipelineScore(metadata=metadata)
         stop_index = len(self.steps)
         for i, step in enumerate(self.steps):
             gen = step(self.datum)

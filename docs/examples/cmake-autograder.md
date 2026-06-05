@@ -52,6 +52,7 @@ from lograder.pipeline.score import (
     AllOrNothingScorer, CleanRunScorer, TestCaseScorer,
     GimmeConfig, GradescopeConfig,
 )
+from lograder.pipeline.metadata import GraderMetadata, StaffAuthor
 from lograder.pipeline.pipeline import Pipeline
 
 # ── Manifest ──────────────────────────────────────────────────────────────────
@@ -159,15 +160,22 @@ perf.scorer   = TestCaseScorer(
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    metadata = GraderMetadata.from_gradescope(
+        grader_name="CS101 Lab 3 — Sorter",
+        course="CSCI 101",
+        version="2024.1",
+        authors=[StaffAuthor(name="Prof. Smith", email="smith@uni.edu", role="Instructor")],
+        notes="Contact course staff if you believe there is a grading error.",
+    )
+
     with config(root_directory=Path("/autograder/submission"), executable_timeout=60.0):
-        score = pipeline()
+        score = pipeline(metadata=metadata)
 
     score.write_results_json(
         config=GradescopeConfig(
             visibility="visible",
             stdout_visibility="hidden",
         ),
-        output="Graded automatically. Contact course staff if you believe there is an error.",
     )
 ```
 

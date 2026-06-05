@@ -17,6 +17,7 @@
 | [Build](pipeline/build.md) | `CMakeBuild`, `MakefileBuild`, `BashScriptBuild`, `PrebuiltArtifacts` |
 | [Test](pipeline/test.md) | `OutputCompareTest`, `ValgrindTest`, `FileOutputTest`, `PerformanceTest`, `SymbolTest`, `Catch2Test`, `GTestTest`, `CTestTest`, `PytestTest` |
 | [Scoring](pipeline/scoring.md) | `AllOrNothingScorer`, `CleanRunScorer`, `TestCaseScorer`, gimme floors, Gradescope output |
+| [Metadata](pipeline/metadata.md) | `GraderMetadata`, `StaffAuthor`, attribution, submission time, late detection |
 
 ### Supporting layers
 
@@ -74,6 +75,9 @@ from lograder.pipeline.score import (
     TestCaseScorer, AllOrNothingScorer, CleanRunScorer,
     GimmeConfig, GradescopeConfig, GradescopeTestConfig,
 )
+
+# Metadata & attribution
+from lograder.pipeline.metadata import GraderMetadata, StaffAuthor, Submitter
 
 # Result
 from lograder.common import Ok, Err, Result
