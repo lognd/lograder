@@ -102,5 +102,5 @@ setup_logger(Path("my_config.toml"))
 ```
 
 Key things to customize:
-- `[handlers.student]` -> `output_file` -- path for the HTML report (default `out.html`)
+- `[handlers.student]` to `output_file` -- path for the HTML report (default `out.html`)
 - Handler log level -- control which packets appear in which output

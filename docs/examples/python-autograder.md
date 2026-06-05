@@ -73,7 +73,7 @@ pipeline.add(check  := PyProjectManifestCheck())
 pipeline.add(source := SourceCheck(
     files=["graph.py"],
     constraints=[
-        ImportConstraint(module="networkx",  forbidden=True),  # must implement from scratch
+        ImportConstraint(module="networkx",          forbidden=True),  # must implement from scratch
         ImportConstraint(module="collections.deque", forbidden=False),  # allowed
     ],
 ))

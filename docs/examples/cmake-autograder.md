@@ -97,12 +97,12 @@ OUTPUT_CASES = [
 ]
 
 VALGRIND_CASES = [
-    ValgrindCase(name="no_leaks_empty",  args=[], stdin=b"",        check_leaks=True),
+    ValgrindCase(name="no_leaks_empty",  args=[], stdin=b"",          check_leaks=True),
     ValgrindCase(name="no_leaks_normal", args=[], stdin=b"3\n1\n2\n", check_leaks=True),
 ]
 
 PERF_CASES = [
-    PerformanceCase(name="perf_1k",   args=[], stdin="\n".join(str(i) for i in range(1000, 0, -1)).encode() + b"\n",  time_limit=1.0),
+    PerformanceCase(name="perf_1k",   args=[], stdin="\n".join(str(i) for i in range(1000, 0, -1)).encode() + b"\n",   time_limit=1.0),
     PerformanceCase(name="perf_100k", args=[], stdin="\n".join(str(i) for i in range(100000, 0, -1)).encode() + b"\n", time_limit=5.0),
 ]
 
@@ -114,11 +114,11 @@ pipeline.add(check  := CMakeManifestCheck())
 pipeline.add(source := SourceCheck(
     files=["src/sorter.cpp"],
     constraints=[
-        OperatorConstraint(operator="goto",      forbidden=True),
-        IdentifierConstraint(name="malloc",      forbidden=True),
-        IdentifierConstraint(name="free",        forbidden=True),
+        OperatorConstraint(operator="goto",       forbidden=True),
+        IdentifierConstraint(name="malloc",       forbidden=True),
+        IdentifierConstraint(name="free",         forbidden=True),
         QualifiedNameConstraint(name="std::sort", forbidden=True),
-        IncludeConstraint(header="algorithm",    forbidden=True),
+        IncludeConstraint(header="algorithm",     forbidden=True),
     ],
 ))
 pipeline.add(build  := CMakeBuild())
