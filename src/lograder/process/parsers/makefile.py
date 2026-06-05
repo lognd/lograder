@@ -118,20 +118,11 @@ def _expand_vars(value: str, variables: dict[str, str], depth: int = 0) -> str:
             continue
 
         next_ch = value[i + 1]
-        if next_ch == "(":
-            close_idx = _find_close(value, i + 2, ")")
+        if next_ch in ("(", "{"):
+            close_ch = ")" if next_ch == "(" else "}"
+            close_idx = _find_close(value, i + 2, close_ch)
             if close_idx < 0:
                 # Unclosed -- emit literally
-                result.append(value[i])
-                i += 1
-                continue
-            inner = value[i + 2 : close_idx]
-            inner = _expand_vars(inner, variables, depth + 1)
-            result.append(_eval_ref(inner, variables))
-            i = close_idx + 1
-        elif next_ch == "{":
-            close_idx = _find_close(value, i + 2, "}")
-            if close_idx < 0:
                 result.append(value[i])
                 i += 1
                 continue

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic
 
 from pydantic import field_validator, model_validator
 from typing_extensions import Self
@@ -26,6 +26,7 @@ from lograder.process.registry.common import (
 )
 
 if TYPE_CHECKING:
+    # noinspection PyUnresolvedReferences
     from _strenum_compat import StrEnum
 else:
     try:

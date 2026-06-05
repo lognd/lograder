@@ -8,7 +8,6 @@ from pydantic import field_validator, model_validator
 from typing_extensions import Self
 
 from lograder.process.cli_args import (
-    CLI_ARG_MISSING,
     CLIArgs,
     CLIMultiOption,
     CLIOption,

@@ -16,6 +16,7 @@ from lograder.process.cli_args import (
 from lograder.process.executable import TypedExecutable, register_typed_executable
 
 if TYPE_CHECKING:
+    # noinspection PyUnresolvedReferences
     from _strenum_compat import StrEnum
 else:
     try:

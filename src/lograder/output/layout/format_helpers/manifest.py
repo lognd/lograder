@@ -44,6 +44,7 @@ _MANIFEST_FUZZY_BLURB_MAP: dict[ManifestItemStatus, str] = {
 }
 
 
+# noinspection PyTypeHints
 def render_manifest_tree(
     manifest_expected: DirectoryMapping, manifest_received: DirectoryMapping
 ) -> list[list[str]]:
@@ -109,6 +110,7 @@ def render_manifest_tree(
     return lines
 
 
+# noinspection PyTypeHints
 def render_manifest_diff(
     manifest_expected: DirectoryMapping,
     manifest_received: DirectoryMapping,

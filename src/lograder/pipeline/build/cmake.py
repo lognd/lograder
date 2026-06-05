@@ -1,16 +1,15 @@
 from typing import final, Generator
 
-from lograder.common import Unreachable, Result, Ok, Err
+from lograder.common import Unreachable, Result, Ok
 from lograder.process.registry.cmake import (
     CMakeConfigureArgs,
     CMakeBuildArgs,
-    CMakeInstallArgs,
     CMakeExecutable,
 )
 from lograder.process.parsers.cmake import cmake_artifacts_from_file_api
 from lograder.pipeline.build.build import Build, BuildOutput, make_build_output
 from lograder.pipeline.check.project.simple_project import CMakeManifest
-from lograder.pipeline.types.artifacts import Artifact, CMakeArtifact, FileArtifact
+from lograder.pipeline.types.artifacts import Artifact, FileArtifact
 
 
 @final

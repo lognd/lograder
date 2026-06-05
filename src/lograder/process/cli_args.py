@@ -3,7 +3,6 @@ from typing import (
     Any,
     Callable,
     Iterable,
-    Literal,
     Mapping,
     Optional,
     Sequence,

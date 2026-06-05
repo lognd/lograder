@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Generator, Literal, TypeAlias, overload
+from typing import Generator, Literal, TypeAlias
 
 from ....common import Result, Unreachable
 from ...types.parcels import Manifest

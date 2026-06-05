@@ -1,8 +1,6 @@
-from typing import final, Generator
-from pathlib import Path
+from typing import Generator, final
 
-
-from lograder.common import Unreachable, Result, Ok, Err
+from lograder.common import Ok, Result, Unreachable
 from lograder.process.registry.makefile import MakefileArgs, MakefileExecutable
 from lograder.pipeline.build.build import Build, BuildOutput, make_build_output
 from lograder.pipeline.check.project.simple_project import MakefileManifest

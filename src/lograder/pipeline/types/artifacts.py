@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
-from lograder.process.executable import (
-    ExecutableInput,
-    ExecutableOptions,
-    ExecutableOutput,
-    StaticExecutable,
-)
+from lograder.process.executable import StaticExecutable
 
 
 class Artifact(BaseModel):

@@ -34,3 +34,19 @@ class TestError(BaseModel):
 
 
 class Test(Step[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC): ...
+
+
+class JUnitTestSuccess(TestSuccess):
+    __test__: bool = False
+    duration: float | None
+
+
+class JUnitTestFailure(TestFailure):
+    __test__: bool = False
+    duration: float | None
+    failure_message: str
+    failure_text: str
+
+
+class JUnitTestError(TestError):
+    __test__: bool = False

@@ -17,6 +17,7 @@ from lograder.process.os_helpers import is_posix
 from lograder.process.registry.bash import BashExecutable, BashScriptArgs
 
 if TYPE_CHECKING:
+    # noinspection PyUnresolvedReferences
     from _strenum_compat import StrEnum
 else:
     try:

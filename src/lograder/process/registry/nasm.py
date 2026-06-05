@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pydantic import field_validator
-from typing_extensions import Self
 
 from lograder.process.cli_args import (
     CLIArgs,
@@ -19,6 +18,7 @@ from lograder.process.os_helpers import is_posix
 from lograder.process.registry.bash import BashExecutable, BashScriptArgs
 
 if TYPE_CHECKING:
+    # noinspection PyUnresolvedReferences
     from _strenum_compat import StrEnum
 else:
     try:

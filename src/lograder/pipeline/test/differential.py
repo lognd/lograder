@@ -3,8 +3,6 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Generator, final
 
-from pydantic import BaseModel, Field
-
 from lograder.common import Err, Ok, Result
 from lograder.pipeline.test.oracle import OracleInput
 from lograder.pipeline.test.output_compare import compare_outputs

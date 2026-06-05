@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic
 
 from lograder.exception import DeveloperException
 from lograder.process.cli_args import CLI_ARG_MISSING, CLIOption, CLIPresenceFlag

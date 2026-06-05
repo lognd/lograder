@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from lograder.common import Err, Ok, Result
 from lograder.pipeline.test.test import Test, TestError
 from lograder.pipeline.types.artifacts import Artifact, FileArtifact
-from lograder.process.executable import ExecutableInput, ExecutableOptions
+from lograder.process.executable import ExecutableOptions
 from lograder.process.parsers.nm import parse_nm_output
 from lograder.process.registry.nm import NmArgs, NmExecutable
 

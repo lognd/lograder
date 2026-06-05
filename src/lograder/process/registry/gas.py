@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any
 
 from pydantic import field_validator
-from typing_extensions import Self
 
 from lograder.process.cli_args import (
     CLIArgs,

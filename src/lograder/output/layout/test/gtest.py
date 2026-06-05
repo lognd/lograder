@@ -1,24 +1,20 @@
 from __future__ import annotations
 
 from colorama import Fore as F
-from colorama import Style as S
 
+from lograder.output.layout.format_helpers.test_layout import ERROR as _ERROR
+from lograder.output.layout.format_helpers.test_layout import PASS as _PASS
+from lograder.output.layout.format_helpers.test_layout import (
+    duration_str as _duration_str,
+)
+from lograder.output.layout.format_helpers.test_layout import (
+    junit_failure_ansi as _junit_failure_ansi,
+)
+from lograder.output.layout.format_helpers.test_layout import (
+    junit_failure_simple as _junit_failure_simple,
+)
 from lograder.output.layout.layout import Layout, register_layout
 from lograder.pipeline.test.gtest import GTestError, GTestFailure, GTestSuccess
-
-_PASS = f"{S.BRIGHT}{F.GREEN}[PASS]{F.RESET}{S.RESET_ALL}"
-_FAIL = f"{S.BRIGHT}{F.RED}[FAIL]{F.RESET}{S.RESET_ALL}"
-_ERROR = f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
-
-
-def _duration_str(d: float | None) -> str:
-    return f" ({d:.3f}s)" if d is not None else ""
-
-
-def _truncate(text: str, limit: int = 800) -> str:
-    if len(text) <= limit:
-        return text
-    return text[:limit] + f"\n... ({len(text) - limit} chars truncated)"
 
 
 @register_layout("gtest-success")
@@ -43,28 +39,23 @@ class GTestSuccessLayout(Layout[GTestSuccess]):
 class GTestFailureLayout(Layout[GTestFailure]):
     @classmethod
     def to_simple(cls, data: GTestFailure) -> str:
-        parts = [
-            f"[FAIL] `{data.artifact_name}` - {data.test_name}"
-            f"{_duration_str(data.duration)}\n",
-        ]
-        if data.failure_message:
-            parts.append(f"  {data.failure_message}\n")
-        if data.failure_text:
-            parts.append(f"{_truncate(data.failure_text)}\n")
-        return "".join(parts)
+        return _junit_failure_simple(
+            data.artifact_name,
+            data.test_name,
+            data.duration,
+            data.failure_message,
+            data.failure_text,
+        )
 
     @classmethod
     def to_ansi(cls, data: GTestFailure) -> str:
-        parts = [
-            f"{_FAIL}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}` - {data.test_name}"
-            f"{F.YELLOW}{_duration_str(data.duration)}{F.RESET}\n",
-        ]
-        if data.failure_message:
-            parts.append(f"  {F.RED}{data.failure_message}{F.RESET}\n")
-        if data.failure_text:
-            parts.append(f"{_truncate(data.failure_text)}\n")
-        return "".join(parts)
+        return _junit_failure_ansi(
+            data.artifact_name,
+            data.test_name,
+            data.duration,
+            data.failure_message,
+            data.failure_text,
+        )
 
 
 @register_layout("gtest-error")

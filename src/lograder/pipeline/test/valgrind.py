@@ -23,6 +23,7 @@ from lograder.process.parsers.valgrind import (
 )
 from lograder.process.registry.valgrind import ValgrindExecutable
 
+# noinspection PyTypeChecker
 _VALGRIND: ValgrindExecutable = ValgrindExecutable()
 
 

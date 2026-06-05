@@ -1,7 +1,4 @@
-import datetime as dt
-import json
 import logging
-from typing import Optional
 
 from lograder.exception import DeveloperException
 from lograder.output.layout import SupportedFormat, dispatch_layout

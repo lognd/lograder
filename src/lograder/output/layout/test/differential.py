@@ -1,29 +1,18 @@
 from __future__ import annotations
 
 from colorama import Fore as F
-from colorama import Style as S
 
+from lograder.output.layout.format_helpers.test_layout import ERROR as _ERROR
+from lograder.output.layout.format_helpers.test_layout import FAIL as _FAIL
+from lograder.output.layout.format_helpers.test_layout import PASS as _PASS
+from lograder.output.layout.format_helpers.test_layout import args_str as _args_str
+from lograder.output.layout.format_helpers.test_layout import truncate as _truncate
 from lograder.output.layout.layout import Layout, register_layout
 from lograder.pipeline.test.differential import (
     DifferentialError,
     DifferentialFailure,
     DifferentialSuccess,
 )
-from lograder.process.os_helpers import command_to_str
-
-_PASS = f"{S.BRIGHT}{F.GREEN}[PASS]{F.RESET}{S.RESET_ALL}"
-_FAIL = f"{S.BRIGHT}{F.RED}[FAIL]{F.RESET}{S.RESET_ALL}"
-_ERROR = f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
-
-
-def _args_str(args: list[str]) -> str:
-    return f" {command_to_str(args)}" if args else ""
-
-
-def _truncate(text: str, limit: int = 2000) -> str:
-    if len(text) <= limit:
-        return text
-    return text[:limit] + f"\n... ({len(text) - limit} chars truncated)"
 
 
 @register_layout("differential-success")

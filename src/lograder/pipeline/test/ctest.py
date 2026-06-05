@@ -7,7 +7,12 @@ from pathlib import Path
 from typing import Generator, final
 
 from lograder.common import Err, Ok, Result
-from lograder.pipeline.test.test import Test, TestError, TestFailure, TestSuccess
+from lograder.pipeline.test.test import (
+    JUnitTestError,
+    JUnitTestFailure,
+    JUnitTestSuccess,
+    Test,
+)
 from lograder.pipeline.types.artifacts import Artifact, CMakeArtifact
 from lograder.process.executable import ExecutableInput, ExecutableOptions
 from lograder.process.parsers.junit import JUnitTestCase, parse_junit_xml
@@ -21,22 +26,16 @@ __test__: bool = False
 # ---------------------------------------------------------------------------
 
 
-class CTestSuccess(TestSuccess):
-    __test__: bool = False
+class CTestSuccess(JUnitTestSuccess):
     suite_name: str
-    duration: float | None
 
 
-class CTestFailure(TestFailure):
-    __test__: bool = False
+class CTestFailure(JUnitTestFailure):
     suite_name: str
-    duration: float | None
-    failure_message: str
-    failure_text: str
 
 
-class CTestError(TestError):
-    __test__: bool = False
+class CTestError(JUnitTestError):
+    pass
 
 
 # ---------------------------------------------------------------------------

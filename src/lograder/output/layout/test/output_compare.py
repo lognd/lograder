@@ -1,29 +1,24 @@
 from __future__ import annotations
 
 from colorama import Fore as F
-from colorama import Style as S
 
+from lograder.output.layout.format_helpers.test_layout import ERROR as _ERROR
+from lograder.output.layout.format_helpers.test_layout import FAIL as _FAIL
+from lograder.output.layout.format_helpers.test_layout import PASS as _PASS
+from lograder.output.layout.format_helpers.test_layout import args_str as _args_str
+from lograder.output.layout.format_helpers.test_layout import (
+    exit_code_stdin_ansi as _exit_code_stdin_ansi,
+)
+from lograder.output.layout.format_helpers.test_layout import (
+    exit_code_stdin_simple as _exit_code_stdin_simple,
+)
+from lograder.output.layout.format_helpers.test_layout import truncate as _truncate
 from lograder.output.layout.layout import Layout, register_layout
 from lograder.pipeline.test.output_compare import (
     OutputCompareError,
     OutputCompareFailure,
     OutputCompareSuccess,
 )
-from lograder.process.os_helpers import command_to_str
-
-_PASS = f"{S.BRIGHT}{F.GREEN}[PASS]{F.RESET}{S.RESET_ALL}"
-_FAIL = f"{S.BRIGHT}{F.RED}[FAIL]{F.RESET}{S.RESET_ALL}"
-_ERROR = f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
-
-
-def _args_str(args: list[str]) -> str:
-    return f" {command_to_str(args)}" if args else ""
-
-
-def _truncate(text: str, limit: int = 2000) -> str:
-    if len(text) <= limit:
-        return text
-    return text[:limit] + f"\n... ({len(text) - limit} chars truncated)"
 
 
 @register_layout("output-compare-success")
@@ -50,16 +45,9 @@ class OutputCompareFailureLayout(Layout[OutputCompareFailure]):
         ]
         if data.diff:
             parts.append(f"Output diff (expected -> actual):\n{_truncate(data.diff)}\n")
-        if (
-            data.expected_exit_code is not None
-            and data.actual_exit_code != data.expected_exit_code
-        ):
-            parts.append(
-                f"Exit code: expected {data.expected_exit_code},"
-                f" got {data.actual_exit_code}.\n"
-            )
-        if data.stdin_text:
-            parts.append(f"stdin: {repr(data.stdin_text)}\n")
+        _exit_code_stdin_simple(
+            parts, data.expected_exit_code, data.actual_exit_code, data.stdin_text
+        )
         return "".join(parts)
 
     @classmethod
@@ -74,16 +62,9 @@ class OutputCompareFailureLayout(Layout[OutputCompareFailure]):
                 f"{F.YELLOW}Output diff (expected -> actual):{F.RESET}\n"
                 f"{_truncate(data.diff)}\n"
             )
-        if (
-            data.expected_exit_code is not None
-            and data.actual_exit_code != data.expected_exit_code
-        ):
-            parts.append(
-                f"Exit code: expected {F.GREEN}{data.expected_exit_code}{F.RESET},"
-                f" got {F.RED}{data.actual_exit_code}{F.RESET}.\n"
-            )
-        if data.stdin_text:
-            parts.append(f"stdin: {F.YELLOW}{repr(data.stdin_text)}{F.RESET}\n")
+        _exit_code_stdin_ansi(
+            parts, data.expected_exit_code, data.actual_exit_code, data.stdin_text
+        )
         return "".join(parts)
 
 

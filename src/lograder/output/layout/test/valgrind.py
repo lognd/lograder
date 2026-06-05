@@ -3,6 +3,8 @@ from __future__ import annotations
 from colorama import Fore as F
 from colorama import Style as S
 
+from lograder.output.layout.format_helpers.test_layout import ERROR as _ERROR
+from lograder.output.layout.format_helpers.test_layout import args_str as _args_str
 from lograder.output.layout.layout import Layout, register_layout
 from lograder.pipeline.test.valgrind import (
     ValgrindError,
@@ -10,15 +12,9 @@ from lograder.pipeline.test.valgrind import (
     ValgrindTestFailure,
     ValgrindTestSuccess,
 )
-from lograder.process.os_helpers import command_to_str
 
 _CLEAN = f"{S.BRIGHT}{F.GREEN}[CLEAN]{F.RESET}{S.RESET_ALL}"
 _ERRORS = f"{S.BRIGHT}{F.RED}[ERRORS]{F.RESET}{S.RESET_ALL}"
-_ERROR = f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
-
-
-def _args_str(args: list[str]) -> str:
-    return f" {command_to_str(args)}" if args else ""
 
 
 def _format_vg_error_simple(err: ValgrindError) -> str:

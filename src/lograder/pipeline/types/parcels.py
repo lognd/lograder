@@ -159,6 +159,7 @@ class ManifestComparisonSummary(BaseModel):
 class Manifest(Package):
     """Represents a project's file/directory tree. Supports structural comparison (== exact, <= subset) and construction from directory scan, TOML, or flat path list."""
 
+    # noinspection PyTypeHints
     def __init__(self, structure: DirectoryMapping, *, root: Path):
         super().__init__()
         self._mapping = structure
@@ -181,6 +182,7 @@ class Manifest(Package):
                 f"Directory, `{str(dir)}`, is outside configured root directory, `{str(root)}`."
             )
 
+        # noinspection PyTypeHints
         def build_mapping(current: Path) -> DirectoryMapping:
             items: DirectoryMapping = []
 
@@ -241,6 +243,7 @@ class Manifest(Package):
                 f"(See traceback for more info.)"
             ) from e
 
+        # noinspection PyTypeHints
         def parse_node(node: Any, *, where: str = "root") -> DirectoryMapping:
             if isinstance(node, list):
                 out: DirectoryMapping = []
@@ -262,7 +265,7 @@ class Manifest(Package):
                 f"Manifest TOML node at `{where}` must be a list; got `{type(node).__name__}`."
             )
 
-        # noinspection PyTypeChecker
+        # noinspection PyTypeChecker,PyTypeHints
         def parse_directory_dict(node: Any, *, where: str) -> DirectoryDict:
             if not isinstance(node, dict):
                 raise StaffException(
@@ -361,6 +364,7 @@ class Manifest(Package):
                 )
             node["files"].add(file_name)
 
+        # noinspection PyTypeHints
         def emit_mapping(node: TrieNode) -> DirectoryMapping:
             out: DirectoryMapping = []
 
@@ -483,6 +487,7 @@ class Manifest(Package):
                     )
         return True
 
+    # noinspection PyTypeHints
     @staticmethod
     def _mapping_eq(expected: DirectoryMapping, received: DirectoryMapping) -> bool:
         return Manifest._mapping_cmp(
@@ -491,6 +496,7 @@ class Manifest(Package):
             fail_attrs=("missing", "extra", "should_be_directory", "should_be_file"),
         )
 
+    # noinspection PyTypeHints
     @staticmethod
     def _mapping_le(expected: DirectoryMapping, received: DirectoryMapping) -> bool:
         return Manifest._mapping_cmp(
@@ -517,6 +523,7 @@ class Manifest(Package):
     def files(self) -> list[File]:
         return [File(f) for f in self._files]
 
+    # noinspection PyTypeHints
     @property
     def directory_mapping(self) -> DirectoryMapping:
         return self._mapping
@@ -525,6 +532,7 @@ class Manifest(Package):
     def root(self) -> Path:
         return self._root
 
+    # noinspection PyTypeHints
     @staticmethod
     def _explore_directory(
         directory: DirectoryMapping, *, root: Optional[Path] = None

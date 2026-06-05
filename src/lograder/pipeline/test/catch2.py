@@ -7,7 +7,12 @@ from pathlib import Path
 from typing import Generator, final
 
 from lograder.common import Err, Ok, Result
-from lograder.pipeline.test.test import Test, TestError, TestFailure, TestSuccess
+from lograder.pipeline.test.test import (
+    JUnitTestError,
+    JUnitTestFailure,
+    JUnitTestSuccess,
+    Test,
+)
 from lograder.pipeline.types.artifacts import Artifact, FileArtifact
 from lograder.process.cli_args import (
     CLI_ARG_MISSING,
@@ -92,26 +97,20 @@ class Catch2Args(CLIArgs):
 # ---------------------------------------------------------------------------
 
 
-class Catch2Success(TestSuccess):
-    __test__: bool = False
+class Catch2Success(JUnitTestSuccess):
     suite_name: str
-    duration: float | None
     stdout: str
     stderr: str
 
 
-class Catch2Failure(TestFailure):
-    __test__: bool = False
+class Catch2Failure(JUnitTestFailure):
     suite_name: str
-    duration: float | None
-    failure_message: str
-    failure_text: str
     stdout: str
     stderr: str
 
 
-class Catch2Error(TestError):
-    __test__: bool = False
+class Catch2Error(JUnitTestError):
+    pass
 
 
 # ---------------------------------------------------------------------------

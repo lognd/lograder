@@ -7,7 +7,6 @@ from typing import (
     Literal,
     Optional,
     TypeVar,
-    cast,
 )
 
 from ansi2html import Ansi2HTMLConverter

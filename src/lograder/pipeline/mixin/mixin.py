@@ -1,5 +1,6 @@
 import shutil
 from abc import ABC
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Generator, final
 
@@ -20,7 +21,28 @@ class MixinData(BaseModel):
 class Mixin(Step[Manifest, Manifest, Unreachable, MixinData, Unreachable], ABC):
     """Abstract base for pipeline stages that copy files between two directories."""
 
-    pass
+    @staticmethod
+    def _copy_matching_files(
+        file_paths: Iterable[Path],
+        source_root: Path,
+        dest_root: Path,
+        filter_list: list[str] | None,
+        overwrite: bool,
+    ) -> list[str]:
+        copied: list[str] = []
+        for file_path in file_paths:
+            rel = file_path.relative_to(source_root)
+            if filter_list is not None:
+                rel_str = str(rel)
+                if rel_str not in filter_list and rel.name not in filter_list:
+                    continue
+            dest = dest_root / rel
+            if dest.exists() and not overwrite:
+                continue
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(file_path, dest)
+            copied.append(str(rel))
+        return copied
 
 
 @final
@@ -68,23 +90,13 @@ class InjectStudentIntoStaff(Mixin):
         None,
         Result[Manifest, Unreachable],
     ]:
-        copied: list[str] = []
-        for file_path in source_manifest._files:
-            rel = file_path.relative_to(source_manifest.root)
-            if self._student_files is not None:
-                rel_str = str(rel)
-                if (
-                    rel_str not in self._student_files
-                    and rel.name not in self._student_files
-                ):
-                    continue
-            dest = self._staff_directory / rel
-            if dest.exists() and not self._overwrite:
-                continue
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(file_path, dest)
-            copied.append(str(rel))
-
+        copied = self._copy_matching_files(
+            source_manifest._files,
+            source_manifest.root,
+            self._staff_directory,
+            self._student_files,
+            self._overwrite,
+        )
         yield Ok(
             MixinData(
                 source_directory=source_manifest.root,
@@ -141,23 +153,13 @@ class InjectStaffIntoStudent(Mixin):
         Result[Manifest, Unreachable],
     ]:
         staff_manifest = Manifest.from_directory(self._staff_source)
-        copied: list[str] = []
-        for file_path in staff_manifest._files:
-            rel = file_path.relative_to(self._staff_source)
-            if self._staff_files is not None:
-                rel_str = str(rel)
-                if (
-                    rel_str not in self._staff_files
-                    and rel.name not in self._staff_files
-                ):
-                    continue
-            dest = source_manifest.root / rel
-            if dest.exists() and not self._overwrite:
-                continue
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(file_path, dest)
-            copied.append(str(rel))
-
+        copied = self._copy_matching_files(
+            staff_manifest._files,
+            self._staff_source,
+            source_manifest.root,
+            self._staff_files,
+            self._overwrite,
+        )
         yield Ok(
             MixinData(
                 source_directory=self._staff_source,

@@ -10,7 +10,6 @@ from lograder.common import Err, Ok, Result
 from lograder.pipeline.check.check import Check, CheckData, CheckError
 from lograder.pipeline.check.source._ast import (
     CppAnalysis,
-    PreprocessError,
     PythonAnalysis,
     analyze_cpp,
     analyze_python,

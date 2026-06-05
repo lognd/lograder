@@ -7,9 +7,13 @@ from pathlib import Path
 from typing import Generator, final
 
 from lograder.common import Err, Ok, Result
-from lograder.pipeline.test.test import Test, TestError, TestFailure, TestSuccess
+from lograder.pipeline.test.test import (
+    JUnitTestError,
+    JUnitTestFailure,
+    JUnitTestSuccess,
+    Test,
+)
 from lograder.pipeline.types.artifacts import Artifact, FileArtifact
-from lograder.process.cli_args import CLI_ARG_MISSING
 from lograder.process.executable import ExecutableInput, ExecutableOptions
 from lograder.process.parsers.junit import JUnitTestCase, parse_junit_xml
 from lograder.process.registry.gtest import GTestArgs
@@ -22,26 +26,20 @@ __test__: bool = False
 # ---------------------------------------------------------------------------
 
 
-class GTestSuccess(TestSuccess):
-    __test__: bool = False
+class GTestSuccess(JUnitTestSuccess):
     suite_name: str
-    duration: float | None
     stdout: str
     stderr: str
 
 
-class GTestFailure(TestFailure):
-    __test__: bool = False
+class GTestFailure(JUnitTestFailure):
     suite_name: str
-    duration: float | None
-    failure_message: str
-    failure_text: str
     stdout: str
     stderr: str
 
 
-class GTestError(TestError):
-    __test__: bool = False
+class GTestError(JUnitTestError):
+    pass
 
 
 # ---------------------------------------------------------------------------

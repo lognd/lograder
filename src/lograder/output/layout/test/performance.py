@@ -3,21 +3,17 @@ from __future__ import annotations
 from colorama import Fore as F
 from colorama import Style as S
 
+from lograder.output.layout.format_helpers.test_layout import ERROR as _ERROR
+from lograder.output.layout.format_helpers.test_layout import PASS as _PASS
+from lograder.output.layout.format_helpers.test_layout import args_str as _args_str
 from lograder.output.layout.layout import Layout, register_layout
 from lograder.pipeline.test.performance import (
     PerformanceTestError,
     PerformanceTestFailure,
     PerformanceTestSuccess,
 )
-from lograder.process.os_helpers import command_to_str
 
-_PASS = f"{S.BRIGHT}{F.GREEN}[PASS]{F.RESET}{S.RESET_ALL}"
 _SLOW = f"{S.BRIGHT}{F.RED}[SLOW]{F.RESET}{S.RESET_ALL}"
-_ERROR = f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
-
-
-def _args_str(args: list[str]) -> str:
-    return f" {command_to_str(args)}" if args else ""
 
 
 def _fmt_time(seconds: float) -> str:
