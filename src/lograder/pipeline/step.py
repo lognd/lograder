@@ -23,6 +23,7 @@ class _IS_ABSTRACT(Empty): ...
 # do this with a class-decorator but then anybody who uses this will also need
 # to include the plugin.
 class Step(Generic[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC):
+    """Base for pipeline stages. __call__ is a generator: yield display packets, return the final Result."""
     _valid_input_types: set[type] | type[_IS_ABSTRACT] = _IS_ABSTRACT
     _valid_output_type: type[OkOutputT] | type[_IS_ABSTRACT] = _IS_ABSTRACT
 

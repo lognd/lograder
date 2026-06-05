@@ -406,6 +406,7 @@ def nested_cli_emit(args: CLIArgs) -> list[str]:
 
 
 class TypedExecutable(Generic[T]):
+    """Executable bound to a specific CLIArgs type. Validates args, attempts auto-install if not found, and returns Result[ExecutableOutput, InstallationError]."""
     bound_types: Optional[set[type[CLIArgs]]] = None
     executable: Optional[StaticExecutable] = None
     install_executable: Optional[InstallationExecutable] = None

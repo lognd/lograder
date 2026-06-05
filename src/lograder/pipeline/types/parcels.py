@@ -157,6 +157,8 @@ class ManifestComparisonSummary(BaseModel):
 
 
 class Manifest(Package):
+    """Represents a project's file/directory tree. Supports structural comparison (== exact, <= subset) and construction from directory scan, TOML, or flat path list."""
+
     def __init__(self, structure: DirectoryMapping, *, root: Path):
         super().__init__()
         self._mapping = structure

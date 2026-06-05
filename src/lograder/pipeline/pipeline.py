@@ -12,6 +12,8 @@ _LOGGER = get_logger(__name__)
 
 
 class Pipeline:
+    """Executes a sequence of Steps, threading each step's Ok output into the next step's input."""
+
     def __init__(self) -> None:
         self.steps: list[Step] = []
         self.datum: Any = PIPELINE_START()

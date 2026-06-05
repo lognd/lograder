@@ -3,9 +3,9 @@
 This repository contains the source code for
 a general-purpose autograder. The idea from a
 high-level view is everything belongs to a pipeline,
-which can be found in `src/pipeline/pipeline.py`.
+which can be found in `src/lograder/pipeline/pipeline.py`.
 The main type that is of note is `Step`, found in
-`src/pipeline/step.py`. The steps that make up the
+`src/lograder/pipeline/step.py`. The steps that make up the
 pipeline have a `__call__` which is a generator.
 The generator may `yield` values (both errors and info)
 which are non-fatal, while `return` values are either
@@ -33,6 +33,15 @@ With that out of the way, we can get a little more into the
 details.
 
 ---
+## Installation
+
+```bash
+pip install -e ".[dev]"
+```
+
+Run tests with `pytest`.
+
+---
 # "The Pipeline"
 
 The autograder must be able to take student files of any type,
@@ -43,7 +52,37 @@ create any sort of artifact, whether that be text output, file
 output, etc.; and then "test" the artifacts whatever that may
 mean.
 
-The primary subpackage for this is located in `src/pipeline`.
+The primary subpackage for this is located in `src/lograder/pipeline`.
+
+## Step generics
+
+Every concrete `Step` subclass must declare exactly five type parameters:
+
+```python
+class MyStep(Step[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT]): ...
+```
+
+`OkOutputT` becomes the input for the next step. `ErrOutputT` and `ErrDisplayT`
+are fatal and non-fatal error types respectively, sent to the packet logger.
+`__init_subclass__` enforces this at class definition time.
+
+## Result type
+
+`Result[T, E]` (see `src/lograder/common/result.py`) is a Rust-inspired
+error-as-value container. Use `Ok(value)` and `Err(value)` constructors.
+`danger_ok` / `danger_err` are assertion-guarded unwrappers. Do not raise
+exceptions for expected failure modes — return `Err(...)` instead.
+`DeveloperException` and `StaffException` are reserved for internal bugs
+and course staff configuration errors respectively.
+
+## Manifest
+
+`Manifest` (see `src/lograder/pipeline/types/parcels.py`) represents a
+project's file/directory tree and is the primary type flowing between
+Input and Check steps. It can be constructed from a directory scan
+(`from_directory`), a TOML file (`from_toml`), or a flat list of paths
+(`from_flat`). `==` checks exact equality; `<=` checks subset (received
+contains at least the expected files).
 
 ## Input
 
@@ -62,6 +101,10 @@ example is to do a source file parse to ensure that an illegal library or
 operator is not used or is used under a certain number of times. The input
 and output type of these should be able to be chained together.
 
+The `simple_project.py` check module generates named manifest-check classes
+(`CMakeManifestCheck`, `MakefileManifestCheck`, `PyProjectManifestCheck`)
+at import time, so they can be used directly.
+
 ## Mixin
 
 These will be used to inject staff code (such as specified header files)
@@ -74,6 +117,10 @@ These steps actually build the library, such as via `cmake` or `make`
 or `pip install` and produce artifacts that are testable or usable in the
 next steps.
 
+Implemented builders: `CMakeBuild` (configure + build + File API artifact
+parsing), `MakefileBuild` (runs `make`; artifact parsing is not yet
+implemented).
+
 ## Test
 
 These are mostly post-build testing. Examples could be running a number
@@ -83,5 +130,8 @@ binary file to see if they match or running `valgrind` to check for memory
 leaks.
 
 ---
-# TODO
-- Create `Layout` for `lograder.pipeline.build.makefile.MakefileBuildOutput`
+# Ideas / Future Work
+- Implement `Mixin.__call__` (currently a stub).
+- Add Makefile artifact parsing in `MakefileBuild` (returns empty list today).
+- Create `Layout` for `lograder.pipeline.build.makefile.MakefileBuildOutput`.
+- Implement `Pipeline.validate_step_types()` call and validation in `Pipeline.__call__`.

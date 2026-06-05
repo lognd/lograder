@@ -37,6 +37,7 @@ def get_config() -> EnvironmentConfig:
 
 @contextmanager
 def config(**changes: Any) -> Iterator[EnvironmentConfig]:
+    """Context manager that temporarily overrides EnvironmentConfig fields for the duration of the block."""
     base = get_config()
     try:
         new = base.model_copy(update=changes)

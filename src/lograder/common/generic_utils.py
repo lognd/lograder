@@ -76,6 +76,7 @@ def get_first_bound_type(typ: type) -> Optional[Any]:
 
 
 def get_bound_types(cls: type, target_typ: type) -> Optional[tuple[Any, ...]]:
+    """Walk the MRO of cls to find the concrete type arguments bound to target_typ, resolving TypeVar substitutions."""
     return _get_bound_types_recursive(cls, target_typ, {})
 
 
