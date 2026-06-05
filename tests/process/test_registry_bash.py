@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -215,3 +216,52 @@ def test_bash_command_args_quotes_single_quotes_correctly() -> None:
     emitted = args.emit()
     assert emitted[0] == "-c"
     assert emitted[1] == "echo 'it'\"'\"'s fine'"
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+
+_BASH_AVAILABLE = bool(_shutil.which("bash"))
+
+
+@pytest.mark.skipif(not _BASH_AVAILABLE, reason="bash not available")
+def test_bash_real_runs_echo_command() -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    exe = BashExecutable()
+    args = BashCommandArgs[EchoArgs](command=EchoArgs(program="echo", text="hello"))
+    result = exe(args, options=ExecutableOptions())
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert b"hello" in result.danger_ok.stdout_bytes
+
+
+@pytest.mark.skipif(not _BASH_AVAILABLE, reason="bash not available")
+def test_bash_real_runs_script(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    script = tmp_path / "greet.sh"
+    script.write_text("#!/usr/bin/env bash\necho greetings\n", encoding="utf-8")
+
+    exe = BashExecutable()
+    args = BashScriptArgs(script=script)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert b"greetings" in result.danger_ok.stdout_bytes
+
+
+@pytest.mark.skipif(not _BASH_AVAILABLE, reason="bash not available")
+def test_bash_real_nonzero_exit_still_returns_ok() -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    class ExitArgs(CLIArgs):
+        program: str = CLIOption(emit=["{}"], position=0)
+        code: str = CLIOption(emit=["{}"], position=1)
+
+    exe = BashExecutable()
+    args = BashCommandArgs[ExitArgs](command=ExitArgs(program="exit", code="42"))
+    result = exe(args, options=ExecutableOptions())
+    assert result.is_ok
+    assert result.danger_ok.return_code == 42

@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -89,3 +90,38 @@ def test_add_opts_passthrough() -> None:
 def test_registered() -> None:
     assert GprofngExecutable.executable is not None
     assert GprofngExecutable.executable.command == ["gprofng"]
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+import subprocess as _subprocess
+
+_GPROFNG_AVAILABLE = bool(_shutil.which("gprofng"))
+_GCC_AVAILABLE = bool(_shutil.which("gcc"))
+
+_WORK_C = """\
+#include <stdio.h>
+void work(void) { for(int i=0;i<10000;i++) {} }
+int main(void) { work(); return 0; }
+"""
+
+
+@pytest.mark.skipif(
+    not (_GPROFNG_AVAILABLE and _GCC_AVAILABLE), reason="gprofng and gcc both required"
+)
+def test_gprofng_real_collect(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src = tmp_path / "main.c"
+    src.write_text(_WORK_C, encoding="utf-8")
+    binary = tmp_path / "main"
+    _subprocess.run(
+        ["gcc", str(src), "-o", str(binary)], check=True, capture_output=True
+    )
+
+    exe = GprofngExecutable()
+    args = GprofngCollectArgs(command=[str(binary)])
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0

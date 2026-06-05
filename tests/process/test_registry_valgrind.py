@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -163,3 +164,70 @@ def test_valgrind_rejects_empty_nested_command() -> None:
         ValgrindArgs[EmptyArgs](
             command=EmptyArgs(),
         )
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+import subprocess as _subprocess
+
+_VALGRIND_AVAILABLE = bool(_shutil.which("valgrind"))
+_GCC_AVAILABLE = bool(_shutil.which("gcc"))
+
+
+@pytest.mark.skipif(
+    not (_VALGRIND_AVAILABLE and _GCC_AVAILABLE),
+    reason="valgrind and gcc both required",
+)
+def test_valgrind_real_clean_program(tmp_path) -> None:
+    from lograder.process.executable import ExecutableInput, ExecutableOptions
+
+    src = tmp_path / "main.c"
+    src.write_text(
+        '#include <stdio.h>\nint main(void){puts("clean");return 0;}\n',
+        encoding="utf-8",
+    )
+    binary = tmp_path / "main"
+    _subprocess.run(
+        ["gcc", str(src), "-o", str(binary)], check=True, capture_output=True
+    )
+
+    exe = ValgrindExecutable()
+    args = ValgrindArgs[EchoArgs](
+        command=EchoArgs(program=str(binary)),
+        leak_check=ValgrindLeakCheck.FULL,
+        error_exitcode=1,
+    )
+    result = exe(args, input=ExecutableInput(), options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+
+
+@pytest.mark.skipif(
+    not (_VALGRIND_AVAILABLE and _GCC_AVAILABLE),
+    reason="valgrind and gcc both required",
+)
+def test_valgrind_real_xml_output(tmp_path) -> None:
+    from lograder.process.executable import ExecutableInput, ExecutableOptions
+
+    src = tmp_path / "main.c"
+    src.write_text(
+        '#include <stdio.h>\nint main(void){puts("ok");return 0;}\n',
+        encoding="utf-8",
+    )
+    binary = tmp_path / "main"
+    _subprocess.run(
+        ["gcc", str(src), "-o", str(binary)], check=True, capture_output=True
+    )
+    xml_out = tmp_path / "out.xml"
+
+    exe = ValgrindExecutable()
+    args = ValgrindArgs[EchoArgs](
+        command=EchoArgs(program=str(binary)),
+        xml=True,
+        xml_file=xml_out,
+    )
+    result = exe(args, input=ExecutableInput(), options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert xml_out.exists()
+    assert b"<valgrindoutput" in xml_out.read_bytes()

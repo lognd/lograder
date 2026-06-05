@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -371,3 +372,61 @@ def test_cmake_install_omits_missing_values() -> None:
         prefix=CLI_ARG_MISSING(),
     )
     assert args.emit() == ["--install", "build"]
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+
+_CMAKE_AVAILABLE = bool(_shutil.which("cmake"))
+
+_MINIMAL_CMAKELISTS = """\
+cmake_minimum_required(VERSION 3.10)
+project(hello C)
+add_executable(hello main.c)
+"""
+_HELLO_C = '#include <stdio.h>\nint main(void){puts("hi");return 0;}\n'
+
+
+@pytest.mark.skipif(not _CMAKE_AVAILABLE, reason="cmake not available")
+@pytest.mark.slow
+def test_cmake_real_configure(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    (src_dir / "CMakeLists.txt").write_text(_MINIMAL_CMAKELISTS, encoding="utf-8")
+    (src_dir / "main.c").write_text(_HELLO_C, encoding="utf-8")
+    build_dir = tmp_path / "build"
+    build_dir.mkdir()
+
+    exe = CMakeExecutable()
+    args = CMakeConfigureArgs(source_dir=src_dir, build_dir=build_dir)
+    result = exe(args, options=ExecutableOptions(cwd=build_dir))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert (build_dir / "CMakeCache.txt").exists()
+
+
+@pytest.mark.skipif(not _CMAKE_AVAILABLE, reason="cmake not available")
+@pytest.mark.slow
+def test_cmake_real_build(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    (src_dir / "CMakeLists.txt").write_text(_MINIMAL_CMAKELISTS, encoding="utf-8")
+    (src_dir / "main.c").write_text(_HELLO_C, encoding="utf-8")
+    build_dir = tmp_path / "build"
+    build_dir.mkdir()
+
+    # configure first
+    exe = CMakeExecutable()
+    config_args = CMakeConfigureArgs(source_dir=src_dir, build_dir=build_dir)
+    config_result = exe(config_args, options=ExecutableOptions(cwd=build_dir))
+    assert config_result.is_ok and config_result.danger_ok.return_code == 0
+
+    build_args = CMakeBuildArgs(build_dir=build_dir)
+    build_result = exe(build_args, options=ExecutableOptions(cwd=build_dir))
+    assert build_result.is_ok
+    assert build_result.danger_ok.return_code == 0

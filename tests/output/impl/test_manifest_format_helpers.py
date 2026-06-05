@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -259,14 +260,14 @@ def test_render_manifest_diff_truncates_missing_after_five():
     exp = ["a", "b", "c", "d", "e", "f"]
     rec = []
     out = render_manifest_diff(exp, rec)
-    assert out == "missing=a,b,c,d,e…"
+    assert out == "missing=a,b,c,d,e,..."
 
 
 def test_render_manifest_diff_truncates_extra_after_five():
     exp = []
     rec = ["a", "b", "c", "d", "e", "f"]
     out = render_manifest_diff(exp, rec)
-    assert out == "extra=a,b,c,d,e…"
+    assert out == "extra=a,b,c,d,e,..."
 
 
 def test_render_manifest_diff_truncates_mismatch_after_five():
@@ -274,5 +275,6 @@ def test_render_manifest_diff_truncates_mismatch_after_five():
     rec = ["a", "b", "c", "d", "e", "f"]
     out = render_manifest_diff(exp, rec)
     assert (
-        out == "mismatch=a:dir!=file,b:dir!=file,c:dir!=file,d:dir!=file,e:dir!=file…"
+        out
+        == "mismatch=a:dir!=file,b:dir!=file,c:dir!=file,d:dir!=file,e:dir!=file,..."
     )

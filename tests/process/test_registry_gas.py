@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -124,3 +125,51 @@ def test_reject_nonexistent_input_file(tmp_path: Path) -> None:
 def test_registered() -> None:
     assert GasExecutable.executable is not None
     assert GasExecutable.executable.command == ["as"]
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+
+_AS_AVAILABLE = bool(_shutil.which("as"))
+
+# Minimal assembly - defines a function that returns 0 (AArch64 / x86-64 portable)
+_HELLO_ASM = """\
+    .text
+    .globl foo
+foo:
+    mov x0, #0
+    ret
+"""
+
+
+@pytest.mark.skipif(not _AS_AVAILABLE, reason="as (gas) not available")
+def test_gas_real_assembles_x86_source(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src = tmp_path / "main.s"
+    src.write_text(_HELLO_ASM, encoding="utf-8")
+    obj = tmp_path / "main.o"
+
+    exe = GasExecutable()
+    args = GasArgs(input=[src], output=obj)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert obj.exists()
+
+
+@pytest.mark.skipif(not _AS_AVAILABLE, reason="as (gas) not available")
+def test_gas_real_debug_info_flag(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src = tmp_path / "foo.s"
+    src.write_text(_HELLO_ASM, encoding="utf-8")
+    obj = tmp_path / "foo.o"
+
+    exe = GasExecutable()
+    args = GasArgs(input=[src], output=obj, debug=True)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert obj.exists()

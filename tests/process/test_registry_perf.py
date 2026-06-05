@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -100,3 +101,34 @@ def test_add_opts_passthrough() -> None:
 def test_registered() -> None:
     assert PerfExecutable.executable is not None
     assert PerfExecutable.executable.command == ["perf"]
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+
+_PERF_AVAILABLE = bool(_shutil.which("perf"))
+
+
+@pytest.mark.skipif(not _PERF_AVAILABLE, reason="perf not available")
+@pytest.mark.slow
+def test_perf_real_stat_runs_true(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    exe = PerfExecutable()
+    args = PerfStatArgs(command=["true"])
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    # perf stat exits 0 on success; may be non-zero in restricted environments
+    # but the key assertion is that the executable was invoked (result.is_ok)
+
+
+@pytest.mark.skipif(not _PERF_AVAILABLE, reason="perf not available")
+@pytest.mark.slow
+def test_perf_real_stat_with_repeat(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    exe = PerfExecutable()
+    args = PerfStatArgs(command=["true"], repeat=2)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok

@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import json
 from pathlib import Path
 from typing import Generator

@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -115,3 +116,52 @@ def test_registered(tmp_path) -> None:
     a.touch()
     assert NasmExecutable.executable is not None
     assert NasmExecutable.executable.command == ["nasm"]
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+
+_NASM_AVAILABLE = bool(_shutil.which("nasm"))
+
+# Minimal x86-64 ELF64 object - just exports a function that returns 0
+_HELLO_NASM = """\
+section .text
+global _start
+_start:
+    mov eax, 1
+    xor edi, edi
+    syscall
+"""
+
+
+@pytest.mark.skipif(not _NASM_AVAILABLE, reason="nasm not available")
+def test_nasm_real_assembles_elf64(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src = tmp_path / "main.asm"
+    src.write_text(_HELLO_NASM, encoding="utf-8")
+    obj = tmp_path / "main.o"
+
+    exe = NasmExecutable()
+    args = NasmArgs(input=[src], output=obj, format=NasmFormat.ELF64)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert obj.exists()
+
+
+@pytest.mark.skipif(not _NASM_AVAILABLE, reason="nasm not available")
+def test_nasm_real_assembles_without_format(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src = tmp_path / "foo.asm"
+    src.write_text(_HELLO_NASM, encoding="utf-8")
+    obj = tmp_path / "foo.o"
+
+    exe = NasmExecutable()
+    args = NasmArgs(input=[src], output=obj)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert obj.exists()

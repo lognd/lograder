@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -178,3 +179,56 @@ def test_makefile_rejects_variable_key_containing_equals() -> None:
 def test_makefile_rejects_silent_with_print_directory() -> None:
     with pytest.raises(ValidationError):
         MakefileArgs(silent=True, print_directory=True)
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+
+_MAKE_AVAILABLE = bool(_shutil.which("make"))
+
+_MAKEFILE_CONTENT = """\
+all:
+\t@echo hello_from_make
+
+greet:
+\t@echo greetings
+"""
+
+
+@pytest.mark.skipif(not _MAKE_AVAILABLE, reason="make not available")
+def test_make_real_default_target(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    (tmp_path / "Makefile").write_text(_MAKEFILE_CONTENT, encoding="utf-8")
+    exe = MakefileExecutable()
+    args = MakefileArgs(directory=tmp_path)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert b"hello_from_make" in result.danger_ok.stdout_bytes
+
+
+@pytest.mark.skipif(not _MAKE_AVAILABLE, reason="make not available")
+def test_make_real_named_target(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    (tmp_path / "Makefile").write_text(_MAKEFILE_CONTENT, encoding="utf-8")
+    exe = MakefileExecutable()
+    args = MakefileArgs(directory=tmp_path, target="greet")
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert b"greetings" in result.danger_ok.stdout_bytes
+
+
+@pytest.mark.skipif(not _MAKE_AVAILABLE, reason="make not available")
+def test_make_real_parallel_jobs(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    (tmp_path / "Makefile").write_text(_MAKEFILE_CONTENT, encoding="utf-8")
+    exe = MakefileExecutable()
+    args = MakefileArgs(directory=tmp_path, jobs=4)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0

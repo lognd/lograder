@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -77,3 +78,87 @@ def test_reject_empty_input() -> None:
 def test_registered() -> None:
     assert ClangExecutable.executable is not None
     assert ClangExecutable.executable.command == ["clang"]
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+import subprocess as _subprocess
+
+_CLANG_AVAILABLE = bool(_shutil.which("clang"))
+_CLANGXX_AVAILABLE = bool(_shutil.which("clang++"))
+
+_HELLO_C = '#include <stdio.h>\nint main(void){puts("ok");return 0;}\n'
+_HELLO_CPP = '#include <iostream>\nint main(){std::cout<<"ok"<<std::endl;}\n'
+
+
+@pytest.mark.skipif(not _CLANG_AVAILABLE, reason="clang not available")
+def test_clang_real_compiles_c_file(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src = tmp_path / "main.c"
+    src.write_text(_HELLO_C, encoding="utf-8")
+    out = tmp_path / "main"
+    exe = ClangExecutable()
+    args = ClangArgs(
+        input=[src],
+        output=out,
+        standard=ClangCStandard.C11,
+        warnings_all=False,
+        warnings_extra=False,
+    )
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok, result
+    assert result.danger_ok.return_code == 0
+    assert out.exists()
+    proc = _subprocess.run([str(out)], capture_output=True)
+    assert proc.returncode == 0
+    assert b"ok" in proc.stdout
+
+
+@pytest.mark.skipif(not _CLANG_AVAILABLE, reason="clang not available")
+def test_clang_real_compile_only(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src = tmp_path / "foo.c"
+    src.write_text("int add(int a, int b){return a+b;}\n", encoding="utf-8")
+    obj = tmp_path / "foo.o"
+    exe = ClangExecutable()
+    args = ClangArgs(
+        input=[src],
+        output=obj,
+        standard=ClangCStandard.C11,
+        compile_only=True,
+        warnings_all=False,
+        warnings_extra=False,
+    )
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert obj.exists()
+
+
+@pytest.mark.skipif(not _CLANGXX_AVAILABLE, reason="clang++ not available")
+def test_clangxx_real_compiles_cpp_file(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+    from lograder.process.registry.clang import (
+        ClangCXXStandard,
+        ClangXXArgs,
+        ClangXXExecutable,
+    )
+
+    src = tmp_path / "main.cpp"
+    src.write_text(_HELLO_CPP, encoding="utf-8")
+    out = tmp_path / "main"
+    exe = ClangXXExecutable()
+    args = ClangXXArgs(
+        input=[src],
+        output=out,
+        standard=ClangCXXStandard.CXX17,
+        warnings_all=False,
+        warnings_extra=False,
+    )
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert out.exists()

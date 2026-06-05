@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 from fnmatch import fnmatch
 from importlib import import_module
 from pathlib import Path

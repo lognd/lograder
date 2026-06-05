@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -212,3 +213,49 @@ def test_chmod_accepts_common_octal_modes() -> None:
     for mode in valid_modes:
         args = CHModArgs(mode=mode, paths=[Path("file.txt")])
         assert args.mode == mode
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+import stat as _stat
+
+_CHMOD_AVAILABLE = bool(_shutil.which("chmod"))
+
+
+@pytest.mark.skipif(not _CHMOD_AVAILABLE, reason="chmod not available")
+def test_chmod_real_sets_executable_bit(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    f = tmp_path / "script.sh"
+    f.write_text("#!/bin/bash\necho hi\n", encoding="utf-8")
+    before = f.stat().st_mode
+    assert not (before & _stat.S_IXUSR)
+
+    exe = CHModExecutable()
+    args = CHModArgs(mode="755", paths=[f])
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    after = f.stat().st_mode
+    assert after & _stat.S_IXUSR
+
+
+@pytest.mark.skipif(not _CHMOD_AVAILABLE, reason="chmod not available")
+def test_chmod_real_recursive_sets_mode(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    f1 = sub / "a.sh"
+    f2 = sub / "b.sh"
+    for f in [f1, f2]:
+        f.write_text("#!/bin/bash\n", encoding="utf-8")
+
+    exe = CHModExecutable()
+    args = CHModArgs(mode="744", paths=[sub], recursive=True)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    for f in [f1, f2]:
+        assert f.stat().st_mode & _stat.S_IXUSR

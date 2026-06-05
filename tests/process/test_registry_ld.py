@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -91,3 +92,37 @@ def test_reject_empty_input() -> None:
 def test_registered() -> None:
     assert LdExecutable.executable is not None
     assert LdExecutable.executable.command == ["ld"]
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+import subprocess as _subprocess
+
+_LD_AVAILABLE = bool(_shutil.which("ld"))
+_GCC_AVAILABLE = bool(_shutil.which("gcc"))
+
+
+@pytest.mark.skipif(
+    not (_LD_AVAILABLE and _GCC_AVAILABLE), reason="ld and gcc both required"
+)
+def test_ld_real_creates_shared_library(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    src = tmp_path / "foo.c"
+    src.write_text("int foo(void){return 42;}\n", encoding="utf-8")
+    obj = tmp_path / "foo.o"
+    _subprocess.run(
+        ["gcc", "-c", "-fPIC", str(src), "-o", str(obj)],
+        check=True,
+        capture_output=True,
+    )
+    assert obj.exists()
+
+    out_lib = tmp_path / "libfoo.so"
+    exe = LdExecutable()
+    args = LdArgs(input=[obj], output=out_lib, shared=True)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert out_lib.exists()

@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -197,3 +198,86 @@ def test_curl_show_error_implies_silent() -> None:
     emitted = args.emit()
     assert "-S" in emitted
     assert "-s" in emitted
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+import threading as _threading
+from http.server import BaseHTTPRequestHandler as _BaseHTTPRequestHandler
+from http.server import HTTPServer as _HTTPServer
+
+_CURL_AVAILABLE = bool(_shutil.which("curl"))
+
+
+class _OkHandler(_BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"hello-from-test")
+
+    def log_message(self, *args):
+        pass
+
+
+def _start_server() -> tuple[_HTTPServer, int]:
+    server = _HTTPServer(("127.0.0.1", 0), _OkHandler)
+    port = server.server_address[1]
+    t = _threading.Thread(target=server.serve_forever, daemon=True)
+    t.start()
+    return server, port
+
+
+@pytest.mark.skipif(not _CURL_AVAILABLE, reason="curl not available")
+def test_curl_real_fetches_from_local_server(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    server, port = _start_server()
+    try:
+        exe = CURLExecutable()
+        args = CURLArgs(url=f"http://127.0.0.1:{port}/", silent=True, fail=True)
+        result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+        assert result.is_ok
+        assert result.danger_ok.return_code == 0
+        assert b"hello-from-test" in result.danger_ok.stdout_bytes
+    finally:
+        server.shutdown()
+
+
+@pytest.mark.skipif(not _CURL_AVAILABLE, reason="curl not available")
+def test_curl_real_follows_redirect(tmp_path) -> None:
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class RedirectHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == "/":
+                self.send_response(301)
+                self.send_header("Location", "/final")
+                self.end_headers()
+            else:
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"redirected")
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), RedirectHandler)
+    port = server.server_address[1]
+    t = _threading.Thread(target=server.serve_forever, daemon=True)
+    t.start()
+    try:
+        from lograder.process.executable import ExecutableOptions
+
+        exe = CURLExecutable()
+        args = CURLArgs(
+            url=f"http://127.0.0.1:{port}/",
+            follow_redirects=True,
+            silent=True,
+        )
+        result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+        assert result.is_ok
+        assert result.danger_ok.return_code == 0
+        assert b"redirected" in result.danger_ok.stdout_bytes
+    finally:
+        server.shutdown()

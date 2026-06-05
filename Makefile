@@ -33,8 +33,8 @@ check:
 	@$(BLACK) src/ tests/
 	@$(RUFF) format src/ tests/
 	@$(ISORT) src/ tests/
-	@$(MYPY) --config-file mypy-py310.ini src/
-	@$(MYPY) --config-file mypy-py314.ini src/
+	@$(MYPY) --config-file mypy-py310.ini src/ tests/
+	@$(MYPY) --config-file mypy-py314.ini src/ tests/
 
 version:
 	@$(PYTHON) --version

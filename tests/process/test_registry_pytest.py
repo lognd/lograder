@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 # type: ignore
 
 from __future__ import annotations
@@ -81,3 +82,68 @@ def test_stepwise_dependency() -> None:
 def test_registered() -> None:
     assert PytestExecutable.executable is not None
     assert PytestExecutable.executable.command == ["pytest"]
+
+
+# --- Real executable tests ---
+
+import shutil as _shutil
+
+_PYTEST_AVAILABLE = bool(_shutil.which("pytest") or _shutil.which("python3"))
+
+_PASSING_TEST = """\
+def test_always_passes():
+    assert 1 + 1 == 2
+
+def test_string():
+    assert "hello".upper() == "HELLO"
+"""
+
+_FAILING_TEST = """\
+def test_always_fails():
+    assert False, "expected failure"
+"""
+
+
+@pytest.mark.skipif(not _PYTEST_AVAILABLE, reason="pytest not available")
+def test_pytest_real_passing_tests(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    test_file = tmp_path / "test_sample.py"
+    test_file.write_text(_PASSING_TEST, encoding="utf-8")
+
+    exe = PytestExecutable()
+    args = PytestArgs(paths=[test_file])
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+
+
+@pytest.mark.skipif(not _PYTEST_AVAILABLE, reason="pytest not available")
+def test_pytest_real_failing_tests(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    test_file = tmp_path / "test_fail.py"
+    test_file.write_text(_FAILING_TEST, encoding="utf-8")
+
+    exe = PytestExecutable()
+    args = PytestArgs(paths=[test_file])
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code != 0
+
+
+@pytest.mark.skipif(not _PYTEST_AVAILABLE, reason="pytest not available")
+def test_pytest_real_junit_xml_output(tmp_path) -> None:
+    from lograder.process.executable import ExecutableOptions
+
+    test_file = tmp_path / "test_xml.py"
+    test_file.write_text(_PASSING_TEST, encoding="utf-8")
+    xml_out = tmp_path / "results.xml"
+
+    exe = PytestExecutable()
+    args = PytestArgs(paths=[test_file], junit_xml=xml_out)
+    result = exe(args, options=ExecutableOptions(cwd=tmp_path))
+    assert result.is_ok
+    assert result.danger_ok.return_code == 0
+    assert xml_out.exists()
+    assert b"testsuite" in xml_out.read_bytes()
