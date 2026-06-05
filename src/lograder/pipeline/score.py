@@ -63,7 +63,7 @@ class GradescopeConfig:
 
     output: str = ""
     output_format: OutputFormat = "simple_format"
-    test_output_format: OutputFormat = "text"
+    test_output_format: OutputFormat = "ansi"
     test_name_format: Literal["text", "html", "md", "ansi"] = "text"
     visibility: Visibility = "visible"
     stdout_visibility: Visibility = "hidden"
