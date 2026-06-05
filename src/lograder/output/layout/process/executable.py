@@ -51,17 +51,11 @@ class ExecutableDataLayout(Layout[ExecutableData]):
             env_str = ", ".join(f"{k}={v}" for k, v in data.input.env.items())
             parts.append(f"env: {env_str}\n")
         if data.input.stdin_bytes:
-            parts.append(
-                f"stdin: {repr(_decode(data.input.stdin_bytes))}\n"
-            )
+            parts.append(f"stdin: {repr(_decode(data.input.stdin_bytes))}\n")
         if data.output.stdout_bytes:
-            parts.append(
-                f"stdout:\n{_truncate(_decode(data.output.stdout_bytes))}\n"
-            )
+            parts.append(f"stdout:\n{_truncate(_decode(data.output.stdout_bytes))}\n")
         if data.output.stderr_bytes:
-            parts.append(
-                f"stderr:\n{_truncate(_decode(data.output.stderr_bytes))}\n"
-            )
+            parts.append(f"stderr:\n{_truncate(_decode(data.output.stderr_bytes))}\n")
         return "".join(parts)
 
     @classmethod
@@ -79,17 +73,14 @@ class ExecutableDataLayout(Layout[ExecutableData]):
                 parts.append(f"  {F.YELLOW}env: (hidden){F.RESET}\n")
             else:
                 env_lines = "\n".join(
-                    f"  {F.YELLOW}{k}{F.RESET}={v}"
-                    for k, v in data.input.env.items()
+                    f"  {F.YELLOW}{k}{F.RESET}={v}" for k, v in data.input.env.items()
                 )
                 parts.append(f"env:\n{env_lines}\n")
 
         if data.input.hide_input:
             parts.append(f"  stdin: {F.YELLOW}(hidden){F.RESET}\n")
         elif data.input.stdin_bytes:
-            parts.append(
-                f"stdin:\n{_truncate(_decode(data.input.stdin_bytes))}\n"
-            )
+            parts.append(f"stdin:\n{_truncate(_decode(data.input.stdin_bytes))}\n")
 
         if data.input.hide_output:
             parts.append(f"  stdout: {F.YELLOW}(hidden){F.RESET}\n")

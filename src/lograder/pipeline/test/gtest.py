@@ -69,7 +69,7 @@ class GTestTest(
     ``Ok(GTestSuccess)`` or ``Err(GTestFailure)`` yield.  Skipped/disabled
     tests are silently ignored.
 
-    ``test_name`` on each packet uses the format ``"SuiteName.TestName"``  - 
+    ``test_name`` on each packet uses the format ``"SuiteName.TestName"``  -
     matching Google Test's native ``SUITE.TEST`` naming convention.  Use this
     value with ``TestCaseScorer``.
 

@@ -43,10 +43,7 @@ class SymbolFailureLayout(Layout[SymbolFailure]):
 
     @classmethod
     def to_ansi(cls, data: SymbolFailure) -> str:
-        parts = [
-            f"{_FAIL}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}` - {data.test_name}"
-        ]
+        parts = [f"{_FAIL} `{F.CYAN}{data.artifact_name}{F.RESET}` - {data.test_name}"]
         if data.missing:
             missing = ", ".join(f"`{s}`" for s in data.missing)
             parts.append(f"  {F.RED}Missing required symbols:{F.RESET} {missing}")
@@ -64,7 +61,4 @@ class SymbolErrorLayout(Layout[SymbolError]):
 
     @classmethod
     def to_ansi(cls, data: SymbolError) -> str:
-        return (
-            f"{_ERROR}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"
-        )
+        return f"{_ERROR} `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"

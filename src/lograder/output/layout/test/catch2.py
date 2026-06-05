@@ -75,7 +75,4 @@ class Catch2ErrorLayout(Layout[Catch2Error]):
 
     @classmethod
     def to_ansi(cls, data: Catch2Error) -> str:
-        return (
-            f"{_ERROR}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"
-        )
+        return f"{_ERROR} `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"

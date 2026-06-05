@@ -30,9 +30,7 @@ class PytestSuccessLayout(Layout[PytestSuccess]):
     @classmethod
     def to_ansi(cls, data: PytestSuccess) -> str:
         return (
-            f"{_PASS}"
-            f" {data.test_name}"
-            f"{F.YELLOW}{_duration_str(data.duration)}{F.RESET}"
+            f"{_PASS} {data.test_name}{F.YELLOW}{_duration_str(data.duration)}{F.RESET}"
         )
 
 
@@ -69,7 +67,4 @@ class PytestErrorLayout(Layout[PytestError]):
 
     @classmethod
     def to_ansi(cls, data: PytestError) -> str:
-        return (
-            f"{_ERROR}"
-            f" {F.CYAN}pytest{F.RESET}: {data.message}"
-        )
+        return f"{_ERROR} {F.CYAN}pytest{F.RESET}: {data.message}"

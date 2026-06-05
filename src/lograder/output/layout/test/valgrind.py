@@ -39,7 +39,9 @@ def _format_vg_error_ansi(err: ValgrindError) -> str:
 class ValgrindTestSuccessLayout(Layout[ValgrindTestSuccess]):
     @classmethod
     def to_simple(cls, data: ValgrindTestSuccess) -> str:
-        return f"[CLEAN] `{data.artifact_name}` - {data.test_name}{_args_str(data.args)}"
+        return (
+            f"[CLEAN] `{data.artifact_name}` - {data.test_name}{_args_str(data.args)}"
+        )
 
     @classmethod
     def to_ansi(cls, data: ValgrindTestSuccess) -> str:
@@ -91,7 +93,4 @@ class ValgrindTestErrorLayout(Layout[ValgrindTestError]):
 
     @classmethod
     def to_ansi(cls, data: ValgrindTestError) -> str:
-        return (
-            f"{_ERROR}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"
-        )
+        return f"{_ERROR} `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"

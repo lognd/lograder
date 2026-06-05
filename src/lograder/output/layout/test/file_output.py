@@ -109,7 +109,4 @@ class FileOutputErrorLayout(Layout[FileOutputError]):
 
     @classmethod
     def to_ansi(cls, data: FileOutputError) -> str:
-        return (
-            f"{_ERROR}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"
-        )
+        return f"{_ERROR} `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"
