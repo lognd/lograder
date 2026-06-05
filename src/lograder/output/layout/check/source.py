@@ -3,9 +3,9 @@ from colorama import Style as S
 
 from lograder.output.layout.layout import Layout, register_layout
 from lograder.pipeline.check.source.source_check import (
-    OperatorCheckData,
-    OperatorCheckError,
-    OperatorViolation,
+    SourceCheckData,
+    SourceCheckError,
+    SourceViolation,
 )
 
 
@@ -15,10 +15,10 @@ def _bar(count: int, max_count: int) -> str:
     return f"{count}/{max_count}"
 
 
-@register_layout("operator-check-data")
-class OperatorCheckDataLayout(Layout[OperatorCheckData]):
+@register_layout("source-check-data")
+class SourceCheckDataLayout(Layout[SourceCheckData]):
     @classmethod
-    def to_ansi(cls, data: OperatorCheckData) -> str:
+    def to_ansi(cls, data: SourceCheckData) -> str:
         rows = "\n".join(
             f"  {F.GREEN}✓{F.RESET} {r.label}: {_bar(r.count, r.max_count)}"
             for r in data.results
@@ -26,43 +26,41 @@ class OperatorCheckDataLayout(Layout[OperatorCheckData]):
         return (
             f"{S.BRIGHT}< {F.CYAN}{data.check_name.upper()}{F.RESET} >"
             f"{S.RESET_ALL} [{F.CYAN}{data.file}{F.RESET}]\n"
-            f"{F.GREEN}All operator constraints satisfied.{F.RESET}\n"
+            f"{F.GREEN}All constraints satisfied.{F.RESET}\n"
             f"{rows}"
         )
 
     @classmethod
-    def to_simple(cls, data: OperatorCheckData) -> str:
+    def to_simple(cls, data: SourceCheckData) -> str:
         summary = ", ".join(
             f"{r.label}: {_bar(r.count, r.max_count)}" for r in data.results
         )
         return f"[PASS] {data.check_name} — {data.file} — {summary}"
 
 
-@register_layout("operator-violation")
-class OperatorViolationLayout(Layout[OperatorViolation]):
+@register_layout("source-violation")
+class SourceViolationLayout(Layout[SourceViolation]):
     @classmethod
-    def to_ansi(cls, data: OperatorViolation) -> str:
-        toks = ", ".join(f"`{t}`" for t in data.tokens)
+    def to_ansi(cls, data: SourceViolation) -> str:
         return (
             f"{S.BRIGHT}{F.RED}[VIOLATION]{F.RESET}{S.RESET_ALL}"
             f" {data.check_name} — {F.CYAN}{data.file}{F.RESET}\n"
-            f"  {data.label} ({toks}): used {F.RED}{data.count}{F.RESET}"
+            f"  {data.label}: used {F.RED}{data.count}{F.RESET}"
             f" time(s), max allowed is {F.GREEN}{data.max_count}{F.RESET}."
         )
 
     @classmethod
-    def to_simple(cls, data: OperatorViolation) -> str:
-        toks = ", ".join(data.tokens)
+    def to_simple(cls, data: SourceViolation) -> str:
         return (
             f"[VIOLATION] {data.check_name} — {data.file} — "
-            f"{data.label} ({toks}): {data.count} used, max {data.max_count}."
+            f"{data.label}: {data.count} used, max {data.max_count}."
         )
 
 
-@register_layout("operator-check-error")
-class OperatorCheckErrorLayout(Layout[OperatorCheckError]):
+@register_layout("source-check-error")
+class SourceCheckErrorLayout(Layout[SourceCheckError]):
     @classmethod
-    def to_ansi(cls, data: OperatorCheckError) -> str:
+    def to_ansi(cls, data: SourceCheckError) -> str:
         return (
             f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
             f" {data.check_name} — {F.CYAN}{data.file}{F.RESET}\n"
@@ -70,5 +68,5 @@ class OperatorCheckErrorLayout(Layout[OperatorCheckError]):
         )
 
     @classmethod
-    def to_simple(cls, data: OperatorCheckError) -> str:
+    def to_simple(cls, data: SourceCheckError) -> str:
         return f"[ERROR] {data.check_name} — {data.file}: {data.message}"
