@@ -60,13 +60,28 @@ class DifferentialTest(
     Use this when expected output depends on the student's input files or you
     want to avoid storing a large expected-output corpus.
 
-    ``test_cases`` is typically produced by ``cases_from_matrix`` or a generator::
+    The reference binary can be specified in two ways:
 
-        test = DifferentialTest(
+    **Static path**  --  a pre-compiled binary shipped with the grader::
+
+        DifferentialTest(
             "myprogram",
-            Path("staff/bin/myprogram"),
-            cases_from_matrix(["add", "sub", "mul"], ["1", "10", "100"]),
+            Path("hidden-tests/reference"),
+            cases,
         )
+
+    **Artifact key**  --  a binary compiled as a CMake (or other build) target,
+    resolved from the same ``dict[str, Artifact]`` at grading time.  Use this
+    to avoid committing a pre-compiled binary to the repository::
+
+        DifferentialTest(
+            "myprogram",
+            reference_artifact="reference",   # key in CMakeBuild output
+            test_cases=cases,
+        )
+
+    Exactly one of ``reference`` (path) or ``reference_artifact`` (artifact key)
+    must be provided.
 
     Exit codes are not compared by default. Pass ``check_exit_codes=True`` to
     also require the student's exit code to match the reference.
@@ -75,14 +90,29 @@ class DifferentialTest(
     def __init__(
         self,
         artifact_name: str,
-        reference: Path | str,
-        test_cases: Iterable[OracleInput],
+        reference: Path | str | None = None,
+        test_cases: Iterable[OracleInput] = (),
         options: ExecutableOptions | None = None,
         reference_options: ExecutableOptions | None = None,
         check_exit_codes: bool = False,
+        *,
+        reference_artifact: str | None = None,
     ) -> None:
+        if reference is None and reference_artifact is None:
+            raise ValueError(
+                "DifferentialTest: provide either `reference` (path) "
+                "or `reference_artifact` (artifact key), not neither."
+            )
+        if reference is not None and reference_artifact is not None:
+            raise ValueError(
+                "DifferentialTest: provide either `reference` (path) "
+                "or `reference_artifact` (artifact key), not both."
+            )
         self._artifact_name = artifact_name
-        self._reference = StaticExecutable([str(reference)])
+        self._static_reference = (
+            StaticExecutable([str(reference)]) if reference is not None else None
+        )
+        self._reference_artifact = reference_artifact
         self._test_cases = test_cases
         self._options = options
         self._reference_options = reference_options
@@ -114,13 +144,37 @@ class DifferentialTest(
                 )
             )
 
+        if self._reference_artifact is not None:
+            ref_artifact = artifacts.get(self._reference_artifact)
+            if ref_artifact is None:
+                return Err(
+                    DifferentialError(
+                        artifact_name=self._reference_artifact,
+                        message=(
+                            f"Reference artifact `{self._reference_artifact}` not found. "
+                            f"Available: {sorted(artifacts)}."
+                        ),
+                    )
+                )
+            if not isinstance(ref_artifact, FileArtifact):
+                return Err(
+                    DifferentialError(
+                        artifact_name=self._reference_artifact,
+                        message=f"Reference artifact `{self._reference_artifact}` exists but is not a file; cannot execute it.",
+                    )
+                )
+            reference_exe = ref_artifact.executable
+        else:
+            assert self._static_reference is not None
+            reference_exe = self._static_reference
+
         student_opts = self._options or ExecutableOptions()
         ref_opts = self._reference_options or student_opts
 
         for case in self._test_cases:
             inp = ExecutableInput(stdin_bytes=case.stdin, arguments=case.args)
             student_out = artifact.executable(inp, options=student_opts)
-            ref_out = self._reference(inp, options=ref_opts)
+            ref_out = reference_exe(inp, options=ref_opts)
 
             stdout_ok = compare_outputs(
                 student_out.stdout_text, ref_out.stdout_text, case.comparison
