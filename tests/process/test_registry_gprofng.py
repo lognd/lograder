@@ -94,11 +94,13 @@ def test_registered() -> None:
 
 # --- Real executable tests ---
 
+import platform as _platform
 import shutil as _shutil
 import subprocess as _subprocess
 
 _GPROFNG_AVAILABLE = bool(_shutil.which("gprofng"))
 _GCC_AVAILABLE = bool(_shutil.which("gcc"))
+_X86_64 = _platform.machine() == "x86_64"
 
 _WORK_C = """\
 #include <stdio.h>
@@ -108,7 +110,8 @@ int main(void) { work(); return 0; }
 
 
 @pytest.mark.skipif(
-    not (_GPROFNG_AVAILABLE and _GCC_AVAILABLE), reason="gprofng and gcc both required"
+    not (_GPROFNG_AVAILABLE and _GCC_AVAILABLE and _X86_64),
+    reason="gprofng collect requires x86-64, gprofng, and gcc",
 )
 def test_gprofng_real_collect(tmp_path) -> None:
     from lograder.process.executable import ExecutableOptions

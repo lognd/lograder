@@ -13,6 +13,9 @@ from lograder.process.executable import (
     TypedExecutable,
     register_typed_executable,
 )
+from lograder.process.install_script import InstallScript, PlatformInstallScript
+from lograder.process.os_helpers import is_posix
+from lograder.process.registry.bash import BashExecutable, BashScriptArgs
 
 
 class PerfRecordArgs(CLIArgs):
@@ -79,4 +82,14 @@ PerfArgs = Union[
 
 @register_typed_executable(["perf"])
 class PerfExecutable(TypedExecutable[PerfArgs]):
-    pass
+    install_executable = InstallScript(
+        {
+            is_posix: PlatformInstallScript(
+                executable=BashExecutable(),
+                args=BashScriptArgs(
+                    script=Path(__file__).parent
+                    / "install_scripts/posix/install_perf.sh"
+                ),
+            )
+        }
+    )
