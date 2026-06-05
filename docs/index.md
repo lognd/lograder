@@ -18,6 +18,7 @@ Each `Step` is a generator. It `yield`s non-fatal display packets (logged to HTM
 | [quickstart.md](quickstart.md) | Complete working example in 30 lines |
 | [pipeline.md](pipeline.md) | Pipeline, Step protocol, Result type, EnvironmentConfig |
 | [steps.md](steps.md) | All built-in steps: Input, Check, Build, Test |
+| [scoring.md](scoring.md) | Scorers, GradescopeConfig, write_results_json |
 | [output.md](output.md) | Layout registration, logging, HTML output |
 | [process.md](process.md) | TypedExecutable, CLIArgs, StaticExecutable, ExecutableOptions |
 | [examples.md](examples.md) | More complete examples |
@@ -36,23 +37,40 @@ from lograder.pipeline.config import config
 with config(root_directory=Path("/submissions/s42"), executable_timeout=30.0):
     pipeline()
 
-# Steps
+# Steps — Input
 from lograder.pipeline.input.local_directory import LocalDirectory
+
+# Steps — Check
 from lograder.pipeline.check.project.simple_project import CMakeManifestCheck
+from lograder.pipeline.check.source import (
+    SourceCheck, OperatorConstraint, IdentifierConstraint,
+    QualifiedNameConstraint, IncludeConstraint, ImportConstraint,
+)
+
+# Steps — Build
 from lograder.pipeline.build.cmake import CMakeBuild
+from lograder.pipeline.build.bash_script import BashScriptBuild
+from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
+
+# Steps — Test
 from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase
 from lograder.pipeline.test.valgrind import ValgrindTest, ValgrindCase
 from lograder.pipeline.test.file_output import FileOutputTest, FileOutputCase
 from lograder.pipeline.test.performance import PerformanceTest, PerformanceCase
+from lograder.pipeline.test.symbol import SymbolTest, SymbolCase
 
 # Result
 from lograder.common import Ok, Err, Result
 
-# Layouts (must import to register)
+# Layouts (must import to register before any logger.packet() call)
 import lograder.output.layout.process.executable
 import lograder.output.layout.project.simple_project
+import lograder.output.layout.check.source
+import lograder.output.layout.pipeline.bash_script
+import lograder.output.layout.pipeline.prebuilt
 import lograder.output.layout.test.output_compare
 import lograder.output.layout.test.valgrind
 import lograder.output.layout.test.file_output
 import lograder.output.layout.test.performance
+import lograder.output.layout.test.symbol
 ```

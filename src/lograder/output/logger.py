@@ -17,7 +17,7 @@ try:
 except ImportError:
     # This block was added for tomli backwards compatibility.
     # Note that the mypy-suppression is done intentionally because it is wrong.
-    import tomli as tomllib  # type: ignore[no-redef, import-not-found]
+    import tomli as tomllib  # type: ignore[no-redef]
 
 _PAST_SETUP: Optional[Path] = None
 

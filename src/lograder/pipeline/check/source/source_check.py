@@ -24,8 +24,10 @@ Language = Literal["c", "cpp", "python"]
 # Constraint types
 # ---------------------------------------------------------------------------
 
+
 class OperatorConstraint(BaseModel):
     """Limit occurrences of one or more operator tokens (combined count)."""
+
     tokens: list[str]
     max_count: int
     label: str = ""
@@ -41,6 +43,7 @@ class IdentifierConstraint(BaseModel):
     Matched against ``identifier`` and ``type_identifier`` nodes in C/C++,
     and ``identifier`` nodes in Python — after macro expansion for C/C++.
     """
+
     names: list[str]
     max_count: int
     label: str = ""
@@ -56,6 +59,7 @@ class QualifiedNameConstraint(BaseModel):
     Matched against ``qualified_identifier`` nodes after macro expansion.
     Names are specified with ``::`` separators (e.g. ``"std::vector"``).
     """
+
     qualified_names: list[str]
     max_count: int
     label: str = ""
@@ -72,6 +76,7 @@ class IncludeConstraint(BaseModel):
     quotes — e.g. ``"<vector>"`` or ``'"mylib.h"'``.  Checked on the
     *original* (unpreprocessed) source so that includes are still visible.
     """
+
     headers: list[str]
     max_count: int
     label: str = ""
@@ -88,6 +93,7 @@ class ImportConstraint(BaseModel):
     the walk — e.g. ``"numpy"`` matches ``import numpy``, ``import numpy.random``,
     and ``from numpy.random import choice``.
     """
+
     modules: list[str]
     max_count: int
     label: str = ""
@@ -109,6 +115,7 @@ AnyConstraint = (
 # ---------------------------------------------------------------------------
 # Display / error models
 # ---------------------------------------------------------------------------
+
 
 class ConstraintResult(BaseModel):
     label: str
@@ -140,6 +147,7 @@ class SourceCheckError(CheckError):
 # Helper: apply constraints against analysis results
 # ---------------------------------------------------------------------------
 
+
 def _apply_constraints(
     constraints: list[AnyConstraint],
     cpp: CppAnalysis | None,
@@ -150,10 +158,18 @@ def _apply_constraints(
     for c in constraints:
         count: int
         if isinstance(c, OperatorConstraint):
-            src = cpp.operators if cpp is not None else (py.operators if py is not None else Counter())
+            src = (
+                cpp.operators
+                if cpp is not None
+                else (py.operators if py is not None else Counter())
+            )
             count = sum(src.get(tok, 0) for tok in c.tokens)
         elif isinstance(c, IdentifierConstraint):
-            src = cpp.identifiers if cpp is not None else (py.identifiers if py is not None else Counter())
+            src = (
+                cpp.identifiers
+                if cpp is not None
+                else (py.identifiers if py is not None else Counter())
+            )
             count = sum(src.get(name, 0) for name in c.names)
         elif isinstance(c, QualifiedNameConstraint):
             src = cpp.qualified_names if cpp is not None else Counter()
@@ -173,6 +189,7 @@ def _apply_constraints(
 # ---------------------------------------------------------------------------
 # Check step
 # ---------------------------------------------------------------------------
+
 
 class SourceCheck(
     Check[
@@ -224,59 +241,71 @@ class SourceCheck(
         for file_name in self._files:
             path = manifest.root / file_name
             if not path.exists():
-                return Err(SourceCheckError(
-                    check_name=self._label,
-                    file=file_name,
-                    message=f"File not found: {path}",
-                ))
+                return Err(
+                    SourceCheckError(
+                        check_name=self._label,
+                        file=file_name,
+                        message=f"File not found: {path}",
+                    )
+                )
 
             cpp_analysis: CppAnalysis | None = None
             py_analysis: PythonAnalysis | None = None
 
             if self._language in ("c", "cpp"):
-                result = analyze_cpp(path, self._include_dirs or None)
-                if result.is_err:
-                    return Err(SourceCheckError(
-                        check_name=self._label,
-                        file=file_name,
-                        message=result.danger_err.message,
-                    ))
-                cpp_analysis = result.danger_ok
+                cpp_result = analyze_cpp(path, self._include_dirs or None)
+                if cpp_result.is_err:
+                    return Err(
+                        SourceCheckError(
+                            check_name=self._label,
+                            file=file_name,
+                            message=cpp_result.danger_err.message,
+                        )
+                    )
+                cpp_analysis = cpp_result.danger_ok
             else:
-                result = analyze_python(path)
-                if result.is_err:
-                    return Err(SourceCheckError(
-                        check_name=self._label,
-                        file=file_name,
-                        message=str(result.danger_err),
-                    ))
-                py_analysis = result.danger_ok
+                py_result = analyze_python(path)
+                if py_result.is_err:
+                    return Err(
+                        SourceCheckError(
+                            check_name=self._label,
+                            file=file_name,
+                            message=str(py_result.danger_err),
+                        )
+                    )
+                py_analysis = py_result.danger_ok
 
             pairs = _apply_constraints(self._constraints, cpp_analysis, py_analysis)
             constraint_results: list[ConstraintResult] = []
             any_violation = False
 
             for constraint, count in pairs:
-                constraint_results.append(ConstraintResult(
-                    label=constraint.display_label,
-                    count=count,
-                    max_count=constraint.max_count,
-                ))
-                if count > constraint.max_count:
-                    any_violation = True
-                    yield Err(SourceViolation(
-                        check_name=self._label,
-                        file=file_name,
+                constraint_results.append(
+                    ConstraintResult(
                         label=constraint.display_label,
                         count=count,
                         max_count=constraint.max_count,
-                    ))
+                    )
+                )
+                if count > constraint.max_count:
+                    any_violation = True
+                    yield Err(
+                        SourceViolation(
+                            check_name=self._label,
+                            file=file_name,
+                            label=constraint.display_label,
+                            count=count,
+                            max_count=constraint.max_count,
+                        )
+                    )
 
             if not any_violation:
-                yield Ok(SourceCheckData(
-                    check_name=self._label,
-                    file=file_name,
-                    results=constraint_results,
-                ))
+                yield Ok(
+                    SourceCheckData(
+                        check_name=self._label,
+                        file=file_name,
+                        results=constraint_results,
+                    )
+                )
 
         return Ok(manifest)

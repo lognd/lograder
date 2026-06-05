@@ -14,6 +14,7 @@ The common DFS walk (operators via 'operator' field + comparison nodes,
 identifiers by node type) lives in ``_Walker``; language subclasses add
 their own extras via ``_handle_extra``.
 """
+
 from __future__ import annotations
 
 import re
@@ -23,7 +24,7 @@ from pathlib import Path
 import tree_sitter_cpp as tscpp
 import tree_sitter_python as tspy
 from pydantic import BaseModel
-from tree_sitter import Language, Parser
+from tree_sitter import Language, Node, Parser
 
 from lograder.common import Err, Ok, Result
 from lograder.process.executable import ExecutableOptions
@@ -39,6 +40,7 @@ _PY_LANGUAGE = Language(tspy.language())
 # Structured error
 # ---------------------------------------------------------------------------
 
+
 class PreprocessError(BaseModel):
     path: Path
     tried: list[str]
@@ -48,7 +50,9 @@ class PreprocessError(BaseModel):
 
     @property
     def message(self) -> str:
-        parts = [f"Preprocessing '{self.path}' failed (tried: {', '.join(self.tried)})."]
+        parts = [
+            f"Preprocessing '{self.path}' failed (tried: {', '.join(self.tried)})."
+        ]
         if self.exception:
             parts.append(f"Exception: {self.exception}")
         if self.return_code is not None:
@@ -62,12 +66,14 @@ class PreprocessError(BaseModel):
 # Generic tree walker
 # ---------------------------------------------------------------------------
 
+
 class _Walker:
     """DFS tree walker; collects operators and identifiers for any language.
 
     Subclasses set ``op_node_types`` / ``identifier_node_types`` and may
     override ``_handle_extra`` to collect language-specific data.
     """
+
     op_node_types: frozenset[str] = frozenset()
     identifier_node_types: frozenset[str] = frozenset()
 
@@ -75,11 +81,11 @@ class _Walker:
         self.operators: Counter[str] = Counter()
         self.identifiers: Counter[str] = Counter()
 
-    def _handle_extra(self, node: object) -> None:  # noqa: B027 (intentional no-op)
+    def _handle_extra(self, node: Node) -> None:  # noqa: B027 (intentional no-op)
         pass
 
-    def walk(self, root_node: object) -> None:
-        stack = [root_node]
+    def walk(self, root_node: Node) -> None:
+        stack: list[Node] = [root_node]
         while stack:
             n = stack.pop()
 
@@ -93,7 +99,9 @@ class _Walker:
             elif n.type == "comparison_operator":
                 for child in n.children:
                     if not child.is_named and child.text:
-                        self.operators[child.text.decode("utf-8", errors="replace")] += 1
+                        self.operators[
+                            child.text.decode("utf-8", errors="replace")
+                        ] += 1
 
             if n.type in self.identifier_node_types and n.text:
                 self.identifiers[n.text.decode("utf-8", errors="replace")] += 1
@@ -106,7 +114,8 @@ class _Walker:
 # C/C++ walkers
 # ---------------------------------------------------------------------------
 
-def _qualified_name_text(node: object) -> str:
+
+def _qualified_name_text(node: Node) -> str:
     """Recursively reconstruct the full text of a qualified_identifier node."""
     if node.type == "qualified_identifier":
         scope = node.child_by_field_name("scope")
@@ -125,20 +134,22 @@ def _qualified_name_text(node: object) -> str:
 
 
 class _CppWalker(_Walker):
-    op_node_types = frozenset({
-        "binary_expression",
-        "assignment_expression",
-        "unary_expression",
-        "update_expression",
-        "pointer_expression",
-    })
+    op_node_types = frozenset(
+        {
+            "binary_expression",
+            "assignment_expression",
+            "unary_expression",
+            "update_expression",
+            "pointer_expression",
+        }
+    )
     identifier_node_types = frozenset({"identifier", "type_identifier"})
 
     def __init__(self) -> None:
         super().__init__()
         self.qualified_names: Counter[str] = Counter()
 
-    def _handle_extra(self, node: object) -> None:
+    def _handle_extra(self, node: Node) -> None:
         if node.type == "qualified_identifier":
             qname = _qualified_name_text(node)
             if qname:
@@ -151,8 +162,8 @@ class _CppIncludeWalker:
     def __init__(self) -> None:
         self.includes: Counter[str] = Counter()
 
-    def walk(self, root_node: object) -> None:
-        stack = [root_node]
+    def walk(self, root_node: Node) -> None:
+        stack: list[Node] = [root_node]
         while stack:
             n = stack.pop()
             if n.type == "preproc_include":
@@ -166,20 +177,23 @@ class _CppIncludeWalker:
 # Python walker
 # ---------------------------------------------------------------------------
 
+
 class _PythonWalker(_Walker):
-    op_node_types = frozenset({
-        "binary_operator",
-        "augmented_assignment",
-        "unary_operator",
-        "boolean_operator",
-    })
+    op_node_types = frozenset(
+        {
+            "binary_operator",
+            "augmented_assignment",
+            "unary_operator",
+            "boolean_operator",
+        }
+    )
     identifier_node_types = frozenset({"identifier"})
 
     def __init__(self) -> None:
         super().__init__()
         self.imports: Counter[str] = Counter()
 
-    def _handle_extra(self, node: object) -> None:
+    def _handle_extra(self, node: Node) -> None:
         if node.type == "import_statement":
             for child in node.named_children:
                 raw = self._dotted_name_from(child)
@@ -191,7 +205,7 @@ class _PythonWalker(_Walker):
                 self._record_import(m.text.decode("utf-8", errors="replace"))
 
     @staticmethod
-    def _dotted_name_from(node: object) -> str:
+    def _dotted_name_from(node: Node) -> str:
         if node.type == "dotted_name" and node.text:
             return node.text.decode("utf-8", errors="replace")
         if node.type == "aliased_import":
@@ -210,6 +224,7 @@ class _PythonWalker(_Walker):
 # ---------------------------------------------------------------------------
 # Preprocessing chain
 # ---------------------------------------------------------------------------
+
 
 def _preprocess(path: Path, include_dirs: list[Path]) -> Result[str, PreprocessError]:
     tried: list[str] = []
@@ -277,10 +292,15 @@ def _preprocess(path: Path, include_dirs: list[Path]) -> Result[str, PreprocessE
         return Ok(_naive_expand(path.read_text(encoding="utf-8", errors="replace")))
     except OSError as exc:
         last_exc = str(exc)
-        return Err(PreprocessError(
-            path=path, tried=tried,
-            return_code=last_rc, stderr=last_stderr, exception=last_exc,
-        ))
+        return Err(
+            PreprocessError(
+                path=path,
+                tried=tried,
+                return_code=last_rc,
+                stderr=last_stderr,
+                exception=last_exc,
+            )
+        )
 
 
 def _naive_expand(source: str) -> str:
@@ -310,6 +330,7 @@ def _naive_expand(source: str) -> str:
 # Public API — result models
 # ---------------------------------------------------------------------------
 
+
 class CppAnalysis(BaseModel):
     operators: Counter[str]
     identifiers: Counter[str]
@@ -330,6 +351,7 @@ class PythonAnalysis(BaseModel):
 # ---------------------------------------------------------------------------
 # Public API — analysis functions
 # ---------------------------------------------------------------------------
+
 
 def analyze_cpp(
     path: Path,
@@ -353,20 +375,27 @@ def analyze_cpp(
     try:
         original = path.read_text(encoding="utf-8", errors="replace")
     except OSError as exc:
-        return Err(PreprocessError(
-            path=path, tried=["file-read"],
-            return_code=None, stderr=None, exception=str(exc),
-        ))
+        return Err(
+            PreprocessError(
+                path=path,
+                tried=["file-read"],
+                return_code=None,
+                stderr=None,
+                exception=str(exc),
+            )
+        )
     include_walker.walk(
         cpp_parser.parse(original.encode("utf-8", errors="replace")).root_node
     )
 
-    return Ok(CppAnalysis(
-        operators=walker.operators,
-        identifiers=walker.identifiers,
-        qualified_names=walker.qualified_names,
-        includes=include_walker.includes,
-    ))
+    return Ok(
+        CppAnalysis(
+            operators=walker.operators,
+            identifiers=walker.identifiers,
+            qualified_names=walker.qualified_names,
+            includes=include_walker.includes,
+        )
+    )
 
 
 def analyze_python(path: Path) -> Result[PythonAnalysis, OSError]:
@@ -380,8 +409,10 @@ def analyze_python(path: Path) -> Result[PythonAnalysis, OSError]:
     walker.walk(
         Parser(_PY_LANGUAGE).parse(source.encode("utf-8", errors="replace")).root_node
     )
-    return Ok(PythonAnalysis(
-        operators=walker.operators,
-        identifiers=walker.identifiers,
-        imports=walker.imports,
-    ))
+    return Ok(
+        PythonAnalysis(
+            operators=walker.operators,
+            identifiers=walker.identifiers,
+            imports=walker.imports,
+        )
+    )

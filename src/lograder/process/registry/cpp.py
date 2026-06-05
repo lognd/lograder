@@ -1,4 +1,5 @@
 """Standalone C preprocessor (cpp)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -55,7 +56,9 @@ class CPPArgs(CLIArgs):
 
     # Include path
     include_dirs: list[Path] = CLIMultiOption(default=(), token_emit=["-I{}"])
-    quote_include_dirs: list[Path] = CLIMultiOption(default=(), token_emit=["-iquote{}"])
+    quote_include_dirs: list[Path] = CLIMultiOption(
+        default=(), token_emit=["-iquote{}"]
+    )
     system_include_dirs: list[Path] = CLIMultiOption(
         default=(), token_emit=["-isystem{}"]
     )
@@ -70,8 +73,12 @@ class CPPArgs(CLIArgs):
     undef: bool = CLIPresenceFlag(["-undef"], default=False)
 
     # Force-includes
-    include_files: list[Path] = CLIMultiOption(default=(), token_emit=["-include", "{}"])
-    imacros_files: list[Path] = CLIMultiOption(default=(), token_emit=["-imacros", "{}"])
+    include_files: list[Path] = CLIMultiOption(
+        default=(), token_emit=["-include", "{}"]
+    )
+    imacros_files: list[Path] = CLIMultiOption(
+        default=(), token_emit=["-imacros", "{}"]
+    )
 
     # Dependency generation
     dependency_only: bool = CLIPresenceFlag(["-M"], default=False)

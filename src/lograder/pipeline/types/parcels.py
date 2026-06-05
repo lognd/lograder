@@ -16,7 +16,7 @@ from lograder.pipeline.config import get_config
 try:
     import tomllib
 except ImportError:
-    import tomli as tomllib  # type: ignore[no-redef, import-not-found]
+    import tomli as tomllib  # type: ignore[no-redef]
 
 
 class Package:

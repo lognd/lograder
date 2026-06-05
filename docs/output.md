@@ -46,10 +46,14 @@ Built-in layouts and their import paths:
 |-------------|--------|
 | `ExecutableData`, `InstallWarning` | `lograder.output.layout.process.executable` |
 | `CMake/Makefile/PyProjectManifestCheck{Data,Error}` | `lograder.output.layout.project.simple_project` |
+| `SourceCheckData`, `SourceViolation`, `SourceCheckError` | `lograder.output.layout.check.source` |
+| `BashScriptBuildOutput`, `BashScriptBuildError` | `lograder.output.layout.pipeline.bash_script` |
+| `PrebuiltArtifactsData`, `PrebuiltArtifactsError` | `lograder.output.layout.pipeline.prebuilt` |
 | `OutputCompare{Success,Failure,Error}` | `lograder.output.layout.test.output_compare` |
 | `ValgrindTest{Success,Failure,Error}` | `lograder.output.layout.test.valgrind` |
 | `FileOutput{Success,Failure,Error}` | `lograder.output.layout.test.file_output` |
 | `PerformanceTest{Success,Failure,Error}` | `lograder.output.layout.test.performance` |
+| `SymbolSuccess`, `SymbolFailure`, `SymbolError` | `lograder.output.layout.test.symbol` |
 
 ## Logger usage
 
