@@ -3,12 +3,12 @@
 C/C++ workflow
 --------------
 1. Preprocess with cpp/g++/clang++ to resolve #define aliasing.
-2. Parse preprocessed source → operators, identifiers, qualified names.
-3. Parse original source → #include directives (erased by preprocessor).
+2. Parse preprocessed source -> operators, identifiers, qualified names.
+3. Parse original source -> #include directives (erased by preprocessor).
 
 Python workflow
 ---------------
-Parse source directly → operators, identifiers, import statements.
+Parse source directly -> operators, identifiers, import statements.
 
 The common DFS walk (operators via 'operator' field + comparison nodes,
 identifiers by node type) lives in ``_Walker``; language subclasses add
@@ -327,7 +327,7 @@ def _naive_expand(source: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Public API — result models
+# Public API  -  result models
 # ---------------------------------------------------------------------------
 
 
@@ -349,7 +349,7 @@ class PythonAnalysis(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Public API — analysis functions
+# Public API  -  analysis functions
 # ---------------------------------------------------------------------------
 
 

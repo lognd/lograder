@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from colorama import Fore as F
 from colorama import Style as S
 
@@ -9,6 +11,10 @@ from lograder.pipeline.test.valgrind import (
     ValgrindTestSuccess,
 )
 from lograder.process.os_helpers import command_to_str
+
+_CLEAN = f"{S.BRIGHT}{F.GREEN}[CLEAN]{F.RESET}{S.RESET_ALL}"
+_ERRORS = f"{S.BRIGHT}{F.RED}[ERRORS]{F.RESET}{S.RESET_ALL}"
+_ERROR = f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
 
 
 def _args_str(args: list[str]) -> str:
@@ -33,15 +39,14 @@ def _format_vg_error_ansi(err: ValgrindError) -> str:
 class ValgrindTestSuccessLayout(Layout[ValgrindTestSuccess]):
     @classmethod
     def to_simple(cls, data: ValgrindTestSuccess) -> str:
-        return (
-            f"[CLEAN] `{data.artifact_name}` — {data.test_name}{_args_str(data.args)}"
-        )
+        return f"[CLEAN] `{data.artifact_name}` - {data.test_name}{_args_str(data.args)}"
 
     @classmethod
     def to_ansi(cls, data: ValgrindTestSuccess) -> str:
         return (
-            f"{S.BRIGHT}{F.GREEN}[CLEAN]{F.RESET}{S.RESET_ALL}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}` — {data.test_name}{_args_str(data.args)}"
+            f"{_CLEAN}"
+            f" `{F.CYAN}{data.artifact_name}{F.RESET}` - {data.test_name}"
+            f"{_args_str(data.args)}"
         )
 
 
@@ -50,7 +55,7 @@ class ValgrindTestFailureLayout(Layout[ValgrindTestFailure]):
     @classmethod
     def to_simple(cls, data: ValgrindTestFailure) -> str:
         parts = [
-            f"[ERRORS] `{data.artifact_name}` — {data.test_name}{_args_str(data.args)}\n",
+            f"[ERRORS] `{data.artifact_name}` - {data.test_name}{_args_str(data.args)}\n",
         ]
         if data.crashed:
             parts.append("  Fatal signal (crash) detected.\n")
@@ -58,14 +63,15 @@ class ValgrindTestFailureLayout(Layout[ValgrindTestFailure]):
             parts.append(_format_vg_error_simple(err))
             parts.append("\n")
         if data.stdin_text:
-            parts.append(f"STDIN: {repr(data.stdin_text)}\n")
+            parts.append(f"stdin: {repr(data.stdin_text)}\n")
         return "".join(parts)
 
     @classmethod
     def to_ansi(cls, data: ValgrindTestFailure) -> str:
         parts = [
-            f"{S.BRIGHT}{F.RED}[ERRORS]{F.RESET}{S.RESET_ALL}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}` — {data.test_name}{_args_str(data.args)}\n",
+            f"{_ERRORS}"
+            f" `{F.CYAN}{data.artifact_name}{F.RESET}` - {data.test_name}"
+            f"{_args_str(data.args)}\n",
         ]
         if data.crashed:
             parts.append(f"  {F.RED}Fatal signal (crash) detected.{F.RESET}\n")
@@ -73,7 +79,7 @@ class ValgrindTestFailureLayout(Layout[ValgrindTestFailure]):
             parts.append(_format_vg_error_ansi(err))
             parts.append("\n")
         if data.stdin_text:
-            parts.append(f"STDIN: {F.YELLOW}{repr(data.stdin_text)}{F.RESET}\n")
+            parts.append(f"stdin: {F.YELLOW}{repr(data.stdin_text)}{F.RESET}\n")
         return "".join(parts)
 
 
@@ -86,6 +92,6 @@ class ValgrindTestErrorLayout(Layout[ValgrindTestError]):
     @classmethod
     def to_ansi(cls, data: ValgrindTestError) -> str:
         return (
-            f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
+            f"{_ERROR}"
             f" `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"
         )

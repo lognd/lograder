@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from colorama import Fore as F
 from colorama import Style as S
 
@@ -9,9 +11,19 @@ from lograder.pipeline.test.file_output import (
 )
 from lograder.process.os_helpers import command_to_str
 
+_PASS = f"{S.BRIGHT}{F.GREEN}[PASS]{F.RESET}{S.RESET_ALL}"
+_FAIL = f"{S.BRIGHT}{F.RED}[FAIL]{F.RESET}{S.RESET_ALL}"
+_ERROR = f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
+
 
 def _args_str(args: list[str]) -> str:
     return f" {command_to_str(args)}" if args else ""
+
+
+def _truncate(text: str, limit: int = 2000) -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit] + f"\n... ({len(text) - limit} chars truncated)"
 
 
 @register_layout("file-output-success")
@@ -19,15 +31,16 @@ class FileOutputSuccessLayout(Layout[FileOutputSuccess]):
     @classmethod
     def to_simple(cls, data: FileOutputSuccess) -> str:
         return (
-            f"[PASS] `{data.artifact_name}` — {data.test_name}{_args_str(data.args)}"
+            f"[PASS] `{data.artifact_name}` - {data.test_name}{_args_str(data.args)}"
             f" (wrote {data.output_file})"
         )
 
     @classmethod
     def to_ansi(cls, data: FileOutputSuccess) -> str:
         return (
-            f"{S.BRIGHT}{F.GREEN}[PASS]{F.RESET}{S.RESET_ALL}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}` — {data.test_name}{_args_str(data.args)}"
+            f"{_PASS}"
+            f" `{F.CYAN}{data.artifact_name}{F.RESET}` - {data.test_name}"
+            f"{_args_str(data.args)}"
             f" (wrote {F.CYAN}{data.output_file}{F.RESET})"
         )
 
@@ -37,30 +50,33 @@ class FileOutputFailureLayout(Layout[FileOutputFailure]):
     @classmethod
     def to_simple(cls, data: FileOutputFailure) -> str:
         parts = [
-            f"[FAIL] `{data.artifact_name}` — {data.test_name}{_args_str(data.args)}\n",
+            f"[FAIL] `{data.artifact_name}` - {data.test_name}{_args_str(data.args)}\n",
         ]
         if data.actual_content is None:
             parts.append(f"  File `{data.output_file}` was not created.\n")
         elif data.diff:
             parts.append(
-                f"File diff (expected → actual) for `{data.output_file}`:\n{data.diff}\n"
+                f"File diff (expected -> actual) for `{data.output_file}`:\n"
+                f"{_truncate(data.diff)}\n"
             )
         if (
             data.expected_exit_code is not None
             and data.actual_exit_code != data.expected_exit_code
         ):
             parts.append(
-                f"Exit code: expected {data.expected_exit_code}, got {data.actual_exit_code}.\n"
+                f"Exit code: expected {data.expected_exit_code},"
+                f" got {data.actual_exit_code}.\n"
             )
         if data.stdin_text:
-            parts.append(f"STDIN: {repr(data.stdin_text)}\n")
+            parts.append(f"stdin: {repr(data.stdin_text)}\n")
         return "".join(parts)
 
     @classmethod
     def to_ansi(cls, data: FileOutputFailure) -> str:
         parts = [
-            f"{S.BRIGHT}{F.RED}[FAIL]{F.RESET}{S.RESET_ALL}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}` — {data.test_name}{_args_str(data.args)}\n",
+            f"{_FAIL}"
+            f" `{F.CYAN}{data.artifact_name}{F.RESET}` - {data.test_name}"
+            f"{_args_str(data.args)}\n",
         ]
         if data.actual_content is None:
             parts.append(
@@ -68,7 +84,9 @@ class FileOutputFailureLayout(Layout[FileOutputFailure]):
             )
         elif data.diff:
             parts.append(
-                f"{F.YELLOW}File diff (expected → actual) for `{data.output_file}`:{F.RESET}\n{data.diff}\n"
+                f"{F.YELLOW}File diff (expected -> actual)"
+                f" for `{data.output_file}`:{F.RESET}\n"
+                f"{_truncate(data.diff)}\n"
             )
         if (
             data.expected_exit_code is not None
@@ -79,7 +97,7 @@ class FileOutputFailureLayout(Layout[FileOutputFailure]):
                 f" got {F.RED}{data.actual_exit_code}{F.RESET}.\n"
             )
         if data.stdin_text:
-            parts.append(f"STDIN: {F.YELLOW}{repr(data.stdin_text)}{F.RESET}\n")
+            parts.append(f"stdin: {F.YELLOW}{repr(data.stdin_text)}{F.RESET}\n")
         return "".join(parts)
 
 
@@ -92,6 +110,6 @@ class FileOutputErrorLayout(Layout[FileOutputError]):
     @classmethod
     def to_ansi(cls, data: FileOutputError) -> str:
         return (
-            f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
+            f"{_ERROR}"
             f" `{F.CYAN}{data.artifact_name}{F.RESET}`: {data.message}"
         )

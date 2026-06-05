@@ -41,7 +41,7 @@ class IdentifierConstraint(BaseModel):
     """Limit uses of specific identifiers/names (variables, functions, types).
 
     Matched against ``identifier`` and ``type_identifier`` nodes in C/C++,
-    and ``identifier`` nodes in Python — after macro expansion for C/C++.
+    and ``identifier`` nodes in Python  -  after macro expansion for C/C++.
     """
 
     names: list[str]
@@ -73,7 +73,7 @@ class IncludeConstraint(BaseModel):
     """C/C++ only: limit ``#include`` directives for specific headers.
 
     Headers are matched as they appear in source, including angle brackets or
-    quotes — e.g. ``"<vector>"`` or ``'"mylib.h"'``.  Checked on the
+    quotes  -  e.g. ``"<vector>"`` or ``'"mylib.h"'``.  Checked on the
     *original* (unpreprocessed) source so that includes are still visible.
     """
 
@@ -87,10 +87,10 @@ class IncludeConstraint(BaseModel):
 
 
 class ImportConstraint(BaseModel):
-    """Python only: limit ``import`` / ``from … import`` statements by module.
+    """Python only: limit ``import`` / ``from ... import`` statements by module.
 
     Matches the top-level package name and any dotted sub-path recorded during
-    the walk — e.g. ``"numpy"`` matches ``import numpy``, ``import numpy.random``,
+    the walk  -  e.g. ``"numpy"`` matches ``import numpy``, ``import numpy.random``,
     and ``from numpy.random import choice``.
     """
 
@@ -204,11 +204,11 @@ class SourceCheck(
 
     Supported constraint types
     --------------------------
-    - ``OperatorConstraint``     — operators (both languages)
-    - ``IdentifierConstraint``   — names / identifiers (both languages)
-    - ``QualifiedNameConstraint``— ``std::vector``-style names (C/C++ only)
-    - ``IncludeConstraint``      — ``#include`` directives (C/C++ only)
-    - ``ImportConstraint``       — ``import`` statements (Python only)
+    - ``OperatorConstraint``      -  operators (both languages)
+    - ``IdentifierConstraint``    -  names / identifiers (both languages)
+    - ``QualifiedNameConstraint`` -  ``std::vector``-style names (C/C++ only)
+    - ``IncludeConstraint``       -  ``#include`` directives (C/C++ only)
+    - ``ImportConstraint``        -  ``import`` statements (Python only)
 
     C/C++ files are preprocessed first so ``#define`` aliasing is resolved
     before the AST is built.  Violations are yielded as non-fatal ``Err``

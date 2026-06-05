@@ -135,13 +135,13 @@ def render_manifest_diff(
     parts: list[str] = []
     if missing:
         parts.append(
-            f"missing={','.join(missing[:5])}{'…' if len(missing) > 5 else ''}"
+            f"missing={','.join(missing[:5])}{',...' if len(missing) > 5 else ''}"
         )
     if extra:
-        parts.append(f"extra={','.join(extra[:5])}{'…' if len(extra) > 5 else ''}")
+        parts.append(f"extra={','.join(extra[:5])}{',...' if len(extra) > 5 else ''}")
     if type_mismatch:
         parts.append(
-            f"mismatch={','.join(type_mismatch[:5])}{'…' if len(type_mismatch) > 5 else ''}"
+            f"mismatch={','.join(type_mismatch[:5])}{',...' if len(type_mismatch) > 5 else ''}"
         )
 
     return " ".join(parts) if parts else "diff=(EMPTY)"

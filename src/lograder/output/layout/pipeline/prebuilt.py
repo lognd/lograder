@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from colorama import Fore as F
 from colorama import Style as S
 
@@ -28,7 +30,7 @@ class PrebuiltArtifactsErrorLayout(Layout[PrebuiltArtifactsError]):
     @classmethod
     def to_ansi(cls, data: PrebuiltArtifactsError) -> str:
         return (
-            f"{S.BRIGHT}{F.RED}< PREBUILT ARTIFACTS ERROR >{F.RESET}{S.RESET_ALL}\n"
+            f"{S.BRIGHT}< {F.RED}PREBUILT ARTIFACTS ERROR{F.RESET} >{S.RESET_ALL}\n"
             f"  {F.CYAN}{data.file}{F.RESET}: {data.message}"
         )
 

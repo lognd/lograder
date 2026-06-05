@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from colorama import Fore as F
 from colorama import Style as S
 
@@ -10,7 +12,7 @@ def _build_summary(data: BuildOutput) -> str:
         return f"install error: {data.install_error.message}"
     if data.executable_output is not None:
         out = data.executable_output
-        return f"exit {out.return_code} — {str(data.config_file.name)}"
+        return f"exit {out.return_code} - {str(data.config_file.name)}"
     return "build complete"
 
 

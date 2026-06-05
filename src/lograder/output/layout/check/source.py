@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from colorama import Fore as F
 from colorama import Style as S
 
@@ -20,7 +22,7 @@ class SourceCheckDataLayout(Layout[SourceCheckData]):
     @classmethod
     def to_ansi(cls, data: SourceCheckData) -> str:
         rows = "\n".join(
-            f"  {F.GREEN}✓{F.RESET} {r.label}: {_bar(r.count, r.max_count)}"
+            f"  {F.GREEN}[ok]{F.RESET} {r.label}: {_bar(r.count, r.max_count)}"
             for r in data.results
         )
         return (
@@ -35,7 +37,7 @@ class SourceCheckDataLayout(Layout[SourceCheckData]):
         summary = ", ".join(
             f"{r.label}: {_bar(r.count, r.max_count)}" for r in data.results
         )
-        return f"[PASS] {data.check_name} — {data.file} — {summary}"
+        return f"[PASS] {data.check_name} - {data.file} - {summary}"
 
 
 @register_layout("source-violation")
@@ -44,7 +46,7 @@ class SourceViolationLayout(Layout[SourceViolation]):
     def to_ansi(cls, data: SourceViolation) -> str:
         return (
             f"{S.BRIGHT}{F.RED}[VIOLATION]{F.RESET}{S.RESET_ALL}"
-            f" {data.check_name} — {F.CYAN}{data.file}{F.RESET}\n"
+            f" {data.check_name} - {F.CYAN}{data.file}{F.RESET}\n"
             f"  {data.label}: used {F.RED}{data.count}{F.RESET}"
             f" time(s), max allowed is {F.GREEN}{data.max_count}{F.RESET}."
         )
@@ -52,7 +54,7 @@ class SourceViolationLayout(Layout[SourceViolation]):
     @classmethod
     def to_simple(cls, data: SourceViolation) -> str:
         return (
-            f"[VIOLATION] {data.check_name} — {data.file} — "
+            f"[VIOLATION] {data.check_name} - {data.file} - "
             f"{data.label}: {data.count} used, max {data.max_count}."
         )
 
@@ -63,10 +65,10 @@ class SourceCheckErrorLayout(Layout[SourceCheckError]):
     def to_ansi(cls, data: SourceCheckError) -> str:
         return (
             f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
-            f" {data.check_name} — {F.CYAN}{data.file}{F.RESET}\n"
+            f" {data.check_name} - {F.CYAN}{data.file}{F.RESET}\n"
             f"  {data.message}"
         )
 
     @classmethod
     def to_simple(cls, data: SourceCheckError) -> str:
-        return f"[ERROR] {data.check_name} — {data.file}: {data.message}"
+        return f"[ERROR] {data.check_name} - {data.file}: {data.message}"

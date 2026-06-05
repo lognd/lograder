@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from colorama import Fore as F
 from colorama import Style as S
 
@@ -11,7 +13,7 @@ from lograder.pipeline.build.bash_script import (
 def _truncate(text: str, limit: int = 800) -> str:
     if len(text) <= limit:
         return text
-    return text[:limit] + f"\n… ({len(text) - limit} chars truncated)"
+    return text[:limit] + f"\n... ({len(text) - limit} chars truncated)"
 
 
 @register_layout("bash-script-build-output")
@@ -43,7 +45,7 @@ class BashScriptBuildErrorLayout(Layout[BashScriptBuildError]):
     @classmethod
     def to_ansi(cls, data: BashScriptBuildError) -> str:
         lines = [
-            f"{S.BRIGHT}{F.RED}< BASH SCRIPT BUILD ERROR >{F.RESET}{S.RESET_ALL}"
+            f"{S.BRIGHT}< {F.RED}BASH SCRIPT BUILD ERROR{F.RESET} >{S.RESET_ALL}"
             f" [{F.CYAN}{data.script}{F.RESET}]",
             f"  {data.message}",
         ]
