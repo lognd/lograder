@@ -1,17 +1,27 @@
 from __future__ import annotations
 
 import json
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
-from lograder.process.executable import StaticExecutable
+from lograder.process.executable import StaticExecutable, ExecutableInput, ExecutableOptions, ExecutableOutput
 
 
 class Artifact(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+T = TypeVar("T")
+O = TypeVar("O")
+class RunnableArtifact(Artifact, Generic[T, O], ABC):
+    @abstractmethod
+    def __call__(self, input: T) -> O: ...
+
+class ExecutableArtifact(RunnableArtifact[tuple[ExecutableInput, ExecutableOptions], ExecutableOutput]):
+    def __call__(self, input: tuple[ExecutableInput, ExecutableOptions]) -> ExecutableOutput: ...
+        # TODO: implement running logic.
 
 class FileArtifact(Artifact):
     path: Path
