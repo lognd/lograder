@@ -330,6 +330,223 @@ SymbolTest(
 - Returns `Err(SymbolError)` fatally if the artifact is not a `FileArtifact` or `nm` is not installed.
 - Import the layout module before running: `import lograder.output.layout.test.symbol`
 
+### `Catch2Test`
+
+Runs a Catch2 v3 test binary and yields one result packet per test case. The binary is invoked with `--reporter junit --out <tmpfile>`; the JUnit XML is parsed after the run.
+
+```python
+from lograder.pipeline.test.catch2 import Catch2Test, Catch2Args
+
+Catch2Test(
+    artifact_name="tests",          # key in the artifacts dict
+)
+
+# Filter to a tag expression or test name:
+Catch2Test(
+    artifact_name="tests",
+    base_args=Catch2Args(
+        test_spec="[unit]",          # Catch2 tag/name expression (positional)
+        order="rand",
+        rng_seed="12345",
+    ),
+)
+```
+
+**`Catch2Args` fields:**
+
+| Field | Flag | Description |
+|-------|------|-------------|
+| `test_spec` | positional | Test name glob or tag expression, e.g. `"[math] ~[slow]"` |
+| `reporter` | `--reporter` | Managed internally; override only for manual invocation |
+| `out` | `--out` | Managed internally |
+| `abort` | `--abort` | Stop after first failure |
+| `abortx` | `--abortx N` | Stop after N failures |
+| `order` | `--order` | `"decl"`, `"lex"`, `"rand"` |
+| `rng_seed` | `--rng-seed` | Seed for random ordering |
+| `warn` | `--warn` | `"NoTests"` to error when no tests match |
+| `durations` | `--durations yes` | Print per-test timing |
+| `min_duration` | `--min-duration` | Only print tests slower than N seconds |
+| `verbosity` | `--verbosity` | `"quiet"`, `"normal"`, `"high"` |
+| `shard_count` | `--shard-count` | Total number of shards (v3.3+) |
+| `shard_index` | `--shard-index` | Zero-based index of this shard |
+| `list_tests` | `--list-tests` | Print test list and exit |
+| `list_tags` | `--list-tags` | Print tag list and exit |
+| `list_reporters` | `--list-reporters` | Print reporter list and exit |
+
+`test_name` on each packet is `"SuiteName/TestName"` when the suite differs from the name, otherwise just the bare name. Skipped tests are silently ignored.
+
+- Returns `Err(Catch2Error)` fatally if the artifact is missing, the binary produces no XML, or the XML cannot be parsed.
+- Import the layout module before running: `import lograder.output.layout.test.catch2`
+
+### `GTestTest`
+
+Runs a Google Test binary and yields one result packet per test case. The binary is invoked with `--gtest_output=xml:<tmpfile>`; the JUnit XML is parsed after the run.
+
+```python
+from lograder.pipeline.test.gtest import GTestTest
+from lograder.process.registry.gtest import GTestArgs
+
+GTestTest(
+    artifact_name="tests",
+)
+
+# Filter and shuffle:
+GTestTest(
+    artifact_name="tests",
+    base_args=GTestArgs(
+        gtest_filter="MathSuite.*",    # gtest filter glob
+        gtest_shuffle=True,
+        gtest_random_seed=42,
+    ),
+)
+```
+
+**`GTestArgs` fields:**
+
+| Field | Flag | Description |
+|-------|------|-------------|
+| `gtest_output` | `--gtest_output={}` | Managed internally |
+| `gtest_filter` | `--gtest_filter={}` | Test filter glob, e.g. `"Suite.Test"`, `"Suite*"`, `"-Suite.Test"` |
+| `gtest_also_run_disabled_tests` | `--gtest_also_run_disabled_tests` | Run `DISABLED_` tests |
+| `gtest_repeat` | `--gtest_repeat=N` | Repeat tests N times |
+| `gtest_shuffle` | `--gtest_shuffle` | Randomize test order |
+| `gtest_random_seed` | `--gtest_random_seed=N` | Seed for shuffle |
+| `gtest_recreate_environments_when_repeating` | `--gtest_recreate_environments_when_repeating` | Recreate fixtures between repeats |
+| `gtest_fail_fast` | `--gtest_fail_fast` | Stop after first failure |
+| `gtest_brief` | `--gtest_brief=1` | Only print failures |
+| `gtest_print_time` | `--gtest_print_time=1` | Print timing per test |
+| `gtest_death_test_style` | `--gtest_death_test_style={}` | `"fast"`, `"safe"`, `"threadsafe"` |
+| `gtest_list_tests` | `--gtest_list_tests` | List tests and exit |
+
+`test_name` on each packet uses `"SuiteName.TestName"` — matching gtest's native `SUITE.TEST` naming. Skipped/disabled tests are silently ignored.
+
+- Returns `Err(GTestError)` fatally if the artifact is missing, the binary produces no XML, or the XML cannot be parsed.
+- Import the layout module before running: `import lograder.output.layout.test.gtest`
+
+### `CTestTest`
+
+Runs `ctest` in a CMake build directory and yields one result packet per test. The build directory is resolved either from an explicit `build_dir` parameter or by looking up a `CMakeArtifact` in the artifacts dict. CTest is invoked with `--output-junit <tmpfile>`.
+
+```python
+from lograder.pipeline.test.ctest import CTestTest
+from lograder.process.registry.ctest import CTestArgs
+
+# Resolve build_dir from a CMakeArtifact (most common — works after CMakeBuild):
+CTestTest(artifact_name="my_target")
+
+# Or pass the build directory explicitly:
+CTestTest(build_dir=Path("build"))
+
+# Filtering and parallelism:
+CTestTest(
+    artifact_name="my_target",
+    base_args=CTestArgs(
+        test_regex="Math.*",          # -R: run matching tests
+        exclude_regex="Slow.*",       # -E: skip matching tests
+        parallel=4,                   # -j: parallel jobs
+        output_on_failure=True,       # print output for failing tests
+    ),
+)
+```
+
+**Key `CTestArgs` fields:**
+
+| Field | Flag | Description |
+|-------|------|-------------|
+| `test_regex` | `-R` | Run tests matching regex |
+| `exclude_regex` | `-E` | Skip tests matching regex |
+| `label_regex` | `-L` | Run tests with matching label |
+| `exclude_label_regex` | `-LE` | Skip tests with matching label |
+| `tests_index` | `-I` | Run tests by index range, e.g. `"2,4,6"` |
+| `rerun_failed` | `--rerun-failed` | Re-run only previously failed tests |
+| `run_disabled` | `--run-disabled` | Run disabled tests |
+| `parallel` | `-j N` | Run N tests in parallel |
+| `timeout` | `--timeout` | Per-test timeout (seconds) |
+| `stop_on_failure` | `--stop-on-failure` | Stop after first failure |
+| `schedule_random` | `--schedule-random` | Randomize test order |
+| `repeat` | `--repeat` | `"until-fail:N"`, `"until-pass:N"`, `"after-timeout:N"` |
+| `build_config` | `-C` | Build configuration (e.g. `"Release"`) |
+| `test_dir` | `--test-dir` | Managed internally |
+| `output_junit` | `--output-junit` | Managed internally |
+| `output_on_failure` | `--output-on-failure` | Print test output on failure |
+| `verbose` | `-V` | Verbose output |
+| `extra_verbose` | `-VV` | Extra verbose |
+| `quiet` | `-Q` | Suppress most output |
+| `show_only` | `-N` | Dry run — list tests without running |
+| `print_labels` | `--print-labels` | Print all test labels |
+
+`test_name` on each packet is `"SuiteName/TestName"` when the suite differs from the test name, otherwise just the bare name.
+
+- CTest auto-install is attempted if not found (same pattern as `ValgrindTest`).
+- Returns `Err(CTestError)` fatally if ctest is not installed, the build directory can't be resolved, or no XML is produced.
+- Import the layout module before running: `import lograder.output.layout.test.ctest`
+
+### `PytestTest`
+
+Runs pytest and yields one result packet per test case via JUnit XML. Unlike the binary-based test steps, `PytestTest` invokes the `pytest` executable directly — it does not look up an artifact by name. pytest auto-installs if not found.
+
+```python
+from lograder.pipeline.test.pytest import PytestTest
+from lograder.process.registry.pytest import PytestArgs
+from lograder.process.executable import ExecutableOptions
+
+# Discover tests automatically in the submission directory:
+PytestTest(
+    options=ExecutableOptions(cwd=submission_root),
+)
+
+# Run specific test files, with a keyword filter:
+PytestTest(
+    paths=["tests/test_math.py", "tests/test_io.py"],  # relative to options.cwd
+    base_args=PytestArgs(
+        keyword="not slow",         # -k expression
+        traceback="short",          # --tb=short
+        disable_warnings=True,
+    ),
+    options=ExecutableOptions(cwd=submission_root, timeout=60.0),
+    label="correctness",            # used as artifact_name in result packets
+)
+```
+
+`test_name` on each packet is `"classname::name"` — matching pytest's native `module::function` naming. Use this with `TestCaseScorer`. Skipped tests are silently ignored.
+
+**Key `PytestArgs` fields:**
+
+| Field | Flag | Description |
+|-------|------|-------------|
+| `paths` | positional | Do **not** set here — use the `paths` constructor param instead |
+| `keyword` | `-k` | Expression to filter tests, e.g. `"not slow"`, `"add or subtract"` |
+| `marker` | `-m` | Marker expression, e.g. `"unit and not integration"` |
+| `max_fail` | `--maxfail=N` | Stop after N failures |
+| `exit_first` | `-x` | Stop after first failure |
+| `verbose` | `-v` | Verbose output |
+| `quiet` | `-q` | Quiet output |
+| `capture` | `--capture={}` | `"fd"`, `"sys"`, `"no"`, `"tee-sys"` |
+| `show_capture` | `--show-capture={}` | `"no"`, `"stdout"`, `"stderr"`, `"log"`, `"all"` |
+| `disable_warnings` | `--disable-warnings` | Suppress warning summary |
+| `show_locals` | `--showlocals` | Show local variables in tracebacks |
+| `durations` | `--durations=N` | Show N slowest tests |
+| `durations_min` | `--durations-min=F` | Minimum duration to report |
+| `traceback` | `--tb={}` | `"short"`, `"long"`, `"no"`, `"line"`, `"native"`, `"auto"` |
+| `color` | `--color={}` | `"yes"`, `"no"`, `"auto"` |
+| `last_failed` | `--lf` | Re-run only last-failed tests |
+| `failed_first` | `--ff` | Run last-failed tests first |
+| `new_first` | `--nf` | Run newest test files first |
+| `cache_clear` | `--cache-clear` | Clear pytest cache |
+| `stepwise` | `--sw` | Stop on failure and restart there next run |
+| `collect_only` | `--collect-only` | Collect and print tests without running |
+| `ignore` | `--ignore={}` | Paths to ignore during collection |
+| `ignore_glob` | `--ignore-glob={}` | Glob patterns to ignore |
+| `deselect` | `--deselect={}` | Deselect specific node IDs |
+| `root_dir` | `--rootdir={}` | Override rootdir |
+| `import_mode` | `--import-mode={}` | `"prepend"`, `"append"`, `"importlib"` |
+| `base_temp` | `--basetemp={}` | Base temporary directory |
+| `python_warnings` | `-W{}` | Python warning filters |
+| `add_opts` | positional | Extra raw arguments appended to the command |
+| `junit_xml` | `--junitxml={}` | Managed internally |
+
+- Import the layout module before running: `import lograder.output.layout.test.pytest`
+
 ### `ExecutableOptions` for test steps
 
 All test steps accept an `options: ExecutableOptions | None` parameter.

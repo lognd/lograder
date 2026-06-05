@@ -58,6 +58,13 @@ from lograder.pipeline.test.valgrind import ValgrindTest, ValgrindCase
 from lograder.pipeline.test.file_output import FileOutputTest, FileOutputCase
 from lograder.pipeline.test.performance import PerformanceTest, PerformanceCase
 from lograder.pipeline.test.symbol import SymbolTest, SymbolCase
+from lograder.pipeline.test.catch2 import Catch2Test, Catch2Args
+from lograder.pipeline.test.gtest import GTestTest
+from lograder.process.registry.gtest import GTestArgs
+from lograder.pipeline.test.ctest import CTestTest
+from lograder.process.registry.ctest import CTestArgs
+from lograder.pipeline.test.pytest import PytestTest
+from lograder.process.registry.pytest import PytestArgs
 
 # Result
 from lograder.common import Ok, Err, Result
@@ -73,4 +80,8 @@ import lograder.output.layout.test.valgrind
 import lograder.output.layout.test.file_output
 import lograder.output.layout.test.performance
 import lograder.output.layout.test.symbol
+import lograder.output.layout.test.catch2
+import lograder.output.layout.test.gtest
+import lograder.output.layout.test.ctest
+import lograder.output.layout.test.pytest
 ```

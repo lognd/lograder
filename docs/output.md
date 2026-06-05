@@ -54,6 +54,10 @@ Built-in layouts and their import paths:
 | `FileOutput{Success,Failure,Error}` | `lograder.output.layout.test.file_output` |
 | `PerformanceTest{Success,Failure,Error}` | `lograder.output.layout.test.performance` |
 | `SymbolSuccess`, `SymbolFailure`, `SymbolError` | `lograder.output.layout.test.symbol` |
+| `Catch2{Success,Failure,Error}` | `lograder.output.layout.test.catch2` |
+| `GTest{Success,Failure,Error}` | `lograder.output.layout.test.gtest` |
+| `CTest{Success,Failure,Error}` | `lograder.output.layout.test.ctest` |
+| `Pytest{Success,Failure,Error}` | `lograder.output.layout.test.pytest` |
 
 ## Logger usage
 

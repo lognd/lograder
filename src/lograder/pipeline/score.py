@@ -34,7 +34,7 @@ class GradescopeTestConfig:
 
     All fields are optional. ``status=None`` lets Gradescope infer pass/fail
     from score vs max_score. ``output`` is shown to students directly in the
-    Gradescope UI — put a human-readable summary here.
+    Gradescope UI  -  put a human-readable summary here.
     """
 
     output: str = ""
@@ -103,7 +103,7 @@ class ScoreContribution:
 class PipelineScore:
     """Aggregated scoring result from a pipeline run.
 
-    ``contributions`` includes ALL scored steps — both completed and skipped due to early
+    ``contributions`` includes ALL scored steps  -  both completed and skipped due to early
     exit. Skipped steps contribute 0/possible so the total ``possible`` is always accurate.
     """
 
@@ -250,9 +250,9 @@ class TestCaseScorer(Scorer):
     """Awards points per passing test case with optional extra credit and gimme floor.
 
     Args:
-        points_per_case: Flat float (requires ``num_cases``) or dict case→points.
+        points_per_case: Flat float (requires ``num_cases``) or dict case->points.
         num_cases: Required when ``points_per_case`` is a float.
-        extra_credit_cases: Case names → extra credit earned on pass; NOT in ``possible``.
+        extra_credit_cases: Case names -> extra credit earned on pass; NOT in ``possible``.
         gimme: If student passes >= ``min_pass_fraction`` of attempted cases, ``earned``
             is floored to ``gimme.points``.
         label: Name used in Gradescope output.
@@ -319,7 +319,7 @@ class TestCaseScorer(Scorer):
 class AllOrNothingScorer(Scorer):
     """Awards full points if the step's return Result is Ok, 0 otherwise.
 
-    Responds only to the fatal return — use ``CleanRunScorer`` to score non-fatal Err yields.
+    Responds only to the fatal return  -  use ``CleanRunScorer`` to score non-fatal Err yields.
 
     Args:
         points: Regular points on success.
@@ -353,7 +353,7 @@ class CleanRunScorer(Scorer):
     """Awards points based on the absence of non-fatal Err packets yielded by a step.
 
     Designed for check steps where a clean run (zero or few violations) earns credit.
-    Responds to yielded Err packets — not the fatal return value. Use ``AllOrNothingScorer``
+    Responds to yielded Err packets  -  not the fatal return value. Use ``AllOrNothingScorer``
     if you only care about whether the step as a whole passes.
 
     Args:
