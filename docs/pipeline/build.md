@@ -90,18 +90,30 @@ Runs a bash script to build the project. Useful for non-standard build systems.
 ```python
 from lograder.pipeline.build.bash_script import BashScriptBuild
 
-pipeline.add(build := BashScriptBuild(script=Path("build.sh")))
+pipeline.add(build := BashScriptBuild(
+    script="build.sh",
+    artifacts={"my_program": "my_program"},
+))
 ```
 
-`build.sh` receives the submission directory as its working directory. On success it returns `Ok(dict[str, Artifact])` (empty -- use `PrebuiltArtifacts` to populate the artifact dict).
+`script` is a filename relative to `manifest.root` (the submission directory). The script runs with `cwd=manifest.root`. `artifacts` maps artifact names to paths relative to `cwd`; each path must exist after the script completes or the step fails fatally.
+
+On success it returns `Ok(dict[str, Artifact])` containing exactly the artifacts declared. The step fails fatally (stopping the pipeline) if:
+- the script file is missing from the submission
+- the script exits non-zero
+- an expected artifact path was not produced
+
+### Options
 
 ```python
-from lograder.pipeline.build.bash_script import BashScriptBuild
-from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
+from lograder.process.executable import ExecutableOptions
 
-pipeline.add(BashScriptBuild(script=Path("build.sh")))
-# BashScriptBuild returns an empty artifact dict, not a manifest -- use absolute Path:
-pipeline.add(PrebuiltArtifacts({"my_program": submission_dir / "my_program"}))
+pipeline.add(BashScriptBuild(
+    script="build.sh",
+    artifacts={"my_program": "my_program"},
+    options=ExecutableOptions(timeout=60.0),
+    make_artifacts_executable=True,  # default: chmod +x each artifact
+))
 ```
 
 ## `PrebuiltArtifacts`
@@ -118,12 +130,16 @@ from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
 # After a manifest check step -- use a relative string (resolved against manifest.root):
 pipeline.add(PrebuiltArtifacts({"my_program": "my_program"}))
 
-# After MakefileBuild or BashScriptBuild -- use an absolute Path:
+# After MakefileBuild -- use an absolute Path (no manifest root available):
 pipeline.add(MakefileBuild())
 pipeline.add(PrebuiltArtifacts({"my_program": submission_dir / "my_program"}))
+
+# After BashScriptBuild -- merge in additional artifacts with absolute Paths:
+pipeline.add(BashScriptBuild("build.sh", artifacts={"my_program": "my_program"}))
+pipeline.add(PrebuiltArtifacts({"helper_script": Path("/autograder/source/grader/check.sh")}))
 ```
 
-`PrebuiltArtifacts` merges its new artifacts with any already in the dict, so it can safely follow any build step. When chaining after `MakefileBuild` or `BashScriptBuild` (which return an empty artifact dict, not a manifest), values must be absolute `Path` objects since there is no manifest root to resolve against.
+`PrebuiltArtifacts` merges its new artifacts with any already in the dict, so it can safely follow any build step. When chaining after `MakefileBuild` (which returns an empty artifact dict, not a manifest), values must be absolute `Path` objects since there is no manifest root to resolve against.
 
 ## Artifact types
 
@@ -178,6 +194,31 @@ pipeline = Pipeline()
 pipeline.add(LocalDirectory())
 pipeline.add(MakefileManifestCheck())
 pipeline.add(MakefileBuild())
+# MakefileBuild returns Ok({}) -- inject the binary with an absolute path:
 pipeline.add(PrebuiltArtifacts({"lab1": submission_dir / "lab1"}))
 pipeline.add(tests := OutputCompareTest("lab1", cases))
+```
+
+## Full BashScriptBuild pipeline example
+
+```python
+from lograder.pipeline.build.bash_script import BashScriptBuild
+from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
+from lograder.pipeline.mixin.mixin import InjectStaffIntoStudent
+
+GRADER_DIR = Path(__file__).parent
+
+# Inject staff-provided support files before running the student script:
+pipeline = Pipeline()
+pipeline.add(LocalDirectory(root=submission_dir))
+pipeline.add(InjectStaffIntoStudent(GRADER_DIR / "project"))
+pipeline.add(build := BashScriptBuild(
+    script="build.sh",
+    artifacts={"my_program": "my_program"},
+))
+# Add grader-side helper scripts as additional artifacts (absolute paths):
+pipeline.add(PrebuiltArtifacts({
+    "check_script": GRADER_DIR / "check.sh",
+}))
+pipeline.add(tests := OutputCompareTest("my_program", cases))
 ```
