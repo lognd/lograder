@@ -214,4 +214,3 @@ class DifferentialTest(
         return Ok(artifacts)
 
 
-import lograder.output.layout.test.differential  # noqa: E402, F401

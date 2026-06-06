@@ -213,4 +213,3 @@ class ValgrindTest(
         return Ok(artifacts)
 
 
-import lograder.output.layout.test.valgrind  # noqa: E402, F401

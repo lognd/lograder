@@ -156,4 +156,3 @@ class OutputCompareTest(
         return Ok(artifacts)
 
 
-import lograder.output.layout.test.output_compare  # noqa: E402, F401

@@ -224,3 +224,55 @@ def test_dispatch_layout_raises_when_packet_type_has_no_registered_id():
 
     with pytest.raises(DeveloperException, match="missing a `PacketId`"):
         dispatch_layout(data)
+
+
+# ---------------------------------------------------------------------------
+# Auto-registration via lograder.output.layout import
+# ---------------------------------------------------------------------------
+
+
+def test_uncaught_exception_layout_registered_by_init_import():
+    # Regression: UncaughtException had no bottom-import in local_directory.py,
+    # so pipelines that failed at LocalDirectory raised a confusing
+    # "ModelMetaclass missing PacketId" error instead of showing the real cause.
+    from lograder.exception import UncaughtException
+    from lograder.output.packets import PacketAuthority
+
+    assert PacketAuthority.get_packet_id(UncaughtException) is not None
+
+
+def test_output_compare_layouts_registered_by_init_import():
+    from lograder.output.packets import PacketAuthority
+    from lograder.pipeline.test.output_compare import (
+        OutputCompareError,
+        OutputCompareFailure,
+        OutputCompareSuccess,
+    )
+
+    for cls in (OutputCompareSuccess, OutputCompareFailure, OutputCompareError):
+        assert PacketAuthority.get_packet_id(cls) is not None, (
+            f"{cls.__name__} layout not registered after importing lograder.output.layout"
+        )
+
+
+def test_all_builtin_layouts_registered_by_init_import():
+    # Importing from lograder.output.layout should register every built-in packet
+    # type so pipeline authors never need manual layout imports in their pipelines.
+    from lograder.output.packets import PacketAuthority
+    from lograder.pipeline.build.bash_script import BashScriptBuildError, BashScriptBuildOutput
+    from lograder.pipeline.build.build import BuildOutput
+    from lograder.pipeline.mixin.mixin import MixinData
+    from lograder.pipeline.test.catch2 import Catch2Error, Catch2Failure, Catch2Success
+
+    for cls in (
+        BuildOutput,
+        BashScriptBuildOutput,
+        BashScriptBuildError,
+        MixinData,
+        Catch2Success,
+        Catch2Failure,
+        Catch2Error,
+    ):
+        assert PacketAuthority.get_packet_id(cls) is not None, (
+            f"{cls.__name__} layout not registered after importing lograder.output.layout"
+        )

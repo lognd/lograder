@@ -275,4 +275,3 @@ class Catch2Test(
         return Ok(artifacts)
 
 
-import lograder.output.layout.test.catch2  # noqa: E402, F401

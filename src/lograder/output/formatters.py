@@ -1,18 +1,23 @@
 import logging
+from typing import TYPE_CHECKING
 
 from lograder.exception import DeveloperException
-from lograder.output.layout import SupportedFormat, dispatch_layout
 from lograder.output.logger import LograderLogger
 from lograder.output.packets import unwrap_packet
 
+if TYPE_CHECKING:
+    from lograder.output.layout import SupportedFormat
+
 
 class PacketFormatter(logging.Formatter):
-    def __init__(self, *, mode: SupportedFormat = "simple"):
+    def __init__(self, *, mode: "SupportedFormat" = "simple"):
         super().__init__()
         self.mode = mode
         self._fallback = logging.Formatter("%(levelname)s: %(message)s")
 
     def format(self, record: logging.LogRecord) -> str:
+        from lograder.output.layout import dispatch_layout
+
         packet = getattr(record, LograderLogger.PACKET_ATTR, None)
         if packet is None:
             return self._fallback.format(record)

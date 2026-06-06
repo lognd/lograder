@@ -170,4 +170,3 @@ class InjectStaffIntoStudent(Mixin):
         return Ok(Manifest.from_directory(source_manifest.root))
 
 
-import lograder.output.layout.pipeline.mixin  # noqa: E402, F401

@@ -80,4 +80,3 @@ def make_build_output(
 class Build(Step[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC): ...
 
 
-import lograder.output.layout.pipeline.build  # noqa: E402, F401

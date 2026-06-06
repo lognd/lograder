@@ -173,4 +173,3 @@ class BashScriptBuild(
         return Ok(artifact_map)
 
 
-import lograder.output.layout.pipeline.bash_script  # noqa: E402, F401

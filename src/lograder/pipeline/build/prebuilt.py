@@ -114,4 +114,3 @@ class PrebuiltArtifacts(
         return Ok(artifacts)
 
 
-import lograder.output.layout.pipeline.prebuilt  # noqa: E402, F401

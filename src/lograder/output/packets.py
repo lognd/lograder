@@ -64,7 +64,7 @@ class PacketAuthority:
         packet_id = cls.get_packet_id(packet_cls)
         if packet_id is None:
             raise DeveloperException(
-                f"A logging packet type (`{packet_cls.__class__.__name__}`) was found missing a `PacketId`, set with `@register_layout(<packet_id>)` decorator used on a class implementing the `Layout[{packet_cls.__class__.__name__}]` generic."
+                f"A logging packet type (`{packet_cls.__name__}`) was found missing a `PacketId`, set with `@register_layout(<packet_id>)` decorator used on a class implementing the `Layout[{packet_cls.__name__}]` generic."
             )
         return packet_id
 

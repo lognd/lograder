@@ -310,4 +310,3 @@ class SourceCheck(
         return Ok(manifest)
 
 
-import lograder.output.layout.check.source  # noqa: E402, F401

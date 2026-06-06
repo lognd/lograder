@@ -55,4 +55,3 @@ class ManifestCheck(
         )
 
 
-import lograder.output.layout.project.manifest  # noqa: E402, F401

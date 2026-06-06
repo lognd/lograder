@@ -550,4 +550,3 @@ class TypedExecutable(Generic[T]):
         return Ok(self.executable(input=effective_input, options=options))
 
 
-import lograder.output.layout.process.executable  # noqa: E402, F401

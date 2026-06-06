@@ -150,4 +150,3 @@ class FileOutputTest(
         return Ok(artifacts)
 
 
-import lograder.output.layout.test.file_output  # noqa: E402, F401

@@ -130,4 +130,3 @@ class PerformanceTest(
         return Ok(artifacts)
 
 
-import lograder.output.layout.test.performance  # noqa: E402, F401

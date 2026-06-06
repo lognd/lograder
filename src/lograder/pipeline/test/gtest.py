@@ -198,4 +198,3 @@ def _full_name(tc: JUnitTestCase) -> str:
     return tc.test_name
 
 
-import lograder.output.layout.test.gtest  # noqa: E402, F401

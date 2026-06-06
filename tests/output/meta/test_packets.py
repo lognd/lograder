@@ -85,6 +85,17 @@ def test_access_packet_id_raises_when_missing():
         PacketAuthority.access_packet_id(PacketModel)
 
 
+def test_access_packet_id_error_names_actual_class_not_metaclass():
+    # Regression: the error message previously showed `ModelMetaclass` (Pydantic's
+    # metaclass) because it used `packet_cls.__class__.__name__` instead of
+    # `packet_cls.__name__`.
+    class UnregisteredModel(BaseModel):
+        v: int
+
+    with pytest.raises(DeveloperException, match="UnregisteredModel"):
+        PacketAuthority.access_packet_id(UnregisteredModel)
+
+
 def test_get_layout_returns_none_when_missing():
     assert PacketAuthority.get_layout(PacketId("MISSING")) is None
 
