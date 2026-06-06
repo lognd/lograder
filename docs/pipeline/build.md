@@ -62,12 +62,10 @@ pipeline.add(build := MakefileBuild())
 ```python
 from lograder.pipeline.build.makefile import MakefileBuild
 from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
-from lograder.pipeline.types.artifacts import FileArtifact
 
 pipeline.add(MakefileBuild())
-pipeline.add(PrebuiltArtifacts({
-    "my_program": FileArtifact(path=Path("my_program")),
-}))
+# MakefileBuild returns an empty artifact dict, not a manifest -- use absolute Path:
+pipeline.add(PrebuiltArtifacts({"my_program": submission_dir / "my_program"}))
 ```
 
 ### Make options
@@ -100,12 +98,10 @@ pipeline.add(build := BashScriptBuild(script=Path("build.sh")))
 ```python
 from lograder.pipeline.build.bash_script import BashScriptBuild
 from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
-from lograder.pipeline.types.artifacts import FileArtifact
 
 pipeline.add(BashScriptBuild(script=Path("build.sh")))
-pipeline.add(PrebuiltArtifacts({
-    "my_program": FileArtifact(path=Path("my_program")),
-}))
+# BashScriptBuild returns an empty artifact dict, not a manifest -- use absolute Path:
+pipeline.add(PrebuiltArtifacts({"my_program": submission_dir / "my_program"}))
 ```
 
 ## `PrebuiltArtifacts`
@@ -118,21 +114,22 @@ Injects artifacts into the pipeline without building anything. Useful for:
 
 ```python
 from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
-from lograder.pipeline.types.artifacts import FileArtifact
 
-pipeline.add(PrebuiltArtifacts({
-    "my_program": FileArtifact(path=Path("/path/to/binary")),
-    "my_library": FileArtifact(path=Path("/path/to/libmy.so")),
-}))
+# After a manifest check step -- use a relative string (resolved against manifest.root):
+pipeline.add(PrebuiltArtifacts({"my_program": "my_program"}))
+
+# After MakefileBuild or BashScriptBuild -- use an absolute Path:
+pipeline.add(MakefileBuild())
+pipeline.add(PrebuiltArtifacts({"my_program": submission_dir / "my_program"}))
 ```
 
-`PrebuiltArtifacts` merges its artifacts with any already in the dict, so you can chain it after any build step.
+`PrebuiltArtifacts` merges its new artifacts with any already in the dict, so it can safely follow any build step. When chaining after `MakefileBuild` or `BashScriptBuild` (which return an empty artifact dict, not a manifest), values must be absolute `Path` objects since there is no manifest root to resolve against.
 
 ## Artifact types
 
 | Type | Description | Produced by |
 |------|-------------|-------------|
-| `FileArtifact(path)` | A file on disk | `PrebuiltArtifacts`, `MakefileBuild` |
+| `FileArtifact(path)` | A file on disk | produced internally by `PrebuiltArtifacts` |
 | `CMakeArtifact(name, target_type, build_dir)` | A CMake build target | `CMakeBuild` |
 | `CMakeFileArtifact` | CMake target with a resolved file path | `CMakeBuild` (most targets) |
 
@@ -174,7 +171,6 @@ with config(root_directory=Path("/autograder/submission")):
 ```python
 from lograder.pipeline.build.makefile import MakefileBuild
 from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
-from lograder.pipeline.types.artifacts import FileArtifact
 
 make_simple_manifest_checker("lab1", required_files=["Makefile", "lab1.c"])
 
@@ -182,6 +178,6 @@ pipeline = Pipeline()
 pipeline.add(LocalDirectory())
 pipeline.add(MakefileManifestCheck())
 pipeline.add(MakefileBuild())
-pipeline.add(PrebuiltArtifacts({"lab1": FileArtifact(path=Path("lab1"))}))
+pipeline.add(PrebuiltArtifacts({"lab1": submission_dir / "lab1"}))
 pipeline.add(tests := OutputCompareTest("lab1", cases))
 ```

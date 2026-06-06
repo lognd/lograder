@@ -31,7 +31,6 @@ from lograder.pipeline.input.local_directory import LocalDirectory
 from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
 from lograder.pipeline.build.makefile import MakefileBuild
 from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
-from lograder.pipeline.types.artifacts import FileArtifact
 from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase
 from lograder.pipeline.test.valgrind import ValgrindTest, ValgrindCase
 from lograder.pipeline.score import (
@@ -90,9 +89,11 @@ VALGRIND_CASES = [
 pipeline = Pipeline()
 pipeline.add(LocalDirectory())
 pipeline.add(MakefileManifestCheck())
+SUBMISSION_DIR = Path("/autograder/submission")
+
 pipeline.add(build := MakefileBuild())
-# MakefileBuild returns Ok({}) -- inject the binary manually
-pipeline.add(PrebuiltArtifacts({"wordcount": FileArtifact(path=Path("wordcount"))}))
+# MakefileBuild returns Ok({}) -- inject the binary with an absolute path:
+pipeline.add(PrebuiltArtifacts({"wordcount": SUBMISSION_DIR / "wordcount"}))
 pipeline.add(tests := OutputCompareTest("wordcount", OUTPUT_CASES))
 pipeline.add(vg    := ValgrindTest("wordcount", VALGRIND_CASES))
 
@@ -125,13 +126,11 @@ if __name__ == "__main__":
 
 `MakefileBuild` runs `make` in the submission directory. It does not currently parse the Makefile to discover built targets, so you must use `PrebuiltArtifacts` to tell lograder where the binary is.
 
-The `path` in `FileArtifact(path=Path("wordcount"))` is relative to `config().root_directory` (the submission directory), so this assumes `make` writes `wordcount` to the root of the submission.
-
-If your Makefile writes to a different location:
+The absolute path passed to `PrebuiltArtifacts` should match where `make` writes the binary.  If your Makefile writes to a subdirectory:
 
 ```python
 pipeline.add(PrebuiltArtifacts({
-    "wordcount": FileArtifact(path=Path("bin/wordcount")),
+    "wordcount": SUBMISSION_DIR / "bin" / "wordcount",
 }))
 ```
 

@@ -32,7 +32,9 @@ class CMakeBuild(
         cmake_file = (
             input.root / "CMakeLists.txt"
         )  # Guaranteed to exist from CMakeManifest
-        conf_args = CMakeConfigureArgs(source_dir=input.root)
+        conf_args = CMakeConfigureArgs(
+            source_dir=input.root, build_dir=input.root / "build"
+        )
 
         conf_output = self.executable(conf_args)
         cmake_info = make_build_output(conf_output, input, cmake_file)
@@ -41,7 +43,7 @@ class CMakeBuild(
             return cmake_info.swap_ok(dict[str, Artifact])
         yield cmake_info.swap_err(Unreachable)
 
-        build_args = CMakeBuildArgs()
+        build_args = CMakeBuildArgs(build_dir=conf_args.build_dir)
         build_output = self.executable(build_args)
         cmake_info = make_build_output(build_output, input, cmake_file)
 
