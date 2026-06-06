@@ -62,7 +62,7 @@ class GradescopeConfig:
     """
 
     output: str = ""
-    output_format: OutputFormat = "simple_format"
+    output_format: OutputFormat = "ansi"
     test_output_format: OutputFormat = "ansi"
     test_name_format: Literal["text", "html", "md", "ansi"] = "text"
     visibility: Visibility = "visible"
@@ -159,13 +159,13 @@ class PipelineScore:
                 leaderboard=cfg.leaderboard,
             )
 
-        # Prepend metadata block to output
+        # Prepend metadata block to output; metadata uses ANSI codes so force the format.
         if effective_metadata is not None:
             meta_block = effective_metadata.to_display_string()
             combined = meta_block + ("\n\n" + cfg.output if cfg.output else "")
             from dataclasses import replace as _replace
 
-            cfg = _replace(cfg, output=combined)
+            cfg = _replace(cfg, output=combined, output_format="ansi")
 
         tests = []
         for step, c in self.contributions:

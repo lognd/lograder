@@ -207,69 +207,75 @@ class GraderMetadata:
 
     def to_display_string(self) -> str:
         """
-        Format the metadata block as a plain-text string suitable for
-        inclusion in the Gradescope ``output`` field.
+        Format the metadata block as an ANSI-styled string suitable for
+        inclusion in the Gradescope ``output`` field (requires output_format="ansi").
         """
+        _R = "\033[0m"
+        _BOLD = "\033[1m"
+        _DIM = "\033[2m"
+        _CYAN = "\033[36m"
+        _RED = "\033[31m"
+        _GRAY = "\033[90m"
+
+        def _label(text: str) -> str:
+            return f"{_BOLD}{text}{_R}"
+
         lines: list[str] = []
-        sep = "-" * 50
 
-        lines.append(sep)
-
-        # Title line
         title = self.grader_name or "Autograder"
         if self.version:
-            title = f"{title}  (v{self.version})"
-        lines.append(f"  {title}")
-        lines.append(sep)
+            title = f"{title}  v{self.version}"
+        lines.append(f"{_BOLD}{_CYAN}{title}{_R}")
+        lines.append(f"{_GRAY}{'─' * 50}{_R}")
 
         if self.course:
-            lines.append(f"  Course:      {self.course}")
+            lines.append(f"{_label('Course:')}      {self.course}")
         if self.assignment:
-            lines.append(f"  Assignment:  {self.assignment}")
+            lines.append(f"{_label('Assignment:')}  {self.assignment}")
 
-        # Timing
         if self.submission_time:
             ts = _fmt_dt(self.submission_time)
             late = self.is_late
-            suffix = ""
             if late is True and self.due_date:
-                suffix = f"  !  LATE  (due {_fmt_dt(self.due_date)})"
+                due = _fmt_dt(self.due_date)
+                lines.append(
+                    f"{_label('Submitted:')}   {ts}"
+                    f"  {_RED}{_BOLD}LATE{_R}  {_GRAY}(due {due}){_R}"
+                )
             elif late is False and self.due_date:
-                suffix = f"  (due {_fmt_dt(self.due_date)})"
-            lines.append(f"  Submitted:   {ts}{suffix}")
+                lines.append(
+                    f"{_label('Submitted:')}   {ts}"
+                    f"  {_GRAY}(due {_fmt_dt(self.due_date)}){_R}"
+                )
+            else:
+                lines.append(f"{_label('Submitted:')}   {ts}")
         elif self.due_date:
-            lines.append(f"  Due:         {_fmt_dt(self.due_date)}")
+            lines.append(f"{_label('Due:')}         {_fmt_dt(self.due_date)}")
 
-        # Submitters
         if self.submitters:
-            sub_parts = []
+            parts = []
             for s in self.submitters:
                 part = s.name
                 if s.sid:
                     part += f" ({s.sid})"
                 if s.email:
                     part += f" <{s.email}>"
-                sub_parts.append(part)
-            lines.append(f"  Student(s):  {',  '.join(sub_parts)}")
+                parts.append(part)
+            lines.append(f"{_label('Student(s):')}  {',  '.join(parts)}")
 
-        # Authors
         if self.authors:
-            indent = "               "
-            first = self.authors[0].display()
-            lines.append(f"  Author(s):   {first}")
-            for a in self.authors[1:]:
-                lines.append(f"{indent}{a.display()}")
+            lines.append(
+                f"{_label('Author(s):')}   {',  '.join(a.display() for a in self.authors)}"
+            )
 
-        # Notes
         if self.notes:
-            lines.append(f"  Notes:       {self.notes}")
+            lines.append(f"{_label('Notes:')}       {self.notes}")
 
-        # lograder attribution
         if self.show_lograder_attribution:
             ver = _lograder_version()
-            lines.append(f"  Built with:  lograder {ver} -- {LOGRADER_AUTHOR}")
+            lines.append(f"{_DIM}Built with lograder {ver} by {LOGRADER_AUTHOR}{_R}")
 
-        lines.append(sep)
+        lines.append(f"{_GRAY}{'─' * 50}{_R}")
         return "\n".join(lines)
 
 
