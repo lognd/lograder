@@ -1,21 +1,23 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Optional
+
+from pydantic import BaseModel
 
 from lograder.exception import DeveloperException
 from lograder.output.logger import LograderLogger
 from lograder.output.packets import unwrap_packet
 
 if TYPE_CHECKING:
-    from lograder.output.layout import (
-        SupportedFormat,
-    )
+    from lograder.output.layout import Layout, SupportedFormat
 
-dispatch_layout = (
+_DispatchFn = Callable[["BaseModel"], "Layout"]
+
+dispatch_layout: Optional[_DispatchFn] = (
     None  # populated lazily on first format() call to avoid circular import
 )
 
 
-def _load_dispatch_layout():
+def _load_dispatch_layout() -> _DispatchFn:
     global dispatch_layout
     if dispatch_layout is None:
         from lograder.output.layout import dispatch_layout as _dl
@@ -31,13 +33,13 @@ class PacketFormatter(logging.Formatter):
         self._fallback = logging.Formatter("%(levelname)s: %(message)s")
 
     def format(self, record: logging.LogRecord) -> str:
-        _load_dispatch_layout()
+        _dispatch = _load_dispatch_layout()
         packet = getattr(record, LograderLogger.PACKET_ATTR, None)
         if packet is None:
             return self._fallback.format(record)
 
         data = unwrap_packet(packet)
-        layout = dispatch_layout(data)
+        layout = _dispatch(data)
 
         format_output = getattr(layout, self.mode)
         if format_output is None:
