@@ -91,7 +91,7 @@ class InjectStudentIntoStaff(Mixin):
         Result[Manifest, Unreachable],
     ]:
         copied = self._copy_matching_files(
-            source_manifest._files,
+            source_manifest.file_paths,
             source_manifest.root,
             self._staff_directory,
             self._student_files,
@@ -154,7 +154,7 @@ class InjectStaffIntoStudent(Mixin):
     ]:
         staff_manifest = Manifest.from_directory(self._staff_source)
         copied = self._copy_matching_files(
-            staff_manifest._files,
+            staff_manifest.file_paths,
             self._staff_source,
             source_manifest.root,
             self._staff_files,
@@ -168,5 +168,3 @@ class InjectStaffIntoStudent(Mixin):
             )
         )
         return Ok(Manifest.from_directory(source_manifest.root))
-
-

@@ -171,5 +171,3 @@ class BashScriptBuild(
             artifact_map[name] = FileArtifact(path=path)
 
         return Ok(artifact_map)
-
-

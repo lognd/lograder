@@ -148,5 +148,3 @@ class FileOutputTest(
                 )
 
         return Ok(artifacts)
-
-

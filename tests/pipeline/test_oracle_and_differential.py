@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-from lograder.common import Err, Ok
 from lograder.pipeline.config import config
 from lograder.pipeline.test.differential import (
     DifferentialError,

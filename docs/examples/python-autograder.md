@@ -21,96 +21,71 @@ Students submit a Python project with:
 ## Full autograder
 
 ```python
-# autograder.py
+# pipeline.py
+import os
 from pathlib import Path
 
+from lograder.pipeline.check.source.source_check import ImportConstraint, SourceCheck
 from lograder.pipeline.config import config
 from lograder.pipeline.input.local_directory import LocalDirectory
-from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
-from lograder.pipeline.check.source.source_check import SourceCheck, ImportConstraint
-from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
-from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase
-from lograder.pipeline.test.pytest import PytestTest
-from lograder.pipeline.score import (
-    AllOrNothingScorer, CleanRunScorer, TestCaseScorer,
-    GimmeConfig, GradescopeConfig,
-)
 from lograder.pipeline.pipeline import Pipeline
-
-# -- Manifest ------------------------------------------------------------------
-
-make_simple_manifest_checker(
-    "graph",
-    required_files=["graph.py"],
+from lograder.pipeline.score import (
+    CleanRunScorer,
+    GimmeConfig,
+    GradescopeConfig,
+    TestCaseScorer,
 )
+from lograder.pipeline.test.pytest import PytestTest
 
-# -- Test cases ----------------------------------------------------------------
+_SUBMISSION_DIR = Path("/autograder/submission")
+_GRADER_DIR = Path(__file__).parent
 
-# Instructor test cases live in /autograder/source/instructor_tests/
-INSTRUCTOR_TESTS = Path("/autograder/source/instructor_tests")
+# Instructor test cases live alongside pipeline.py
+_INSTRUCTOR_TESTS = _GRADER_DIR / "instructor_tests"
 
-# We also test the CLI interface (if the assignment has one)
-CLI_CASES = [
-    OutputCompareCase(
-        name="bfs_simple",
-        args=["bfs", "A"],
-        stdin=b"",
-        expected_stdout="A B C\n",
-    ),
-    OutputCompareCase(
-        name="dfs_simple",
-        args=["dfs", "A"],
-        stdin=b"",
-        expected_stdout="A C B\n",
-    ),
-]
 
-# -- Pipeline ------------------------------------------------------------------
+def make_pipeline(submission_dir: Path = _SUBMISSION_DIR) -> Pipeline:
+    # PytestTest reads the student module via os.environ["SUBMISSION_DIR"]
+    os.environ["SUBMISSION_DIR"] = str(submission_dir)
 
-pipeline = Pipeline()
-pipeline.add(inp    := LocalDirectory())
-pipeline.add(check  := PyProjectManifestCheck())
-pipeline.add(source := SourceCheck(
-    files=["graph.py"],
-    constraints=[
-        ImportConstraint(module="networkx",          forbidden=True),  # must implement from scratch
-        ImportConstraint(module="collections.deque", forbidden=False),  # allowed
-    ],
-))
-pipeline.add(pytest_step := PytestTest(
-    test_paths=[INSTRUCTOR_TESTS],
-))
+    pipeline = Pipeline()
+    pipeline.add(LocalDirectory(root=submission_dir))
+    pipeline.add(source := SourceCheck(
+        language="python",
+        files=["graph.py"],
+        constraints=[
+            ImportConstraint(module="networkx",          forbidden=True),
+            ImportConstraint(module="collections.deque", forbidden=False),
+        ],
+    ))
+    pipeline.add(pytest_step := PytestTest(test_paths=[_INSTRUCTOR_TESTS]))
 
-# -- Scorers -------------------------------------------------------------------
+    source.scorer = CleanRunScorer(5.0, label="No forbidden imports")
+    pytest_step.scorer = TestCaseScorer(
+        {
+            "instructor_tests/test_graph.py::test_bfs_basic":    10.0,
+            "instructor_tests/test_graph.py::test_bfs_cycle":    10.0,
+            "instructor_tests/test_graph.py::test_dfs_basic":    10.0,
+            "instructor_tests/test_graph.py::test_dfs_cycle":    10.0,
+            "instructor_tests/test_graph.py::test_path_exists":  15.0,
+            "instructor_tests/test_graph.py::test_path_missing": 10.0,
+            "instructor_tests/test_graph.py::test_empty_graph":  10.0,
+            "instructor_tests/test_graph.py::test_large_graph":  0.0,
+            "instructor_tests/test_graph.py::test_disconnected": 0.0,
+        },
+        extra_credit_cases={
+            "instructor_tests/test_graph.py::test_large_graph":  5.0,
+            "instructor_tests/test_graph.py::test_disconnected": 5.0,
+        },
+        gimme=GimmeConfig(min_pass_fraction=0.25, points=15.0),
+        label="Correctness",
+    )
+    return pipeline
 
-check.scorer  = AllOrNothingScorer(0.0, label="Files present")
-source.scorer = CleanRunScorer(5.0, label="No forbidden imports")
-pytest_step.scorer = TestCaseScorer(
-    {
-        "instructor_tests/test_graph.py::test_bfs_basic":    10.0,
-        "instructor_tests/test_graph.py::test_bfs_cycle":    10.0,
-        "instructor_tests/test_graph.py::test_dfs_basic":    10.0,
-        "instructor_tests/test_graph.py::test_dfs_cycle":    10.0,
-        "instructor_tests/test_graph.py::test_path_exists":  15.0,
-        "instructor_tests/test_graph.py::test_path_missing": 10.0,
-        "instructor_tests/test_graph.py::test_empty_graph":  10.0,
-        # Extra credit
-        "instructor_tests/test_graph.py::test_large_graph":  0.0,
-        "instructor_tests/test_graph.py::test_disconnected": 0.0,
-    },
-    extra_credit_cases={
-        "instructor_tests/test_graph.py::test_large_graph":  5.0,
-        "instructor_tests/test_graph.py::test_disconnected": 5.0,
-    },
-    gimme=GimmeConfig(min_pass_fraction=0.25, points=15.0),
-    label="Correctness",
-)
-
-# -- Entry point ---------------------------------------------------------------
 
 if __name__ == "__main__":
-    with config(root_directory=Path("/autograder/submission"), executable_timeout=30.0):
-        score = pipeline()
+    with config(root_directory=_SUBMISSION_DIR, executable_timeout=30.0):
+        score = make_pipeline()()
 
     score.write_results_json(
         config=GradescopeConfig(visibility="visible"),
@@ -121,11 +96,12 @@ if __name__ == "__main__":
 
 ```python
 # instructor_tests/test_graph.py
+import os
 import sys
 from pathlib import Path
 
-# Add submission to path so we can import the student's graph.py
-sys.path.insert(0, str(Path("/autograder/submission")))
+# PytestTest sets os.environ["SUBMISSION_DIR"] before invoking pytest.
+sys.path.insert(0, os.environ["SUBMISSION_DIR"])
 
 import pytest
 from graph import Graph
@@ -217,5 +193,5 @@ pip3 install lograder pytest
 ```bash
 #!/usr/bin/env bash
 cd /autograder/source
-python3 autograder.py
+python3 pipeline.py
 ```

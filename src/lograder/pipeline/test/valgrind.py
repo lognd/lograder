@@ -137,7 +137,7 @@ class ValgrindTest(
                 return Err(
                     ValgrindTestError(
                         artifact_name=self._artifact_name,
-                        message=f"valgrind not found and auto-install is disabled. Enable with config(allow_auto_install=True) or install valgrind manually.",
+                        message="valgrind not found and auto-install is disabled. Enable with config(allow_auto_install=True) or install valgrind manually.",
                     )
                 )
 
@@ -211,5 +211,3 @@ class ValgrindTest(
                 )
 
         return Ok(artifacts)
-
-

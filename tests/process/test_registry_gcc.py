@@ -200,8 +200,8 @@ def test_gcc_rejects_preprocess_with_link_inputs() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
-import subprocess as _subprocess
+import shutil as _shutil  # noqa: E402
+import subprocess as _subprocess  # noqa: E402
 
 _GCC_AVAILABLE = bool(_shutil.which("gcc"))
 _GXX_AVAILABLE = bool(_shutil.which("g++"))

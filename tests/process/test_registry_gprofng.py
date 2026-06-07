@@ -6,7 +6,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
 from lograder.process.registry.gprofng import (
     GprofngCollectArgs,
@@ -94,9 +93,9 @@ def test_registered() -> None:
 
 # --- Real executable tests ---
 
-import platform as _platform
-import shutil as _shutil
-import subprocess as _subprocess
+import platform as _platform  # noqa: E402
+import shutil as _shutil  # noqa: E402
+import subprocess as _subprocess  # noqa: E402
 
 _GPROFNG_AVAILABLE = bool(_shutil.which("gprofng"))
 _GCC_AVAILABLE = bool(_shutil.which("gcc"))

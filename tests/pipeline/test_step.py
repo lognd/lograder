@@ -5,7 +5,7 @@ from typing import Generator, TypeVar
 import pytest
 from pydantic import BaseModel
 
-from lograder.common import Err, Ok, Result
+from lograder.common import Ok, Result
 from lograder.exception import DeveloperException, StaffException
 from lograder.pipeline.step import Step
 from lograder.pipeline.types.sentinel import PIPELINE_START

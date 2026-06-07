@@ -154,5 +154,3 @@ class OutputCompareTest(
                 )
 
         return Ok(artifacts)
-
-

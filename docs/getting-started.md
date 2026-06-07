@@ -24,33 +24,26 @@ pip install -e ".[dev]"
 
 ## Step 1 -- Create the autograder script
 
-Create `autograder.py`:
+Create `pipeline.py`:
 
 ```python
 from pathlib import Path
 
+from lograder.pipeline.build.cmake import CMakeBuild
+from lograder.pipeline.check.project.simple_project import CMakeManifestCheck
 from lograder.pipeline.config import config
 from lograder.pipeline.input.local_directory import LocalDirectory
-from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
-from lograder.pipeline.build.cmake import CMakeBuild
-from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase
-from lograder.pipeline.test.valgrind import ValgrindTest, ValgrindCase
-from lograder.pipeline.score import AllOrNothingScorer, TestCaseScorer, GradescopeConfig
 from lograder.pipeline.pipeline import Pipeline
+from lograder.pipeline.score import AllOrNothingScorer, GradescopeConfig, TestCaseScorer
+from lograder.pipeline.test.output_compare import OutputCompareCase, OutputCompareTest
+from lograder.pipeline.test.valgrind import ValgrindCase, ValgrindTest
+
+_SUBMISSION_DIR = Path("/autograder/submission")
 ```
 
-## Step 2 -- Declare what files you expect
+`CMakeManifestCheck` is exported directly from `simple_project` -- no codegen call needed.
 
-```python
-# Generates CMakeManifest, CMakeManifestCheck, etc. in this module's globals
-make_simple_manifest_checker(
-    "hello_world",
-    required_files=["CMakeLists.txt", "main.cpp"],
-)
-# After this call you can use CMakeManifestCheck directly
-```
-
-## Step 3 -- Define your test cases
+## Step 2 -- Define your test cases
 
 ```python
 OUTPUT_CASES = [
@@ -65,34 +58,34 @@ VALGRIND_CASES = [
 ]
 ```
 
-## Step 4 -- Assemble the pipeline
+## Step 3 -- Assemble the pipeline
+
+Wrap the pipeline in a factory function. This lets regression tests call `make_pipeline(submission_dir=path_to_solution)` without touching the filesystem.
 
 ```python
-pipeline = Pipeline()
-pipeline.add(inp    := LocalDirectory())
-pipeline.add(check  := CMakeManifestCheck())
-pipeline.add(build  := CMakeBuild())
-pipeline.add(tests  := OutputCompareTest("hello_world", OUTPUT_CASES))
-pipeline.add(vg     := ValgrindTest("hello_world", VALGRIND_CASES))
+def make_pipeline(submission_dir: Path = _SUBMISSION_DIR) -> Pipeline:
+    pipeline = Pipeline()
+    pipeline.add(LocalDirectory(root=submission_dir))
+    pipeline.add(check := CMakeManifestCheck())
+    pipeline.add(build := CMakeBuild())
+    pipeline.add(tests := OutputCompareTest("hello_world", OUTPUT_CASES))
+    pipeline.add(vg    := ValgrindTest("hello_world", VALGRIND_CASES))
+
+    build.scorer = AllOrNothingScorer(10.0, label="Build")
+    tests.scorer = TestCaseScorer(
+        {"no_args": 30.0, "name_arg": 30.0, "empty_arg": 30.0},
+        label="Correctness",
+    )
+    vg.scorer = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory leaks")
+    return pipeline
 ```
 
-## Step 5 -- Attach scorers
-
-```python
-build.scorer = AllOrNothingScorer(10.0, label="Build")
-tests.scorer = TestCaseScorer(
-    {"no_args": 30.0, "name_arg": 30.0, "empty_arg": 30.0},
-    label="Correctness",
-)
-vg.scorer = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory leaks")
-```
-
-## Step 6 -- Run it
+## Step 4 -- Run it
 
 ```python
 if __name__ == "__main__":
-    with config(root_directory=Path("/autograder/submission")):
-        score = pipeline()
+    with config(root_directory=_SUBMISSION_DIR):
+        score = make_pipeline()()
 
     score.write_results_json(
         config=GradescopeConfig(visibility="visible"),
@@ -104,19 +97,16 @@ if __name__ == "__main__":
 ```python
 from pathlib import Path
 
+from lograder.pipeline.build.cmake import CMakeBuild
+from lograder.pipeline.check.project.simple_project import CMakeManifestCheck
 from lograder.pipeline.config import config
 from lograder.pipeline.input.local_directory import LocalDirectory
-from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
-from lograder.pipeline.build.cmake import CMakeBuild
-from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase
-from lograder.pipeline.test.valgrind import ValgrindTest, ValgrindCase
-from lograder.pipeline.score import AllOrNothingScorer, TestCaseScorer, GradescopeConfig
 from lograder.pipeline.pipeline import Pipeline
+from lograder.pipeline.score import AllOrNothingScorer, GradescopeConfig, TestCaseScorer
+from lograder.pipeline.test.output_compare import OutputCompareCase, OutputCompareTest
+from lograder.pipeline.test.valgrind import ValgrindCase, ValgrindTest
 
-make_simple_manifest_checker(
-    "hello_world",
-    required_files=["CMakeLists.txt", "main.cpp"],
-)
+_SUBMISSION_DIR = Path("/autograder/submission")
 
 OUTPUT_CASES = [
     OutputCompareCase(name="no_args",   args=[],        expected_stdout="Hello, World!\n"),
@@ -129,23 +119,27 @@ VALGRIND_CASES = [
     ValgrindCase(name="arg_leaks", args=["Alice"], check_leaks=True),
 ]
 
-pipeline = Pipeline()
-pipeline.add(inp   := LocalDirectory())
-pipeline.add(check := CMakeManifestCheck())
-pipeline.add(build := CMakeBuild())
-pipeline.add(tests := OutputCompareTest("hello_world", OUTPUT_CASES))
-pipeline.add(vg    := ValgrindTest("hello_world", VALGRIND_CASES))
 
-build.scorer = AllOrNothingScorer(10.0, label="Build")
-tests.scorer = TestCaseScorer(
-    {"no_args": 30.0, "name_arg": 30.0, "empty_arg": 30.0},
-    label="Correctness",
-)
-vg.scorer = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory leaks")
+def make_pipeline(submission_dir: Path = _SUBMISSION_DIR) -> Pipeline:
+    pipeline = Pipeline()
+    pipeline.add(LocalDirectory(root=submission_dir))
+    pipeline.add(check := CMakeManifestCheck())
+    pipeline.add(build := CMakeBuild())
+    pipeline.add(tests := OutputCompareTest("hello_world", OUTPUT_CASES))
+    pipeline.add(vg    := ValgrindTest("hello_world", VALGRIND_CASES))
+
+    build.scorer = AllOrNothingScorer(10.0, label="Build")
+    tests.scorer = TestCaseScorer(
+        {"no_args": 30.0, "name_arg": 30.0, "empty_arg": 30.0},
+        label="Correctness",
+    )
+    vg.scorer = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory leaks")
+    return pipeline
+
 
 if __name__ == "__main__":
-    with config(root_directory=Path("/autograder/submission")):
-        score = pipeline()
+    with config(root_directory=_SUBMISSION_DIR):
+        score = make_pipeline()()
     score.write_results_json(config=GradescopeConfig(visibility="visible"))
 ```
 

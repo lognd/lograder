@@ -1,5 +1,4 @@
 # mypy: ignore-errors
-import shutil
 from pathlib import Path
 
 import pytest
@@ -11,7 +10,6 @@ from lograder.pipeline.mixin.mixin import InjectStudentIntoStaff
 from lograder.pipeline.pipeline import Pipeline
 from lograder.pipeline.score import AllOrNothingScorer, TestCaseScorer
 from lograder.pipeline.test.output_compare import (
-    ComparisonMode,
     OutputCompareCase,
     OutputCompareTest,
 )

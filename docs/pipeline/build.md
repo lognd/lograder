@@ -155,48 +155,61 @@ All artifact types expose `.executable -> StaticExecutable` for running.
 
 ```python
 from pathlib import Path
-from lograder.pipeline.pipeline import Pipeline
+
+from lograder.pipeline.build.cmake import CMakeBuild
+from lograder.pipeline.check.project.simple_project import CMakeManifestCheck
 from lograder.pipeline.config import config
 from lograder.pipeline.input.local_directory import LocalDirectory
-from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
-from lograder.pipeline.build.cmake import CMakeBuild
-from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase
+from lograder.pipeline.pipeline import Pipeline
 from lograder.pipeline.score import AllOrNothingScorer
+from lograder.pipeline.test.output_compare import OutputCompareCase, OutputCompareTest
 
-make_simple_manifest_checker("sorter", required_files=["CMakeLists.txt", "sorter.cpp"])
+_SUBMISSION_DIR = Path("/autograder/submission")
 
 cases = [
     OutputCompareCase(name="sorted",   args=["3", "1", "2"], expected_stdout="1 2 3\n"),
     OutputCompareCase(name="reversed", args=["3", "2", "1"], expected_stdout="1 2 3\n"),
 ]
 
-pipeline = Pipeline()
-pipeline.add(LocalDirectory())
-pipeline.add(CMakeManifestCheck())
-pipeline.add(build := CMakeBuild())
-pipeline.add(tests := OutputCompareTest("sorter", cases))
 
-build.scorer = AllOrNothingScorer(20.0, label="Build")
+def make_pipeline(submission_dir: Path = _SUBMISSION_DIR) -> Pipeline:
+    pipeline = Pipeline()
+    pipeline.add(LocalDirectory(root=submission_dir))
+    pipeline.add(CMakeManifestCheck())
+    pipeline.add(build := CMakeBuild())
+    pipeline.add(tests := OutputCompareTest("sorter", cases))
+    build.scorer = AllOrNothingScorer(20.0, label="Build")
+    return pipeline
 
-with config(root_directory=Path("/autograder/submission")):
-    score = pipeline()
+
+if __name__ == "__main__":
+    with config(root_directory=_SUBMISSION_DIR):
+        score = make_pipeline()()
 ```
 
 ## Full Makefile pipeline example
 
 ```python
+from pathlib import Path
+
 from lograder.pipeline.build.makefile import MakefileBuild
 from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
+from lograder.pipeline.check.project.simple_project import MakefileManifestCheck
+from lograder.pipeline.input.local_directory import LocalDirectory
+from lograder.pipeline.pipeline import Pipeline
 
-make_simple_manifest_checker("lab1", required_files=["Makefile", "lab1.c"])
+_SUBMISSION_DIR = Path("/autograder/submission")
 
-pipeline = Pipeline()
-pipeline.add(LocalDirectory())
-pipeline.add(MakefileManifestCheck())
-pipeline.add(MakefileBuild())
-# MakefileBuild returns Ok({}) -- inject the binary with an absolute path:
-pipeline.add(PrebuiltArtifacts({"lab1": submission_dir / "lab1"}))
-pipeline.add(tests := OutputCompareTest("lab1", cases))
+
+def make_pipeline(submission_dir: Path = _SUBMISSION_DIR) -> Pipeline:
+    pipeline = Pipeline()
+    pipeline.add(LocalDirectory(root=submission_dir))
+    pipeline.add(MakefileManifestCheck())
+    pipeline.add(MakefileBuild())
+    # MakefileBuild returns Ok({}) -- inject the binary with an absolute path:
+    pipeline.add(PrebuiltArtifacts({"lab1": submission_dir / "lab1"}))
+    pipeline.add(tests := OutputCompareTest("lab1", cases))
+    return pipeline
 ```
 
 ## Full BashScriptBuild pipeline example
@@ -222,3 +235,58 @@ pipeline.add(PrebuiltArtifacts({
 }))
 pipeline.add(tests := OutputCompareTest("my_program", cases))
 ```
+
+---
+
+## `GXXBuild`
+
+Compiles C++ source files directly with `g++`, without requiring a `CMakeLists.txt`. Use this for assignments where students submit source files and CMake overhead is not warranted.
+
+```python
+from lograder.pipeline.build.gxx import GXXBuild
+from lograder.process.registry.gcc import GNUXXStandard
+
+pipeline.add(build := GXXBuild(
+    sources=["student.cpp"],    # relative to manifest root (submission dir)
+    output="student",           # artifact name and binary stem
+    standard=GNUXXStandard.CXX17,
+))
+build.scorer = AllOrNothingScorer(10.0, label="Compilation")
+```
+
+The output binary is placed in a `tempfile.mkdtemp()` directory so the submission directory is never modified. The artifact is accessible as `"student"` in the artifacts dict.
+
+### With a grader-provided main and ASan
+
+```python
+from lograder.pipeline.build.gxx import GXXBuild
+
+GRADER_DIR = Path(__file__).parent
+
+pipeline.add(GXXBuild(
+    sources=["student.cpp"],
+    output="student",
+    extra_sources=[GRADER_DIR / "main.cpp"],    # grader-provided driver
+    include_dirs=[GRADER_DIR / "include"],       # grader headers
+    sanitizers=["address", "undefined"],         # compile with ASan + UBSan
+    debug_symbols=True,
+    standard=GNUXXStandard.CXX17,
+))
+```
+
+### `GXXBuild` parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sources` | `list[str \| Path]` | required | Student source files, relative to manifest root |
+| `output` | `str` | required | Artifact name and output binary stem |
+| `extra_sources` | `list[Path]` | `[]` | Absolute paths to grader-provided source files |
+| `include_dirs` | `list[str \| Path]` | `[]` | Additional include directories |
+| `library_dirs` | `list[str \| Path]` | `[]` | Additional library search paths |
+| `libraries` | `list[str]` | `[]` | Libraries to link (`-l<name>`) |
+| `sanitizers` | `list[str]` | `[]` | Sanitizers to enable (e.g. `["address", "undefined"]`) |
+| `standard` | `GNUXXStandard` | `CXX17` | C++ language standard |
+| `debug_symbols` | `bool` | `False` | Add `-g` for debugger support |
+| `extra_flags` | `list[str]` | `[]` | Raw extra flags forwarded to g++ |
+
+`manifest.root` is automatically added to `include_dirs` so student source files can include headers they submitted.

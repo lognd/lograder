@@ -1,9 +1,7 @@
 # mypy: ignore-errors
 from __future__ import annotations
 
-import pytest
-
-from lograder.process.parsers.nm import NmSymbol, parse_nm_output
+from lograder.process.parsers.nm import parse_nm_output
 
 
 def test_empty_output_returns_empty_list():

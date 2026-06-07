@@ -67,9 +67,9 @@ def test_memcheck_error_kinds_are_parsed_from_real_xml(
     parsed_output = result.parsed_output
 
     assert_protocol_is_modern(parsed_output)
-    assert getattr(parsed_output, "tool_name") == "memcheck"
+    assert parsed_output.tool_name == "memcheck"
     assert_has_error_kind(parsed_output, expected_kind)
-    assert getattr(parsed_output, "suppression_counts") is not None
+    assert parsed_output.suppression_counts is not None
     assert len(get_all_events(parsed_output)) > 0
 
 
@@ -78,7 +78,7 @@ def test_leak_kinds_are_parsed_from_real_xml(tmp_path: Path) -> None:
     parsed_output = result.parsed_output
     actual_error_kinds = set(get_error_kinds(parsed_output))
 
-    assert getattr(parsed_output, "tool_name") == "memcheck"
+    assert parsed_output.tool_name == "memcheck"
     assert "Leak_DefinitelyLost" in actual_error_kinds
     assert "Leak_IndirectlyLost" in actual_error_kinds
     assert "Leak_PossiblyLost" in actual_error_kinds
@@ -100,7 +100,7 @@ def test_protocol_six_summary_records_are_parsed_when_present(tmp_path: Path) ->
     result = run_case(tmp_path, "invalid_read")
     parsed_output = result.parsed_output
 
-    protocol_version = getattr(parsed_output, "protocol_version")
+    protocol_version = parsed_output.protocol_version
     if int(getattr(protocol_version, "value", protocol_version)) < 6:
         pytest.skip("installed valgrind is not emitting protocol 6 XML")
 
@@ -113,7 +113,7 @@ def test_core_file_descriptor_errors_are_parsed_from_real_xml(tmp_path: Path) ->
     result = run_case(tmp_path, "file_descriptors")
     parsed_output = result.parsed_output
 
-    protocol_version = getattr(parsed_output, "protocol_version")
+    protocol_version = parsed_output.protocol_version
     protocol_value = (
         protocol_version.value
         if hasattr(protocol_version, "value")
@@ -174,7 +174,7 @@ def test_helgrind_events_are_parsed_from_real_xml(tmp_path: Path) -> None:
     result = run_case(tmp_path, "helgrind_race")
     parsed_output = result.parsed_output
 
-    assert getattr(parsed_output, "tool_name") == "helgrind"
+    assert parsed_output.tool_name == "helgrind"
     assert_has_any_error_kind(
         parsed_output, {"Race", "Possible data race", "Misc", "LockOrder"}
     )
@@ -189,10 +189,10 @@ def test_top_level_metadata_and_arguments_are_parsed_from_real_xml(
     result = run_case(tmp_path, "invalid_write")
     parsed_output = result.parsed_output
 
-    assert getattr(parsed_output, "process_identifier") > 0
-    assert getattr(parsed_output, "parent_process_identifier") >= 0
+    assert parsed_output.process_identifier > 0
+    assert parsed_output.parent_process_identifier >= 0
 
-    arguments = getattr(parsed_output, "arguments")
+    arguments = parsed_output.arguments
     assert arguments.valgrind_arguments
     assert arguments.client_arguments
     assert (
@@ -200,15 +200,15 @@ def test_top_level_metadata_and_arguments_are_parsed_from_real_xml(
         or str(result.binary_path) in arguments.client_arguments[0]
     )
 
-    assert getattr(parsed_output, "start_status").state.value == "RUNNING"
-    assert getattr(parsed_output, "finish_status").state.value == "FINISHED"
+    assert parsed_output.start_status.state.value == "RUNNING"
+    assert parsed_output.finish_status.state.value == "FINISHED"
 
 
 def test_leak_records_can_appear_after_finished_status(tmp_path: Path) -> None:
     result = run_case(tmp_path, "leaks")
     parsed_output = result.parsed_output
 
-    postrun_events = getattr(parsed_output, "postrun_events")
+    postrun_events = parsed_output.postrun_events
     error_kinds = [
         str(event.error.kind)
         for event in postrun_events

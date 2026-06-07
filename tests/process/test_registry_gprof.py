@@ -111,8 +111,8 @@ def test_registered() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
-import subprocess as _subprocess
+import shutil as _shutil  # noqa: E402
+import subprocess as _subprocess  # noqa: E402
 
 _GPROF_AVAILABLE = bool(_shutil.which("gprof"))
 _GCC_AVAILABLE = bool(_shutil.which("gcc"))

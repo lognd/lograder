@@ -123,4 +123,3 @@ for project_name, req_files in REQUIRED_FILES.items():
     globals()[check_cls.__name__] = check_cls
 
     REGISTERED_TYPES[project_name] = (manifest_cls, data_cls, error_cls, check_cls)
-

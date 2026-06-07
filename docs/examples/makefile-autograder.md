@@ -23,61 +23,30 @@ The binary reads lines from stdin and prints word count per line plus a total.
 ## Full autograder
 
 ```python
-# autograder.py
+# pipeline.py
 from pathlib import Path
 
-from lograder.pipeline.config import config
-from lograder.pipeline.input.local_directory import LocalDirectory
-from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
 from lograder.pipeline.build.makefile import MakefileBuild
 from lograder.pipeline.build.prebuilt import PrebuiltArtifacts
-from lograder.pipeline.test.output_compare import OutputCompareTest, OutputCompareCase
-from lograder.pipeline.test.valgrind import ValgrindTest, ValgrindCase
-from lograder.pipeline.score import (
-    AllOrNothingScorer, TestCaseScorer, GimmeConfig, GradescopeConfig,
-)
+from lograder.pipeline.check.project.simple_project import MakefileManifestCheck
+from lograder.pipeline.check.source.source_check import SourceCheck
+from lograder.pipeline.config import config
+from lograder.pipeline.input.local_directory import LocalDirectory
 from lograder.pipeline.pipeline import Pipeline
+from lograder.pipeline.score import AllOrNothingScorer, GimmeConfig, GradescopeConfig, TestCaseScorer
+from lograder.pipeline.test.output_compare import OutputCompareCase, OutputCompareTest
+from lograder.pipeline.test.valgrind import ValgrindCase, ValgrindTest
 
-# -- Manifest ------------------------------------------------------------------
-
-make_simple_manifest_checker(
-    "wordcount",
-    required_files=["Makefile", "wordcount.c"],
-)
+_SUBMISSION_DIR = Path("/autograder/submission")
 
 # -- Test cases ----------------------------------------------------------------
 
 OUTPUT_CASES = [
-    OutputCompareCase(
-        name="empty",
-        args=[],
-        stdin=b"",
-        expected_stdout="total: 0\n",
-    ),
-    OutputCompareCase(
-        name="single_word",
-        args=[],
-        stdin=b"hello\n",
-        expected_stdout="line 1: 1\ntotal: 1\n",
-    ),
-    OutputCompareCase(
-        name="multiple_words",
-        args=[],
-        stdin=b"hello world\nfoo bar baz\n",
-        expected_stdout="line 1: 2\nline 2: 3\ntotal: 5\n",
-    ),
-    OutputCompareCase(
-        name="blank_lines",
-        args=[],
-        stdin=b"hello\n\nworld\n",
-        expected_stdout="line 1: 1\nline 2: 0\nline 3: 1\ntotal: 2\n",
-    ),
-    OutputCompareCase(
-        name="whitespace_only",
-        args=[],
-        stdin=b"   \n\t\n",
-        expected_stdout="line 1: 0\nline 2: 0\ntotal: 0\n",
-    ),
+    OutputCompareCase(name="empty",          args=[], stdin=b"",                          expected_stdout="total: 0\n"),
+    OutputCompareCase(name="single_word",    args=[], stdin=b"hello\n",                   expected_stdout="line 1: 1\ntotal: 1\n"),
+    OutputCompareCase(name="multiple_words", args=[], stdin=b"hello world\nfoo bar baz\n", expected_stdout="line 1: 2\nline 2: 3\ntotal: 5\n"),
+    OutputCompareCase(name="blank_lines",    args=[], stdin=b"hello\n\nworld\n",           expected_stdout="line 1: 1\nline 2: 0\nline 3: 1\ntotal: 2\n"),
+    OutputCompareCase(name="whitespace_only", args=[], stdin=b"   \n\t\n",                 expected_stdout="line 1: 0\nline 2: 0\ntotal: 0\n"),
 ]
 
 VALGRIND_CASES = [
@@ -86,38 +55,38 @@ VALGRIND_CASES = [
 
 # -- Pipeline ------------------------------------------------------------------
 
-pipeline = Pipeline()
-pipeline.add(LocalDirectory())
-pipeline.add(MakefileManifestCheck())
-SUBMISSION_DIR = Path("/autograder/submission")
 
-pipeline.add(build := MakefileBuild())
-# MakefileBuild returns Ok({}) -- inject the binary with an absolute path:
-pipeline.add(PrebuiltArtifacts({"wordcount": SUBMISSION_DIR / "wordcount"}))
-pipeline.add(tests := OutputCompareTest("wordcount", OUTPUT_CASES))
-pipeline.add(vg    := ValgrindTest("wordcount", VALGRIND_CASES))
+def make_pipeline(submission_dir: Path = _SUBMISSION_DIR) -> Pipeline:
+    pipeline = Pipeline()
+    pipeline.add(LocalDirectory(root=submission_dir))
+    pipeline.add(source := SourceCheck(language="c", files=["Makefile", "wordcount.c"]))
+    pipeline.add(check  := MakefileManifestCheck())
+    pipeline.add(build  := MakefileBuild())
+    # MakefileBuild returns Ok({}) -- inject the binary with an absolute path.
+    pipeline.add(PrebuiltArtifacts({"wordcount": submission_dir / "wordcount"}))
+    pipeline.add(tests  := OutputCompareTest("wordcount", OUTPUT_CASES))
+    pipeline.add(vg     := ValgrindTest("wordcount", VALGRIND_CASES))
 
-# -- Scorers -------------------------------------------------------------------
+    source.scorer = AllOrNothingScorer(0.0, label="Files present")
+    build.scorer  = AllOrNothingScorer(15.0, label="Build")
+    tests.scorer  = TestCaseScorer(
+        {
+            "empty":           10.0,
+            "single_word":     15.0,
+            "multiple_words":  20.0,
+            "blank_lines":     15.0,
+            "whitespace_only": 15.0,
+        },
+        gimme=GimmeConfig(min_pass_fraction=0.25, points=15.0),
+        label="Correctness",
+    )
+    vg.scorer = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory leaks")
+    return pipeline
 
-build.scorer = AllOrNothingScorer(15.0, label="Build")
-tests.scorer = TestCaseScorer(
-    {
-        "empty":           10.0,
-        "single_word":     15.0,
-        "multiple_words":  20.0,
-        "blank_lines":     15.0,
-        "whitespace_only": 15.0,
-    },
-    gimme=GimmeConfig(min_pass_fraction=0.25, points=15.0),
-    label="Correctness",
-)
-vg.scorer = AllOrNothingScorer(0.0, extra_credit=10.0, label="No memory leaks")
-
-# -- Entry point ---------------------------------------------------------------
 
 if __name__ == "__main__":
-    with config(root_directory=Path("/autograder/submission"), executable_timeout=30.0):
-        score = pipeline()
+    with config(root_directory=_SUBMISSION_DIR, executable_timeout=30.0):
+        score = make_pipeline()()
 
     score.write_results_json(config=GradescopeConfig(visibility="visible"))
 ```

@@ -168,8 +168,8 @@ def test_valgrind_rejects_empty_nested_command() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
-import subprocess as _subprocess
+import shutil as _shutil  # noqa: E402
+import subprocess as _subprocess  # noqa: E402
 
 _VALGRIND_AVAILABLE = bool(_shutil.which("valgrind"))
 _GCC_AVAILABLE = bool(_shutil.which("gcc"))

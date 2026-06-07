@@ -129,7 +129,7 @@ def test_registered() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
+import shutil as _shutil  # noqa: E402
 
 _AS_AVAILABLE = bool(_shutil.which("as"))
 

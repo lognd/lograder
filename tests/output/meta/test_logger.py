@@ -3,11 +3,9 @@
 
 from __future__ import annotations
 
-import io
 import logging
 from pathlib import Path
 
-import pytest
 from pydantic import BaseModel
 
 import lograder.output.logger as logger_mod

@@ -3,10 +3,7 @@
 
 from pathlib import Path
 
-import pytest
-
 from lograder.process.parsers.makefile import (
-    ParsedMakefile,
     _expand_vars,
     _match_pattern,
     artifacts_from_makefile,

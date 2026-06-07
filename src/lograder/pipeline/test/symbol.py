@@ -159,5 +159,3 @@ class SymbolTest(
                 )
 
         return Ok(artifacts)
-
-

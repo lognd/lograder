@@ -217,8 +217,8 @@ def test_chmod_accepts_common_octal_modes() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
-import stat as _stat
+import shutil as _shutil  # noqa: E402
+import stat as _stat  # noqa: E402
 
 _CHMOD_AVAILABLE = bool(_shutil.which("chmod"))
 

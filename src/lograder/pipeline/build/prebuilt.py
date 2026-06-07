@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from lograder.common import Err, Ok, Result, Unreachable
 from lograder.pipeline.build.build import Build
 from lograder.pipeline.types.artifacts import Artifact, FileArtifact
-from lograder.pipeline.types.parcels import Manifest
 
 
 class PrebuiltArtifactsData(BaseModel):
@@ -112,5 +111,3 @@ class PrebuiltArtifacts(
 
         yield Ok(PrebuiltArtifactsData(artifact_names=list(artifacts.keys())))
         return Ok(artifacts)
-
-

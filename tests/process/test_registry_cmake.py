@@ -376,7 +376,7 @@ def test_cmake_install_omits_missing_values() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
+import shutil as _shutil  # noqa: E402
 
 _CMAKE_AVAILABLE = bool(_shutil.which("cmake"))
 

@@ -186,7 +186,7 @@ class CMakeBuildArgs(CLIArgs):
     # Pass through to underlying native build tool
     native_args: list[str] = CLIMultiOption(
         default_factory=list,
-        sequence_emitter=lambda l: ["--", ...] if l else [],
+        sequence_emitter=lambda args: ["--", ...] if args else [],
     )
 
     @field_validator("target", "config", mode="before")
@@ -293,8 +293,8 @@ class CMakeExecutable(
     def __call__(
         self,
         args: CMakeConfigureArgs | CMakeBuildArgs | CMakeInstallArgs,
-        input: ExecutableInput = ExecutableInput(),
-        options: ExecutableOptions = ExecutableOptions(),
+        input: ExecutableInput | None = None,
+        options: ExecutableOptions | None = None,
     ) -> Result[ExecutableOutput, InstallationError]:
         if isinstance(args, CMakeConfigureArgs):
             api_base = (

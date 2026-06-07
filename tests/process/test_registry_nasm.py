@@ -120,7 +120,7 @@ def test_registered(tmp_path) -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
+import shutil as _shutil  # noqa: E402
 
 _NASM_AVAILABLE = bool(_shutil.which("nasm"))
 

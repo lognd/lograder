@@ -29,5 +29,3 @@ class LocalDirectory(
             return Ok(manifest)
         except Exception as e:
             return Err(UncaughtException(error=e))
-
-

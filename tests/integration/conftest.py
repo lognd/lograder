@@ -2,8 +2,6 @@
 import shutil
 from pathlib import Path
 
-import pytest
-
 from lograder.common import Ok, Unreachable
 from lograder.pipeline.build.build import make_build_output
 from lograder.pipeline.build.cmake import CMakeBuild

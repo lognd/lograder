@@ -141,5 +141,5 @@ def get_project_name() -> str:
 def test_build() -> None:
     project_name: str = get_project_name()
     mod = import_module(project_name)
-    hello_world: Callable[[], str] = getattr(mod, "hello_world")
+    hello_world: Callable[[], str] = mod.hello_world
     assert hello_world() == f"Hello world from `{project_name}`!"

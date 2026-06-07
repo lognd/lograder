@@ -220,7 +220,7 @@ def test_bash_command_args_quotes_single_quotes_correctly() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
+import shutil as _shutil  # noqa: E402
 
 _BASH_AVAILABLE = bool(_shutil.which("bash"))
 

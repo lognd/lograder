@@ -204,7 +204,7 @@ def _expand_func(func: str, args: str, variables: dict[str, str]) -> str:
 
         if func == "join":
             list1, list2 = (a.strip() for a in args.split(",", 1))
-            pairs = list(zip(list1.split(), list2.split()))
+            pairs = list(zip(list1.split(), list2.split(), strict=False))
             return " ".join(a + b for a, b in pairs)
 
         if func == "wildcard":

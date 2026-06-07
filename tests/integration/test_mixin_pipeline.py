@@ -250,7 +250,7 @@ def test_inject_student_into_staff_in_pipeline(tmp_path):
     ]
 
     with config(root_directory=tmp_path):
-        score = pipeline()
+        pipeline()
 
     assert pipeline.datum.root == staff
 
@@ -272,7 +272,7 @@ def test_inject_staff_into_student_in_pipeline(tmp_path):
     ]
 
     with config(root_directory=tmp_path):
-        score = pipeline()
+        pipeline()
 
     assert "grader.h" in pipeline.datum
 

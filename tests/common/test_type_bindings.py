@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from typing import Generic, TypeVar, Union
 
-import pytest
-
 from lograder.common import (
     get_bound_types,
     get_first_bound_type,

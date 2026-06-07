@@ -212,5 +212,3 @@ class DifferentialTest(
                 )
 
         return Ok(artifacts)
-
-

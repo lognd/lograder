@@ -6,7 +6,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
 
 from lograder.process.registry.perf import (
     PerfExecutable,
@@ -105,7 +104,7 @@ def test_registered() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
+import shutil as _shutil  # noqa: E402
 
 _PERF_AVAILABLE = bool(_shutil.which("perf"))
 

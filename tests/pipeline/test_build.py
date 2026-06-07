@@ -2,9 +2,9 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from lograder.common import Err, Ok
-from lograder.exception import DeveloperException
 from lograder.pipeline.build.build import BuildOutput, make_build_output
 from lograder.pipeline.config import config
 from lograder.pipeline.types.parcels import Manifest
@@ -84,14 +84,14 @@ def test_build_output_data_property_returns_install_error(tmp_path):
 def test_build_output_neither_raises(tmp_path):
     manifest = _make_manifest(tmp_path)
     config_file = tmp_path / "CMakeLists.txt"
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         BuildOutput(manifest=manifest, config_file=config_file)
 
 
 def test_build_output_both_raises(tmp_path):
     manifest = _make_manifest(tmp_path)
     config_file = tmp_path / "CMakeLists.txt"
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         BuildOutput(
             manifest=manifest,
             config_file=config_file,

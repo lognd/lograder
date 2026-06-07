@@ -1,23 +1,16 @@
 # mypy: ignore-errors
 import json
-from pathlib import Path
 from typing import Generator
 
-import pytest
 from pydantic import BaseModel
 
 from lograder.common import Err, Ok, Result
 from lograder.output.gradescope import GradescopeVisibility, write_gradescope_results
-from lograder.pipeline.pipeline import Pipeline
 from lograder.pipeline.score import (
     AllOrNothingScorer,
-    CleanRunScorer,
     PipelineScore,
-    ScoreContribution,
-    TestCaseScorer,
 )
 from lograder.pipeline.step import Step
-from lograder.pipeline.test.test import TestSuccess
 from lograder.pipeline.types.sentinel import PIPELINE_START
 
 

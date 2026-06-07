@@ -288,26 +288,31 @@ class Executable(ABC):
         self,
         input: ExecutableInput,
         *,
-        options: ExecutableOptions = ExecutableOptions(),
+        options: ExecutableOptions | None = None,
     ) -> ExecutableOutput:
-        invocation = resolve_invocation(self.command, input=input, options=options)
+        invocation = resolve_invocation(
+            self.command, input=input, options=options or ExecutableOptions()
+        )
         return invoke_command(invocation)
 
     def pool(
         self,
         inputs: list[ExecutableInput],
         *,
-        options: ExecutableOptions | list[ExecutableOptions] = ExecutableOptions(),
+        options: ExecutableOptions | list[ExecutableOptions] | None = None,
     ) -> list[Future[ExecutableOutput]]:
-        if isinstance(options, ExecutableOptions):
-            options = [options] * len(inputs)
-        if len(inputs) != len(options):
+        resolved: ExecutableOptions | list[ExecutableOptions] = (
+            options or ExecutableOptions()
+        )
+        if isinstance(resolved, ExecutableOptions):
+            resolved = [resolved] * len(inputs)
+        if len(inputs) != len(resolved):
             raise DeveloperException(
-                f"Mismatch between number of `inputs` ({len(inputs)}) and number of `options` ({len(options)})."
+                f"Mismatch between number of `inputs` ({len(inputs)}) and number of `options` ({len(resolved)})."
             )
         executor = ThreadPoolExecutor(max_workers=get_config().executable_max_workers)
         futures: list[Future[ExecutableOutput]] = []
-        for input, option in zip(inputs, options):
+        for input, option in zip(inputs, resolved, strict=False):
             invocation = resolve_invocation(self.command, input=input, options=option)
             futures.append(executor.submit(invoke_command, invocation))
         return futures
@@ -357,13 +362,13 @@ class InstallationExecutable(ABC):
         self,
         executable: TypedExecutable[T],
         args: T,
-        input: ExecutableInput = ExecutableInput(),
-        options: ExecutableOptions = ExecutableOptions(),
+        input: ExecutableInput | None = None,
+        options: ExecutableOptions | None = None,
     ) -> None:
         self._executable = executable
         self._args = args
-        self._input = input
-        self._options = options
+        self._input = input or ExecutableInput()
+        self._options = options or ExecutableOptions()
 
     def validate_runnable(self) -> None:
         return
@@ -512,8 +517,8 @@ class TypedExecutable(Generic[T]):
     def __call__(
         self,
         args: T,
-        input: ExecutableInput = ExecutableInput(),
-        options: ExecutableOptions = ExecutableOptions(),
+        input: ExecutableInput | None = None,
+        options: ExecutableOptions | None = None,
     ) -> Result[ExecutableOutput, InstallationError]:
         if self.bound_types is None:
             raise DeveloperException(
@@ -523,6 +528,8 @@ class TypedExecutable(Generic[T]):
             raise DeveloperException(
                 f"Cannot call a `{self.__class__.__name__}` instance because the class does not specify a bound executable with `@register_typed_executable([<command-goes-here>])`."
             )
+        input = input or ExecutableInput()
+        options = options or ExecutableOptions()
         if input.arguments:
             raise StaffException(
                 f"Call to `{self.__class__.__name__}` with non-empty arguments (`{'`, `'.join(e for e in input.arguments)}`) in `input` parameter is not allowed because "
@@ -548,5 +555,3 @@ class TypedExecutable(Generic[T]):
             return may_run.swap_ok(ExecutableOutput)
 
         return Ok(self.executable(input=effective_input, options=options))
-
-

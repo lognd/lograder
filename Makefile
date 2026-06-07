@@ -32,6 +32,7 @@ build:
 check:
 	@$(BLACK) src/ tests/
 	@$(RUFF) format src/ tests/
+	@$(RUFF) check src/ tests/ --fix
 	@$(ISORT) src/ tests/
 	@$(MYPY) --config-file mypy-py310.ini src/ tests/
 	@$(MYPY) --config-file mypy-py314.ini src/ tests/

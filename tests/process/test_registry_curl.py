@@ -202,10 +202,10 @@ def test_curl_show_error_implies_silent() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
-import threading as _threading
-from http.server import BaseHTTPRequestHandler as _BaseHTTPRequestHandler
-from http.server import HTTPServer as _HTTPServer
+import shutil as _shutil  # noqa: E402
+import threading as _threading  # noqa: E402
+from http.server import BaseHTTPRequestHandler as _BaseHTTPRequestHandler  # noqa: E402
+from http.server import HTTPServer as _HTTPServer  # noqa: E402
 
 _CURL_AVAILABLE = bool(_shutil.which("curl"))
 

@@ -1,8 +1,6 @@
 # mypy: ignore-errors
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from lograder.process.registry.ctest import CTestArgs, CTestExecutable
@@ -158,8 +156,8 @@ def test_ctest_check_runnable_returns_result():
 
 # --- Real executable tests ---
 
-import shutil as _shutil
-import subprocess as _subprocess
+import shutil as _shutil  # noqa: E402
+import subprocess as _subprocess  # noqa: E402
 
 _CTEST_AVAILABLE = bool(_shutil.which("ctest"))
 _CMAKE_AVAILABLE = bool(_shutil.which("cmake"))

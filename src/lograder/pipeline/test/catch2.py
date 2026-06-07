@@ -273,5 +273,3 @@ class Catch2Test(
             out_path.unlink(missing_ok=True)
 
         return Ok(artifacts)
-
-

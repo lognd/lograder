@@ -55,6 +55,6 @@ def get_logger(name: str) -> LograderLogger:
     logger = logging.getLogger(name)
     if not isinstance(logger, LograderLogger):
         raise StaffException(
-            f"Before any logger can be gotten, `lograder.output.logger.setup_logger()` must be called because it sets the default logger class to `LograderLogger`."
+            "Before any logger can be gotten, `lograder.output.logger.setup_logger()` must be called because it sets the default logger class to `LograderLogger`."
         )
     return logger

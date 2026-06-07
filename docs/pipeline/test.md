@@ -419,3 +419,141 @@ pipeline.add(OutputCompareTest(
     ),
 ))
 ```
+
+---
+
+## `ASanTest`
+
+Runs test cases against an AddressSanitizer-instrumented binary and detects heap overflows, use-after-free errors, and memory leaks.
+
+The binary **must** be compiled with `-fsanitize=address`. Use `GXXBuild(sanitizers=["address"])` or set the flag in `CMakeLists.txt`. Running an uninstrumented binary never triggers failures.
+
+```python
+from lograder.pipeline.test.asan import ASanTest, ASanCase
+
+cases = [
+    ASanCase(name="no_overflow", args=["10"], stdin=b""),
+    ASanCase(name="no_leaks",    args=["5"],  stdin=b"", expected_exit_code=0),
+]
+
+pipeline.add(asan := ASanTest("my_binary", cases))
+asan.scorer = AllOrNothingScorer(20.0, label="Memory Safety")
+```
+
+### `ASanCase` fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `str` | required | Unique case name |
+| `args` | `list[str]` | `[]` | Command-line arguments |
+| `stdin` | `bytes \| str` | `b""` | stdin (str is auto-encoded to UTF-8) |
+| `expected_exit_code` | `int \| None` | `None` | If set, also assert exit code matches |
+
+---
+
+## `CompileCheckTest`
+
+Compiles small code snippets with g++ and asserts whether each one should succeed or fail to compile. Useful for testing const correctness, deleted constructors, access specifiers, template constraints, and SFINAE.
+
+The step does not use the artifacts dict -- it compiles each snippet independently with g++. The artifacts dict is passed through unchanged.
+
+```python
+from lograder.pipeline.test.compile_check import CompileCheckTest, CompileCase
+from lograder.process.registry.gcc import GNUXXStandard
+
+cases = [
+    CompileCase(
+        name="const_read_ok",
+        preamble="#include <MyClass.hpp>",
+        code="const MyClass obj; (void)obj.get_value();",
+        should_compile=True,
+    ),
+    CompileCase(
+        name="const_mutation_forbidden",
+        preamble="#include <MyClass.hpp>",
+        code="const MyClass obj; obj.set_value(1);",
+        should_compile=False,
+    ),
+]
+
+pipeline.add(cc := CompileCheckTest(
+    cases,
+    include_dirs=[submission_dir],  # so g++ can find the student header
+))
+cc.scorer = TestCaseScorer(
+    {"const_read_ok": 10.0, "const_mutation_forbidden": 10.0},
+    label="Compile-Time Rules",
+)
+```
+
+By default each snippet is wrapped in `int main() { ... return 0; }`. To supply a full translation unit, put `// NO_MAIN` anywhere in `preamble`:
+
+```python
+CompileCase(
+    name="full_tu",
+    preamble="#include <MyClass.hpp>\n// NO_MAIN",
+    code="int main() { MyClass obj; return 0; }",
+    should_compile=True,
+)
+```
+
+### `CompileCase` fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `str` | required | Unique case name |
+| `code` | `str` | required | Code snippet (placed inside main unless `// NO_MAIN`) |
+| `should_compile` | `bool` | required | Expected compilation outcome |
+| `preamble` | `str` | `""` | Code before main (includes, type decls). `"// NO_MAIN"` skips main wrapper. |
+| `standard` | `GNUXXStandard` | `CXX17` | C++ standard |
+| `extra_flags` | `list[str]` | `[]` | Additional raw compiler flags |
+
+---
+
+## `ComplexityTest`
+
+Measures empirical algorithmic complexity by timing a binary at increasing input sizes, fitting a log-log regression, and checking the estimated exponent against expected bounds.
+
+```python
+from lograder.pipeline.test.complexity import ComplexityTest, ComplexityCase, ComplexityClass
+
+cases = [
+    ComplexityCase(
+        name="sort_is_nlogn",
+        input_fn=lambda n: "\n".join(str(i) for i in range(n, 0, -1)).encode() + b"\n",
+        sizes=[100, 500, 2000, 10000, 50000],
+        expected=ComplexityClass.O_N_LOG_N,
+        runs_per_size=3,
+    ),
+]
+
+pipeline.add(comp := ComplexityTest("sorter", cases))
+comp.scorer = TestCaseScorer({"sort_is_nlogn": 20.0}, label="Complexity")
+```
+
+### `ComplexityClass` values
+
+| Value | Exponent bounds (log-log slope) |
+|-------|-------------------------------|
+| `O_1` | alpha < 0.15 |
+| `O_LOG_N` | 0.05 -- 0.35 |
+| `O_N` | 0.75 -- 1.35 |
+| `O_N_LOG_N` | 0.90 -- 1.55 (overlaps O_N intentionally) |
+| `O_N_SQUARED` | 1.75 -- 2.35 |
+| `O_N_CUBED` | 2.70 -- 3.30 |
+
+O(n) and O(n log n) bounds overlap because they are nearly indistinguishable at small sizes. Use input sizes spanning >= 3 orders of magnitude for reliable classification.
+
+### `ComplexityCase` fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `name` | `str` | required | Unique case name |
+| `input_fn` | `Callable[[int], bytes]` | required | Returns stdin bytes for a given size n |
+| `sizes` | `list[int]` | required | Increasing input sizes to measure at |
+| `expected` | `ComplexityClass` | required | Expected complexity class |
+| `args` | `list[str]` | `[]` | Command-line arguments |
+| `runs_per_size` | `int` | `3` | Timed runs per size; median is used |
+| `timeout` | `float \| None` | `None` | Per-run timeout (defaults to pipeline timeout) |
+
+**Tip:** timing-based tests are noisy on shared CI machines. Use `runs_per_size >= 3` and generous `sizes` spans. Consider using `AllOrNothingScorer` rather than `TestCaseScorer` if you want all-or-nothing credit for complexity.

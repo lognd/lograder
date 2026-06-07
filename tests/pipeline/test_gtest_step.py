@@ -4,8 +4,6 @@ from __future__ import annotations
 import stat
 from pathlib import Path
 
-import pytest
-
 from lograder.pipeline.config import config
 from lograder.pipeline.test.gtest import (
     GTestError,

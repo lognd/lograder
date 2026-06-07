@@ -5,9 +5,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from lograder.common import Err, Ok
 from lograder.pipeline.check.source._ast import (
     analyze_cpp,
     analyze_python,
@@ -17,7 +14,6 @@ from lograder.pipeline.check.source.source_check import (
     ImportConstraint,
     IncludeConstraint,
     OperatorConstraint,
-    QualifiedNameConstraint,
     SourceCheck,
     SourceCheckError,
     SourceViolation,

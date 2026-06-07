@@ -9,6 +9,7 @@ from collections.abc import Iterator
 
 import pytest
 
+from lograder.output.logger import setup_logger
 from lograder.output.packets import PacketAuthority
 
 

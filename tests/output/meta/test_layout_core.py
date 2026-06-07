@@ -259,7 +259,10 @@ def test_all_builtin_layouts_registered_by_init_import():
     # Importing from lograder.output.layout should register every built-in packet
     # type so pipeline authors never need manual layout imports in their pipelines.
     from lograder.output.packets import PacketAuthority
-    from lograder.pipeline.build.bash_script import BashScriptBuildError, BashScriptBuildOutput
+    from lograder.pipeline.build.bash_script import (
+        BashScriptBuildError,
+        BashScriptBuildOutput,
+    )
     from lograder.pipeline.build.build import BuildOutput
     from lograder.pipeline.mixin.mixin import MixinData
     from lograder.pipeline.test.catch2 import Catch2Error, Catch2Failure, Catch2Success

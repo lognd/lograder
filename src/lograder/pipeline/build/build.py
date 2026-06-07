@@ -1,18 +1,15 @@
 from abc import ABC
-from typing import TypeVar
-from typing import Optional
-from typing_extensions import Self
 from pathlib import Path
+from typing import Optional, TypeVar
 
 from pydantic import BaseModel, ConfigDict, model_validator
+from typing_extensions import Self
 
-from lograder.common import Result, Ok, Err
-from lograder.pipeline.types.parcels import Manifest
+from lograder.common import Err, Ok, Result
 from lograder.exception import DeveloperException
-from lograder.process.executable import ExecutableOutput, InstallationError
-
 from lograder.pipeline.step import Step
-
+from lograder.pipeline.types.parcels import Manifest
+from lograder.process.executable import ExecutableOutput, InstallationError
 
 InputT = TypeVar("InputT")
 OkOutputT = TypeVar("OkOutputT")
@@ -78,5 +75,3 @@ def make_build_output(
 
 
 class Build(Step[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC): ...
-
-

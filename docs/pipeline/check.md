@@ -4,54 +4,48 @@ Check steps validate the student's submission before building. They transform a 
 
 ## Manifest checks
 
-### Generated manifest checkers
+Three manifest check classes are exported directly from `simple_project` -- import and use the one matching your project type:
 
-The easiest way to create a manifest checker is `make_simple_manifest_checker`. It generates the check class and injects it into the caller's module globals.
+```python
+from lograder.pipeline.check.project.simple_project import (
+    CMakeManifestCheck,       # checks for CMakeLists.txt
+    MakefileManifestCheck,    # checks for Makefile
+    PyProjectManifestCheck,   # checks for pyproject.toml
+)
+
+pipeline.add(check := CMakeManifestCheck())
+```
+
+If the check passes it returns `Ok(CMakeManifest)` (or the equivalent typed manifest). If a required file is missing, it returns `Err(CMakeManifestCheckError)` and the pipeline stops.
+
+### Checking for additional files
+
+The built-in manifest checks only verify the project root file (`CMakeLists.txt`, etc.). To also require specific source files, add a `SourceCheck` step immediately after:
+
+```python
+pipeline.add(check  := CMakeManifestCheck())
+pipeline.add(source := SourceCheck(
+    language="cpp",
+    files=["src/graph.cpp", "src/graph.h"],
+    constraints=[],
+))
+```
+
+### Advanced: custom manifest checkers
+
+`make_simple_manifest_checker` generates a new check class for a specific required-files set. The valid `project_name` values are `"CMake"`, `"Makefile"`, and `"PyProject"` -- these determine the generated class names and the base manifest type.
 
 ```python
 from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
 
-make_simple_manifest_checker(
-    "my_project",
-    required_files=["CMakeLists.txt", "main.cpp", "utils.cpp"],
+_, _, _, CMakeManifestCheck = make_simple_manifest_checker(
+    "CMake",
+    req_files=["CMakeLists.txt", "src/main.cpp"],
 )
-# Now available in this module's namespace:
-#   CMakeManifest, CMakeManifestData, CMakeManifestCheckError, CMakeManifestCheck
 pipeline.add(check := CMakeManifestCheck())
 ```
 
-Available project types: `cmake`, `makefile`, `pyproject` (determined automatically from the required files or overridable).
-
-```python
-make_simple_manifest_checker(
-    "my_project",
-    required_files=["Makefile", "lab.c"],
-    # produces: MakefileManifest, MakefileManifestCheck, etc.
-)
-pipeline.add(MakefileManifestCheck())
-```
-
-### What the check validates
-
-- All `required_files` are present in the submission
-- No required file is a directory instead of a file
-- (For CMake projects) `CMakeLists.txt` is present
-
-If the check passes it returns `Ok(CMakeManifest)` (or the equivalent for other project types). If it fails, it returns `Err(CMakeManifestCheckError)` and the pipeline stops.
-
-### Custom required files
-
-```python
-make_simple_manifest_checker(
-    "graph_project",
-    required_files=[
-        "CMakeLists.txt",
-        "src/graph.cpp",
-        "src/graph.h",
-        "tests/test_graph.cpp",
-    ],
-)
-```
+In practice, prefer the direct import + `SourceCheck` pattern above.
 
 ## Source checks
 
@@ -70,6 +64,7 @@ from lograder.pipeline.check.source.source_check import (
 import lograder.output.layout.check.source  # required
 
 pipeline.add(source_check := SourceCheck(
+    language="cpp",
     files=["src/graph.cpp", "src/graph.h"],
     constraints=[
         OperatorConstraint(operator="goto", forbidden=True),
@@ -153,6 +148,7 @@ ImportConstraint(module="my_module", forbidden=False)
 
 ```python
 pipeline.add(SourceCheck(
+    language="cpp",
     files=["main.cpp", "utils.cpp"],
     constraints=[
         OperatorConstraint(operator="goto",   forbidden=True),
@@ -188,34 +184,99 @@ source_check.scorer = CleanRunScorer(
 ## Full example with both checks
 
 ```python
-import lograder.output.layout.process.executable
-import lograder.output.layout.project.simple_project
-import lograder.output.layout.check.source
-import lograder.output.layout.test.output_compare
+import lograder.output.layout.check.source  # noqa: F401
+import lograder.output.layout.pipeline.build  # noqa: F401
+import lograder.output.layout.project.simple_project  # noqa: F401
+import lograder.output.layout.test.output_compare  # noqa: F401
 
-from lograder.pipeline.check.project.simple_project import make_simple_manifest_checker
+from lograder.pipeline.build.cmake import CMakeBuild
+from lograder.pipeline.check.project.simple_project import CMakeManifestCheck
 from lograder.pipeline.check.source.source_check import (
-    SourceCheck, OperatorConstraint, IdentifierConstraint, IncludeConstraint,
+    IdentifierConstraint,
+    OperatorConstraint,
+    SourceCheck,
 )
+from lograder.pipeline.input.local_directory import LocalDirectory
+from lograder.pipeline.pipeline import Pipeline
 from lograder.pipeline.score import AllOrNothingScorer, CleanRunScorer, TestCaseScorer
+from lograder.pipeline.test.output_compare import OutputCompareTest
 
-make_simple_manifest_checker("lab3", required_files=["CMakeLists.txt", "lab3.cpp"])
 
-pipeline = Pipeline()
-pipeline.add(LocalDirectory())
-pipeline.add(manifest := CMakeManifestCheck())
-pipeline.add(source   := SourceCheck(
-    files=["lab3.cpp"],
-    constraints=[
-        OperatorConstraint(operator="goto", forbidden=True),
-        IdentifierConstraint(name="malloc", forbidden=True),
-    ],
-))
-pipeline.add(build := CMakeBuild())
-pipeline.add(tests := OutputCompareTest("lab3", cases))
+def make_pipeline(submission_dir):
+    pipeline = Pipeline()
+    pipeline.add(LocalDirectory(root=submission_dir))
+    pipeline.add(check  := CMakeManifestCheck())
+    pipeline.add(source := SourceCheck(
+        language="cpp",
+        files=["lab3.cpp"],
+        constraints=[
+            OperatorConstraint(operator="goto", forbidden=True),
+            IdentifierConstraint(name="malloc", forbidden=True),
+        ],
+    ))
+    pipeline.add(build := CMakeBuild())
+    pipeline.add(tests := OutputCompareTest("lab3", cases))
 
-manifest.scorer = AllOrNothingScorer(0.0, label="Files present")
-source.scorer   = CleanRunScorer(10.0, label="Code quality")
-build.scorer    = AllOrNothingScorer(10.0, label="Build")
-tests.scorer    = TestCaseScorer({"case1": 20.0, "case2": 20.0}, label="Correctness")
+    check.scorer  = AllOrNothingScorer(0.0, label="Files present")
+    source.scorer = CleanRunScorer(10.0, label="Code quality")
+    build.scorer  = AllOrNothingScorer(10.0, label="Build")
+    tests.scorer  = TestCaseScorer({"case1": 20.0, "case2": 20.0}, label="Correctness")
+    return pipeline
 ```
+
+---
+
+## `MypyCheck`
+
+Runs mypy static type analysis on Python source files and yields a violation packet for each type error. Useful for Python assignments where type annotation correctness is graded.
+
+```python
+from lograder.pipeline.check.mypy_check import MypyCheck
+from lograder.pipeline.score import CleanRunScorer
+
+pipeline.add(mypy := MypyCheck(
+    files=["graph.py"],
+    ignore_missing_imports=True,   # recommended on Gradescope (no third-party stubs)
+))
+mypy.scorer = CleanRunScorer(10.0, label="Type Safety")
+```
+
+`MypyCheck` always returns `Ok(manifest)` unless mypy cannot be installed or a listed file is missing. Each mypy error is yielded as a non-fatal `Err(MypyViolation)` packet, so `CleanRunScorer(points, max_errors=0)` awards points only on a clean run.
+
+### With strict mode
+
+```python
+pipeline.add(mypy := MypyCheck(
+    files=["solution.py"],
+    strict=True,                   # enables all strictness flags at once
+    ignore_missing_imports=True,
+))
+mypy.scorer = CleanRunScorer(0.0, extra_credit=5.0, label="Strict Types")
+```
+
+### Individual strictness flags
+
+```python
+MypyCheck(
+    files=["module.py"],
+    disallow_untyped_defs=True,    # require annotations on all functions
+    disallow_incomplete_defs=True, # require complete annotations (no partial)
+    check_untyped_defs=True,       # type-check unannotated function bodies
+    ignore_missing_imports=True,
+)
+```
+
+### `MypyCheck` parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `files` | `list[str]` | required | Python files relative to manifest root |
+| `strict` | `bool` | `False` | Enable `--strict` (all strictness flags) |
+| `disallow_untyped_defs` | `bool` | `False` | Require annotations on all functions |
+| `disallow_incomplete_defs` | `bool` | `False` | Require complete annotations |
+| `check_untyped_defs` | `bool` | `False` | Check bodies of unannotated functions |
+| `ignore_missing_imports` | `bool` | `True` | Suppress missing stub errors |
+| `extra_args` | `MypyArgs \| None` | `None` | Additional mypy args (overrides per-field) |
+| `options` | `ExecutableOptions \| None` | `None` | Options for mypy invocation |
+
+mypy is auto-installed via the install script in `data/install_scripts/install_mypy.sh` if not found on PATH.

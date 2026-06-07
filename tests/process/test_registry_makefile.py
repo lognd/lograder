@@ -183,7 +183,7 @@ def test_makefile_rejects_silent_with_print_directory() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
+import shutil as _shutil  # noqa: E402
 
 _MAKE_AVAILABLE = bool(_shutil.which("make"))
 

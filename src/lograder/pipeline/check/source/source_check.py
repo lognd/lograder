@@ -308,5 +308,3 @@ class SourceCheck(
                 )
 
         return Ok(manifest)
-
-

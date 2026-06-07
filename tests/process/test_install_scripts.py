@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 from lograder.common import Err, Ok
-from lograder.exception import DeveloperException
 from lograder.process.cli_args import CLIArgs, CLIOption
 from lograder.process.executable import (
     ExecutableInput,
@@ -42,8 +41,8 @@ class SpyTypedExecutable(TypedExecutable[SpyArgs]):
     def __call__(
         self,
         args: DummyArgs,
-        input: ExecutableInput = ExecutableInput(),
-        options: ExecutableOptions = ExecutableOptions(),
+        input: ExecutableInput | None = None,
+        options: ExecutableOptions | None = None,
     ):
         return self._result
 

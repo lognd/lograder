@@ -128,5 +128,3 @@ class PerformanceTest(
                 )
 
         return Ok(artifacts)
-
-

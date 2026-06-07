@@ -62,7 +62,7 @@ def write_generic_type(
     else:
         orig_bases.append(generic_type)
 
-    setattr(cls, "__orig_bases__", tuple(orig_bases))
+    cls.__orig_bases__ = tuple(orig_bases)  # type: ignore[attr-defined]
     return cls
 
 
@@ -131,7 +131,7 @@ def _get_bound_types_recursive(
         if isinstance(origin, type) and issubclass(origin, target_typ):
             params = getattr(origin, "__parameters__", ())
             next_mapping = dict(mapping)
-            next_mapping.update(zip(params, args))
+            next_mapping.update(zip(params, args, strict=False))
 
             found = _get_bound_types_recursive(origin, target_typ, next_mapping)
             if found is not None:

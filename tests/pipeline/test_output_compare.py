@@ -1,11 +1,9 @@
 # mypy: ignore-errors
 import subprocess
 from pathlib import Path
-from typing import Generator
 
 import pytest
 
-from lograder.common import Err, Ok, Result
 from lograder.pipeline.config import config
 from lograder.pipeline.test.output_compare import (
     ComparisonMode,
@@ -172,8 +170,8 @@ def test_output_compare_test_exit_code_check(echo_bin):
         try:
             while True:
                 packets.append(next(gen))
-        except StopIteration as e:
-            result = e.value
+        except StopIteration:
+            pass
 
     assert len(packets) == 1
     assert packets[0].is_err

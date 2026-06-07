@@ -53,5 +53,3 @@ class ManifestCheck(
                 manifest_received=received,
             )
         )
-
-

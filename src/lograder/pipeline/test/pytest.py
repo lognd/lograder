@@ -231,5 +231,3 @@ def _full_name(tc: JUnitTestCase) -> str:
     if tc.classname and tc.classname != tc.test_name:
         return f"{tc.classname}::{tc.test_name}"
     return tc.test_name
-
-

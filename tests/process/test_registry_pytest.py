@@ -86,7 +86,7 @@ def test_registered() -> None:
 
 # --- Real executable tests ---
 
-import shutil as _shutil
+import shutil as _shutil  # noqa: E402
 
 _PYTEST_AVAILABLE = bool(_shutil.which("pytest") or _shutil.which("python3"))
 

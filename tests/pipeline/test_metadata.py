@@ -3,15 +3,11 @@
 
 import json
 from datetime import datetime, timezone
-from pathlib import Path
-
-import pytest
 
 from lograder.pipeline.metadata import (
     GraderMetadata,
     StaffAuthor,
     Submitter,
-    _fmt_dt,
     _parse_iso,
 )
 

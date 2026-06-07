@@ -3,11 +3,7 @@
 
 from __future__ import annotations
 
-import pytest
-
-from lograder.pipeline.config import config
 from lograder.pipeline.test.pytest import (
-    PytestError,
     PytestFailure,
     PytestSuccess,
     PytestTest,

@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from lograder.common import Empty, Ok
+from lograder.common import Empty, Ok, Result
 from lograder.exception import DeveloperException, StaffException
 from lograder.process.cli_args import CLIArgs, CLIOption
 from lograder.process.executable import (

@@ -113,7 +113,7 @@ DirectoryMapping = TypeAliasType("DirectoryMapping", "list[str | DirectoryDict]"
 def validate_directory_dict(x: dict[str, DirectoryMapping], /) -> DirectoryDict:
     if len(x) == 0:
         raise DeveloperException(
-            f"Tried to make a `DictionaryDict` out of an empty dictionary. Please ensure that lines before the listed calling line create a properly formatted `DictionaryDict`; a `DirectoryDict` is a dictionary with a single key corresponding to the super-directory and a value of a list containing strings (corresponding to file names) or other `DirectoryDicts` (corresponding to nested folders)."
+            "Tried to make a `DictionaryDict` out of an empty dictionary. Please ensure that lines before the listed calling line create a properly formatted `DictionaryDict`; a `DirectoryDict` is a dictionary with a single key corresponding to the super-directory and a value of a list containing strings (corresponding to file names) or other `DirectoryDicts` (corresponding to nested folders)."
         )
     if len(x) > 1:
         raise DeveloperException(
@@ -518,6 +518,10 @@ class Manifest(Package):
     @property
     def paths(self) -> list[Path]:
         return self._files + self._dirs
+
+    @property
+    def file_paths(self) -> list[Path]:
+        return list(self._files)
 
     @property
     def files(self) -> list[File]:

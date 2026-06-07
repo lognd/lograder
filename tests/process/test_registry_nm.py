@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from lograder.process.cli_args import CLI_ARG_MISSING
 from lograder.process.registry.nm import NmArgs, NmExecutable
 
 
@@ -89,8 +88,8 @@ def test_nm_check_runnable_returns_result():
 
 # --- Real executable tests ---
 
-import shutil as _shutil
-import subprocess as _subprocess
+import shutil as _shutil  # noqa: E402
+import subprocess as _subprocess  # noqa: E402
 
 _NM_AVAILABLE = bool(_shutil.which("nm"))
 _GCC_AVAILABLE = bool(_shutil.which("gcc"))

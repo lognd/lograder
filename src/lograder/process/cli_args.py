@@ -31,6 +31,8 @@ class POSITION_AGNOSTIC(Singleton): ...
 
 ArgumentPosition = int | POSITION_AGNOSTIC
 
+_POSITION_AGNOSTIC = POSITION_AGNOSTIC()
+
 
 class _PydanticCLIExtra(TypedDict):
     emit: Optional[Sequence[str]]
@@ -163,7 +165,7 @@ def CLIOption(
     default: T | EllipsisType = ...,
     emit: Optional[Sequence[str]] = ("{}",),
     emitter: Optional[Callable[[T], Sequence[str]]] = None,
-    position: ArgumentPosition = POSITION_AGNOSTIC(),
+    position: ArgumentPosition = _POSITION_AGNOSTIC,
     **field_kwargs: Any,
 ) -> Any:
     if emit is None and emitter is None:
@@ -202,7 +204,7 @@ def CLIMultiOption(
     ] = None,
     token_emit: Optional[Sequence[str]] = ("{}",),
     token_emitter: Optional[Callable[[T], Sequence[str]]] = None,
-    position: ArgumentPosition = POSITION_AGNOSTIC(),
+    position: ArgumentPosition = _POSITION_AGNOSTIC,
     **field_kwargs: Any,
 ) -> Any:
     validate_single_specification(
@@ -214,7 +216,11 @@ def CLIMultiOption(
 
     if sequence_emitter is None:
         assert sequence_emit is not None  # Must be true; we just validated.
-        sequence_emitter = lambda _: sequence_emit
+        _seq_emit = sequence_emit
+
+        def sequence_emitter(_: Iterable[T]) -> Sequence[str | EllipsisType]:
+            return _seq_emit
+
     assert (
         sequence_emitter is not None
     )  # Must be true; if it was originally None, then the branch above must have been taken.
@@ -251,7 +257,7 @@ def CLIKVOption(
     ] = None,
     token_emit: Optional[Sequence[str]] = ("{key}={value}",),
     token_emitter: Optional[Callable[[K, V], Sequence[str]]] = None,
-    position: ArgumentPosition = POSITION_AGNOSTIC(),
+    position: ArgumentPosition = _POSITION_AGNOSTIC,
     **field_kwargs: Any,
 ) -> Any:
     validate_single_specification(
@@ -263,7 +269,11 @@ def CLIKVOption(
 
     if sequence_emitter is None:
         assert sequence_emit is not None  # Must be true; we just validated.
-        sequence_emitter = lambda _: sequence_emit
+        _seq_emit_kv = sequence_emit
+
+        def sequence_emitter(_: Mapping[K, V]) -> Sequence[str | EllipsisType]:
+            return _seq_emit_kv
+
     assert (
         sequence_emitter is not None
     )  # Must be true; if it was originally None, then the branch above must have been taken.
@@ -299,7 +309,7 @@ def CLIPresenceFlag(
     *,
     default: T | EllipsisType = ...,
     present_when: bool = True,
-    position: ArgumentPosition = POSITION_AGNOSTIC(),
+    position: ArgumentPosition = _POSITION_AGNOSTIC,
     **field_kwargs: Any,
 ) -> Any:
     return CLIOption(
@@ -318,7 +328,7 @@ def CLIFlag(
     false: Sequence[str],
     *,
     default: T | EllipsisType = ...,
-    position: ArgumentPosition = POSITION_AGNOSTIC(),
+    position: ArgumentPosition = _POSITION_AGNOSTIC,
     **field_kwargs: Any,
 ) -> Any:
     return CLIOption(

@@ -1,5 +1,5 @@
 from enum import Enum, auto
-from typing import Callable, cast
+from typing import cast
 
 # noinspection PyPep8Naming
 from colorama import Fore as F
@@ -115,9 +115,10 @@ def render_manifest_diff(
     manifest_expected: DirectoryMapping,
     manifest_received: DirectoryMapping,
 ) -> str:
-    directory_key: Callable[[str | dict], str] = lambda item: (
-        item if isinstance(item, str) else directory_name(cast(DirectoryDict, item))
-    )
+    def directory_key(item: str | dict) -> str:
+        return (
+            item if isinstance(item, str) else directory_name(cast(DirectoryDict, item))
+        )
 
     exp_keys = {directory_key(item): item for item in manifest_expected}
     rec_keys = {directory_key(item): item for item in manifest_received}

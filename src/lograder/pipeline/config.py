@@ -43,7 +43,8 @@ class EnvironmentConfig(BaseModel):
         return bad_keys
 
 
-_config = ContextVar("_config", default=EnvironmentConfig())
+_config: ContextVar[EnvironmentConfig] = ContextVar("_config")
+_config.set(EnvironmentConfig())
 
 
 def get_config() -> EnvironmentConfig:

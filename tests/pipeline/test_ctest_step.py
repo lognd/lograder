@@ -1,13 +1,9 @@
 # mypy: ignore-errors
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import MagicMock
-
 import pytest
 
 from lograder.common import Empty, Ok
-from lograder.common.empty import Empty as EmptyClass
 from lograder.pipeline.config import config
 from lograder.pipeline.test.ctest import (
     CTestError,
@@ -17,7 +13,7 @@ from lograder.pipeline.test.ctest import (
 )
 from lograder.pipeline.types.artifacts import CMakeArtifact, FileArtifact
 from lograder.process.executable import ExecutableOutput
-from lograder.process.registry.ctest import CTestArgs, CTestExecutable
+from lograder.process.registry.ctest import CTestExecutable
 
 # ---------------------------------------------------------------------------
 # XML samples

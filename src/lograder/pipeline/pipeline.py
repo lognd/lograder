@@ -30,7 +30,7 @@ class Pipeline:
             raise DeveloperException(
                 "Called `validate_step_types()` on a `Pipeline` with no steps."
             )
-        for prev_step, next_step in zip(self.steps[:-1], self.steps[1:]):
+        for prev_step, next_step in zip(self.steps[:-1], self.steps[1:], strict=False):
             next_step.assert_follow(
                 prev_step.__class__, origin_exception_type=StaffException
             )

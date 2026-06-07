@@ -1,7 +1,6 @@
 # mypy: ignore-errors
 from typing import Generator
 
-import pytest
 from pydantic import BaseModel
 
 from lograder.common import Err, Ok, Result

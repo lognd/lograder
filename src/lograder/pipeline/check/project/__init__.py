@@ -30,4 +30,10 @@ __all__ = [
     "CMakeManifest",
     "MakefileManifest",
     "PyProjectManifest",
+    "REQUIRED_FILES",
+    "get_check_cls",
+    "get_data_cls",
+    "get_error_cls",
+    "get_manifest_cls",
+    "make_simple_manifest_checker",
 ]
