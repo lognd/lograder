@@ -19,7 +19,10 @@ ISORT := $(VENV)/isort
 PYTEST := $(VENV)/pytest
 endif
 
-.PHONY: check build uninstall all test self-esteem
+APROG_PUBLIC  := ../aprog-public
+APROG_PRIVATE := ../aprog-private
+
+.PHONY: check build uninstall all test test-companions self-esteem
 
 all: uninstall build check test
 
@@ -57,6 +60,21 @@ test-fast:
 
 test-verbose-fast:
 	@$(PYTEST) -v -s -m "not slow"
+
+test-companions:
+	@if [ -f "$(APROG_PUBLIC)/Makefile" ]; then \
+		echo "--- aprog-public tests ---"; \
+		$(MAKE) -C $(APROG_PUBLIC) test-all; \
+	else \
+		echo "aprog-public not found, skipping"; \
+	fi
+	@if [ -f "$(APROG_PRIVATE)/pyproject.toml" ]; then \
+		echo "--- aprog-private tests ---"; \
+		cd $(APROG_PRIVATE) && (.venv/bin/pytest -m "not slow" 2>/dev/null || pytest -m "not slow"); \
+		code=$$?; [ $$code -eq 0 ] || [ $$code -eq 5 ] || exit $$code; \
+	else \
+		echo "aprog-private not found, skipping"; \
+	fi
 
 self-esteem:
 	@cloc --vcs=git src/
