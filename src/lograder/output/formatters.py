@@ -6,7 +6,22 @@ from lograder.output.logger import LograderLogger
 from lograder.output.packets import unwrap_packet
 
 if TYPE_CHECKING:
-    from lograder.output.layout import SupportedFormat
+    from lograder.output.layout import (
+        SupportedFormat,
+    )
+
+dispatch_layout = (
+    None  # populated lazily on first format() call to avoid circular import
+)
+
+
+def _load_dispatch_layout():
+    global dispatch_layout
+    if dispatch_layout is None:
+        from lograder.output.layout import dispatch_layout as _dl
+
+        dispatch_layout = _dl
+    return dispatch_layout
 
 
 class PacketFormatter(logging.Formatter):
@@ -16,8 +31,7 @@ class PacketFormatter(logging.Formatter):
         self._fallback = logging.Formatter("%(levelname)s: %(message)s")
 
     def format(self, record: logging.LogRecord) -> str:
-        from lograder.output.layout import dispatch_layout
-
+        _load_dispatch_layout()
         packet = getattr(record, LograderLogger.PACKET_ATTR, None)
         if packet is None:
             return self._fallback.format(record)
