@@ -70,7 +70,7 @@ test-companions:
 	fi
 	@if [ -f "$(APROG_PRIVATE)/pyproject.toml" ]; then \
 		echo "--- aprog-private tests ---"; \
-		cd $(APROG_PRIVATE) && (make test); \
+		cd $(APROG_PRIVATE) && (.venv/bin/pytest -m "not slow" 2>/dev/null || pytest -m "not slow"); \
 		code=$$?; [ $$code -eq 0 ] || [ $$code -eq 5 ] || exit $$code; \
 	else \
 		echo "aprog-private not found, skipping"; \
