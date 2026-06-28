@@ -40,7 +40,7 @@ class Mixin(Step[Manifest, Manifest, Unreachable, MixinData, Unreachable], ABC):
             if dest.exists() and not overwrite:
                 continue
             dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(file_path, dest)
+            shutil.copy(file_path, dest)
             copied.append(str(rel))
         return copied
 
