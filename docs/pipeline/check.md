@@ -59,6 +59,7 @@ from lograder.pipeline.check.source.source_check import (
     QualifiedNameConstraint,
     IncludeConstraint,
     ImportConstraint,
+    KeywordConstraint,
 )
 
 import lograder.output.layout.check.source  # required
@@ -67,8 +68,8 @@ pipeline.add(source_check := SourceCheck(
     language="cpp",
     files=["src/graph.cpp", "src/graph.h"],
     constraints=[
-        OperatorConstraint(operator="goto", forbidden=True),
-        IdentifierConstraint(name="malloc", forbidden=True),
+        OperatorConstraint(tokens=["goto"], max_count=0),
+        IdentifierConstraint(names=["malloc"], max_count=0),
     ],
 ))
 source_check.scorer = CleanRunScorer(0.0, extra_credit=5.0, label="Clean code")
@@ -76,72 +77,65 @@ source_check.scorer = CleanRunScorer(0.0, extra_credit=5.0, label="Clean code")
 
 `SourceCheck` must come after the manifest check (it reads files from the manifest) and before the build step.
 
+Every constraint counts matched occurrences and fails when that count exceeds `max_count`. Set `max_count=0` to forbid a feature outright, or a positive number to cap (rather than ban) its use. An optional `label` overrides the auto-generated display label.
+
 ### Constraint types
 
 #### `OperatorConstraint`
 
-Forbids or requires a specific operator or keyword.
+Limits occurrences of one or more operator tokens (both languages).
 
 ```python
 # Forbid goto
-OperatorConstraint(operator="goto", forbidden=True)
+OperatorConstraint(tokens=["goto"], max_count=0)
 
-# Forbid ternary operator
-OperatorConstraint(operator="?:", forbidden=True)
-
-# Require use of new (not just malloc)
-OperatorConstraint(operator="new", forbidden=False)
+# Forbid the ternary operator
+OperatorConstraint(tokens=["?:"], max_count=0)
 ```
 
 #### `IdentifierConstraint`
 
-Forbids or requires a specific identifier (variable name, function name, etc.).
+Limits uses of specific identifiers (variable names, function names, types).
 
 ```python
-# Forbid calling malloc
-IdentifierConstraint(name="malloc", forbidden=True)
-
-# Forbid calling free
-IdentifierConstraint(name="free", forbidden=True)
-
-# Require use of push_back
-IdentifierConstraint(name="push_back", forbidden=False)
+# Forbid calling malloc and free
+IdentifierConstraint(names=["malloc", "free"], max_count=0)
 ```
 
 #### `QualifiedNameConstraint`
 
-Forbids or requires a qualified name (e.g. `std::sort`).
+C/C++ only: limits uses of fully-qualified names such as `std::sort`.
 
 ```python
 # Forbid std::sort (student must implement their own)
-QualifiedNameConstraint(name="std::sort", forbidden=True)
-
-# Forbid std::stack
-QualifiedNameConstraint(name="std::stack", forbidden=True)
+QualifiedNameConstraint(qualified_names=["std::sort"], max_count=0)
 ```
 
 #### `IncludeConstraint`
 
-Forbids or requires a specific `#include` directive.
+C/C++ only: limits `#include` directives for specific headers.
 
 ```python
-# Forbid including algorithm (which has std::sort)
-IncludeConstraint(header="algorithm", forbidden=True)
-
-# Require including the project header
-IncludeConstraint(header="graph.h", forbidden=False)
+# Forbid including <algorithm> (which has std::sort)
+IncludeConstraint(headers=["<algorithm>"], max_count=0)
 ```
 
 #### `ImportConstraint`
 
-For Python files: forbids or requires a specific `import` statement.
+Python only: limits `import` / `from ... import` statements by module.
 
 ```python
 # Forbid importing pickle (security issue)
-ImportConstraint(module="pickle", forbidden=True)
+ImportConstraint(modules=["pickle"], max_count=0)
+```
 
-# Require importing the module being tested
-ImportConstraint(module="my_module", forbidden=False)
+#### `KeywordConstraint`
+
+Limits occurrences of loop keywords, `for`/`while`/`do` (both languages). Useful for "no loops, only recursion" constraints. Python has no `do`-`while` construct.
+
+```python
+# Forbid all loops -- solution must be recursive
+KeywordConstraint(keywords=["for", "while", "do"], max_count=0)
 ```
 
 ### Combining constraints
@@ -151,11 +145,11 @@ pipeline.add(SourceCheck(
     language="cpp",
     files=["main.cpp", "utils.cpp"],
     constraints=[
-        OperatorConstraint(operator="goto",   forbidden=True),
-        IdentifierConstraint(name="malloc",   forbidden=True),
-        IdentifierConstraint(name="free",     forbidden=True),
-        IncludeConstraint(header="algorithm", forbidden=True),
-        QualifiedNameConstraint(name="std::sort", forbidden=True),
+        OperatorConstraint(tokens=["goto"], max_count=0),
+        IdentifierConstraint(names=["malloc", "free"], max_count=0),
+        IncludeConstraint(headers=["<algorithm>"], max_count=0),
+        QualifiedNameConstraint(qualified_names=["std::sort"], max_count=0),
+        KeywordConstraint(keywords=["for", "while", "do"], max_count=0),
     ],
 ))
 ```
@@ -210,8 +204,8 @@ def make_pipeline(submission_dir):
         language="cpp",
         files=["lab3.cpp"],
         constraints=[
-            OperatorConstraint(operator="goto", forbidden=True),
-            IdentifierConstraint(name="malloc", forbidden=True),
+            OperatorConstraint(tokens=["goto"], max_count=0),
+            IdentifierConstraint(names=["malloc"], max_count=0),
         ],
     ))
     pipeline.add(build := CMakeBuild())
@@ -280,3 +274,50 @@ MypyCheck(
 | `options` | `ExecutableOptions \| None` | `None` | Options for mypy invocation |
 
 mypy is auto-installed via the install script in `data/install_scripts/install_mypy.sh` if not found on PATH.
+
+---
+
+## `TyCheck`
+
+Runs [ty](https://docs.astral.sh/ty/) static type analysis on Python source files and yields a violation packet for each type error. `ty` is Astral's fast, modern type checker -- the same tool lograder itself is checked with. Prefer this over `MypyCheck` for new assignments; use `MypyCheck` only when you specifically need mypy's behavior.
+
+```python
+from lograder.pipeline.check.ty_check import TyCheck
+from lograder.pipeline.score import CleanRunScorer
+
+pipeline.add(ty := TyCheck(
+    files=["graph.py"],
+    ignore=["unresolved-import"],   # recommended on Gradescope (no third-party stubs)
+))
+ty.scorer = CleanRunScorer(10.0, label="Type Safety")
+```
+
+`TyCheck` always returns `Ok(manifest)` unless ty cannot be installed or a listed file is missing. Each ty error is yielded as a non-fatal `Err(TyViolation)` packet, so `CleanRunScorer(points, max_errors=0)` awards points only on a clean run.
+
+### Adjusting rule severity
+
+```python
+pipeline.add(ty := TyCheck(
+    files=["solution.py"],
+    error=["possibly-unbound-attribute"],  # promote a rule to error severity
+    warn=["redundant-cast"],               # demote a rule to warning (non-fatal, not counted)
+    ignore=["unresolved-import"],
+))
+ty.scorer = CleanRunScorer(0.0, extra_credit=5.0, label="Strict Types")
+```
+
+### `TyCheck` parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `files` | `list[str]` | required | Python files relative to manifest root |
+| `python_version` | `str \| None` | `None` | Python version ty should assume (e.g. `"3.10"`); defaults to ty's own detection |
+| `ignore` | `list[str] \| None` | `None` | Rule names to suppress entirely |
+| `error` | `list[str] \| None` | `None` | Rule names to force to error severity |
+| `warn` | `list[str] \| None` | `None` | Rule names to force to warning severity |
+| `extra_args` | `TyArgs \| None` | `None` | Additional ty args (overrides per-field) |
+| `options` | `ExecutableOptions \| None` | `None` | Options for ty invocation |
+
+Only `severity == "error"` diagnostics are yielded as violations; warnings are recorded on the summary packet but don't fail the check.
+
+ty is auto-installed via the install script in `data/install_scripts/install_ty.sh` if not found on PATH.
