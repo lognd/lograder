@@ -2,7 +2,7 @@ APROG_PUBLIC  := ../aprog-public
 APROG_PRIVATE := ../aprog-private
 
 .PHONY: install build uninstall all test test-verbose test-fast test-verbose-fast \
-        test-companions lint fmt typecheck check version self-esteem
+        test-companions lint fmt typecheck check version self-esteem clean upload
 
 all: uninstall build check test
 
@@ -62,3 +62,16 @@ test-companions:
 
 self-esteem:
 	@cloc --vcs=git src/
+
+clean:
+	rm -rf dist/ build/ .pytest_cache/ .ruff_cache/ .testmondata
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null; true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null; true
+
+upload: clean
+	@set -a && . ./.env && set +a; \
+	NEW=$$(uv run python scripts/bump_version.py); \
+	git add pyproject.toml; \
+	git commit -m "chore: bump version to $$NEW"; \
+	git push; \
+	uv build && uv publish
