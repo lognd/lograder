@@ -474,7 +474,7 @@ class Manifest(Package):
                     continue
 
                 case dict() as exp_dict, dict() as rec_dict:
-                    dir_name = directory_name(cast(DirectoryDict, exp_dict))
+                    dir_name = directory_name(exp_dict)
                     exp_dir = exp_dict[dir_name]
                     rec_dir = rec_dict[dir_name]
                     if not Manifest._mapping_cmp(exp_dir, rec_dir, fail_attrs):

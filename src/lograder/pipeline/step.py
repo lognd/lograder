@@ -69,7 +69,7 @@ class Step(Generic[InputT, OkOutputT, ErrOutputT, OkDisplayT, ErrDisplayT], ABC)
 
     @abstractmethod
     def __call__(
-        self, input: InputT
+        self, input: InputT, /
     ) -> Generator[
         Result[OkDisplayT, ErrDisplayT],
         None,

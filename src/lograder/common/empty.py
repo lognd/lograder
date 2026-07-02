@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import inspect
-from typing import final
+from typing import cast, final
+
+from typing_extensions import Self
 
 
 class EmptyMeta(type):
@@ -24,10 +26,10 @@ _SINGLETON_INSTANCES: dict[type[Singleton], Singleton] = {}
 
 
 class Singleton(Empty):
-    def __new__(cls) -> Singleton:
+    def __new__(cls) -> Self:
         if cls not in _SINGLETON_INSTANCES:
             _SINGLETON_INSTANCES[cls] = super().__new__(cls)
-        return _SINGLETON_INSTANCES[cls]
+        return cast(Self, _SINGLETON_INSTANCES[cls])
 
 
 @final

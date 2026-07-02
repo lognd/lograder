@@ -132,7 +132,7 @@ class CTestTest(
     ]:
         build_dir_result = self._resolve_build_dir(artifacts)
         if build_dir_result.is_err:
-            return build_dir_result  # type: ignore[return-value]
+            return build_dir_result.swap_ok(dict[str, Artifact])
 
         build_dir = build_dir_result.danger_ok
 

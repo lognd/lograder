@@ -333,11 +333,13 @@ class StaticExecutable(Executable):
 
 _ORIGINAL_COMMANDS: dict[type[TypedExecutable], list[str]] = {}
 
+TypedExecutableT = TypeVar("TypedExecutableT", bound="TypedExecutable")
+
 
 def register_typed_executable(
     base_command: list[str],
-) -> Callable[[type[TypedExecutable]], type[TypedExecutable]]:
-    def wrapper(cls: type[TypedExecutable]) -> type[TypedExecutable]:
+) -> Callable[[type[TypedExecutableT]], type[TypedExecutableT]]:
+    def wrapper(cls: type[TypedExecutableT]) -> type[TypedExecutableT]:
         _ORIGINAL_COMMANDS[cls] = base_command
         cls.executable = StaticExecutable(command=base_command)
         return cls

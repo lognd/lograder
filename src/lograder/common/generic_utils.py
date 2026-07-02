@@ -45,7 +45,7 @@ def write_generic_type(
     generic_type: type,
     args: tuple[Any, ...] | list[Any] | None,
 ) -> type:
-    orig_bases = list(getattr(cls, "__orig_bases__", ()))
+    orig_bases: list[Any] = list(getattr(cls, "__orig_bases__", ()))
     try:
         index, _ = next(
             (i, item)
@@ -62,7 +62,7 @@ def write_generic_type(
     else:
         orig_bases.append(generic_type)
 
-    cls.__orig_bases__ = tuple(orig_bases)  # type: ignore[attr-defined]
+    cls.__orig_bases__ = tuple(orig_bases)  # ty: ignore[unresolved-attribute]
     return cls
 
 
@@ -107,7 +107,7 @@ def _substitute_typevars(tp: Any, mapping: dict[TypeVar, Any]) -> Any:
     new_args = tuple(_substitute_typevars(arg, mapping) for arg in args)
 
     try:
-        return origin[new_args]  # type: ignore[index]
+        return origin[new_args]  # ty: ignore[not-subscriptable]
     except Exception:
         return tp
 

@@ -4,7 +4,51 @@ import json
 from pathlib import Path
 from typing import Any, cast
 
+from pydantic import BaseModel
+
 from lograder.pipeline.types.artifacts import CMakeArtifact, CMakeFileArtifact
+
+
+class _CommonArtifactFields(BaseModel):
+    name: str
+    target_type: str
+    target_id: str | None
+    target_json: Path
+    config_name: str | None
+    project_name: str | None
+    source_dir: Path | None
+    build_dir: Path
+    raw_target: dict[str, Any]
+
+    def to_artifact(self) -> CMakeArtifact:
+        return CMakeArtifact(
+            name=self.name,
+            target_type=self.target_type,
+            target_id=self.target_id,
+            target_json=self.target_json,
+            config_name=self.config_name,
+            project_name=self.project_name,
+            source_dir=self.source_dir,
+            build_dir=self.build_dir,
+            raw_target=self.raw_target,
+        )
+
+    def to_file_artifact(
+        self, artifact_path: Path, cmake_path: str
+    ) -> CMakeFileArtifact:
+        return CMakeFileArtifact(
+            name=self.name,
+            target_type=self.target_type,
+            target_id=self.target_id,
+            target_json=self.target_json,
+            config_name=self.config_name,
+            project_name=self.project_name,
+            source_dir=self.source_dir,
+            build_dir=self.build_dir,
+            raw_target=self.raw_target,
+            path=artifact_path,
+            artifact_path_from_cmake=cmake_path,
+        )
 
 
 def cmake_artifacts_from_file_api(
@@ -57,26 +101,28 @@ def cmake_artifacts_from_file_api(
             target_type = target.get("type", "<unknown>")
             target_id = target.get("id", target_ref.get("id"))
 
-            base = {
-                "name": name,
-                "target_type": target_type,
-                "target_id": target_id,
-                "target_json": target_json_path,
-                "config_name": config_name,
-                "project_name": target_ref.get("projectName"),
-                "source_dir": (
-                    Path(target["sourceDirectory"]).resolve()
-                    if target.get("sourceDirectory")
-                    else None
-                ),
-                "build_dir": Path(target.get("buildDirectory", build_dir)).resolve(),
-                "raw_target": target,
-            }
+            target_source_dir = (
+                Path(target["sourceDirectory"]).resolve()
+                if target.get("sourceDirectory")
+                else None
+            )
+            target_build_dir = Path(target.get("buildDirectory", build_dir)).resolve()
+            common_fields = _CommonArtifactFields(
+                name=name,
+                target_type=target_type,
+                target_id=target_id,
+                target_json=target_json_path,
+                config_name=config_name,
+                project_name=target_ref.get("projectName"),
+                source_dir=target_source_dir,
+                build_dir=target_build_dir,
+                raw_target=target,
+            )
 
             artifacts = target.get("artifacts", [])
 
             if not artifacts:
-                results.append(CMakeArtifact(**base))
+                results.append(common_fields.to_artifact())
                 continue
 
             for artifact in artifacts:
@@ -88,19 +134,12 @@ def cmake_artifacts_from_file_api(
 
                 artifact_path = artifact_path.resolve()
 
-                data = {
-                    **base,
-                    "path": artifact_path,
-                    "artifact_path_from_cmake": cmake_path,
-                }
-
-                if require_exists:
-                    results.append(CMakeFileArtifact(**data))
+                if require_exists or artifact_path.is_file():
+                    results.append(
+                        common_fields.to_file_artifact(artifact_path, cmake_path)
+                    )
                 else:
-                    if artifact_path.is_file():
-                        results.append(CMakeFileArtifact(**data))
-                    else:
-                        results.append(CMakeArtifact(**base))
+                    results.append(common_fields.to_artifact())
 
     return results
 

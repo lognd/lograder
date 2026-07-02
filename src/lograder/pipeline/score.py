@@ -321,11 +321,11 @@ class TestCaseScorer(Scorer):
             )
         self.label = label
         self._points = points_per_case
-        self._possible: float = (
-            sum(points_per_case.values())
-            if isinstance(points_per_case, dict)
-            else float(points_per_case) * num_cases  # type: ignore[operator]
-        )
+        if isinstance(points_per_case, dict):
+            self._possible: float = sum(points_per_case.values())
+        else:
+            assert num_cases is not None  # enforced above
+            self._possible = float(points_per_case) * num_cases
         self._extra_credit_cases: dict[str, float] = extra_credit_cases or {}
         self._gimme = gimme
         self._passes: dict[str, float] = {}
