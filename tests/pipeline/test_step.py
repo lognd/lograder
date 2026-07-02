@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 from abc import abstractmethod
 from typing import Generator, TypeVar
 

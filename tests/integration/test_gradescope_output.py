@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 import json
 from typing import Generator
 

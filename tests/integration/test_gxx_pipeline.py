@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Integration tests for GXXBuild + OutputCompareTest + ASanTest + CompileCheckTest."""
 
 import subprocess

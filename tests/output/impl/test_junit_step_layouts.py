@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Layout rendering tests for Catch2, gtest, ctest, and pytest test step models."""
 
 from __future__ import annotations

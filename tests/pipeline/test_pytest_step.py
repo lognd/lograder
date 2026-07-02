@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Integration tests for PytestTest using real pytest invocations."""
 
 from __future__ import annotations

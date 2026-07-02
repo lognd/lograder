@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 import pytest
 
 from lograder.exception import StaffException

@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Unit tests for ComplexityTest."""
 
 import subprocess

@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
 from lograder.process.registry.gtest import GTestArgs, GTestExecutable

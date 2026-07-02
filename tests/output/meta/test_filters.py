@@ -1,6 +1,3 @@
-# mypy: ignore-errors
-# type: ignore
-
 from __future__ import annotations
 
 import logging

@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
 from lograder.process.parsers.nm import parse_nm_output

@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Unit tests for the Makefile parser (no subprocess, no real build)."""
 
 from pathlib import Path
