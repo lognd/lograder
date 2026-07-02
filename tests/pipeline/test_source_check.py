@@ -1,4 +1,3 @@
-# mypy: ignore-errors
 """Unit and integration tests for SourceCheck and AST analysis."""
 
 from __future__ import annotations
@@ -13,6 +12,7 @@ from lograder.pipeline.check.source.source_check import (
     IdentifierConstraint,
     ImportConstraint,
     IncludeConstraint,
+    KeywordConstraint,
     OperatorConstraint,
     SourceCheck,
     SourceCheckError,
@@ -96,6 +96,27 @@ class TestAnalyzePython:
         assert result.is_ok
         assert len(result.danger_ok.operators) == 0
 
+    def test_for_loop_keyword(self, tmp_path):
+        src = tmp_path / "a.py"
+        src.write_text("for i in range(10):\n    pass\n")
+        result = analyze_python(src)
+        assert result.is_ok
+        assert result.danger_ok.keywords["for"] >= 1
+
+    def test_while_loop_keyword(self, tmp_path):
+        src = tmp_path / "a.py"
+        src.write_text("while True:\n    break\n")
+        result = analyze_python(src)
+        assert result.is_ok
+        assert result.danger_ok.keywords["while"] >= 1
+
+    def test_no_loop_keywords(self, tmp_path):
+        src = tmp_path / "a.py"
+        src.write_text("x = 1 + 2\n")
+        result = analyze_python(src)
+        assert result.is_ok
+        assert len(result.danger_ok.keywords) == 0
+
 
 # ---------------------------------------------------------------------------
 # analyze_cpp unit tests
@@ -145,6 +166,31 @@ class TestAnalyzeCpp:
     def test_missing_file_returns_err(self, tmp_path):
         result = analyze_cpp(tmp_path / "nonexistent.cpp")
         assert result.is_err
+
+    def test_for_loop_keyword(self, tmp_path):
+        src = tmp_path / "a.cpp"
+        src.write_text("int main() { for (int i = 0; i < 10; i++) {} return 0; }\n")
+        result = analyze_cpp(src)
+        assert result.is_ok
+        assert result.danger_ok.keywords["for"] >= 1
+
+    def test_while_loop_keyword(self, tmp_path):
+        src = tmp_path / "a.cpp"
+        src.write_text("int main() { int i = 0; while (i < 10) { i++; } return 0; }\n")
+        result = analyze_cpp(src)
+        assert result.is_ok
+        assert result.danger_ok.keywords["while"] >= 1
+
+    def test_do_while_loop_keyword(self, tmp_path):
+        src = tmp_path / "a.cpp"
+        src.write_text(
+            "int main() { int i = 0; do { i++; } while (i < 10); return 0; }\n"
+        )
+        result = analyze_cpp(src)
+        assert result.is_ok
+        # `while (...)` in a do-while is part of the `do_statement` node itself,
+        # not a separate `while_statement`, so only "do" is counted here.
+        assert result.danger_ok.keywords["do"] >= 1
 
 
 # ---------------------------------------------------------------------------
@@ -209,6 +255,37 @@ class TestSourceCheckPython:
             )
             yields, final = _run_check(check, manifest)
         assert [y for y in yields if y.is_err]
+
+    def test_keyword_constraint_for_loop(self, tmp_path):
+        src = tmp_path / "sol.py"
+        src.write_text("for i in range(10):\n    pass\n")
+        with config(root_directory=tmp_path):
+            manifest = Manifest.from_flat([Path("sol.py")])
+            check = SourceCheck(
+                files=["sol.py"],
+                constraints=[KeywordConstraint(keywords=["for", "while"], max_count=0)],
+                language="python",
+            )
+            yields, final = _run_check(check, manifest)
+        assert final.is_ok
+        violations = [y for y in yields if y.is_err]
+        assert violations
+        v: SourceViolation = violations[0].danger_err
+        assert v.count > 0 and v.max_count == 0
+
+    def test_keyword_constraint_no_violation(self, tmp_path):
+        src = tmp_path / "sol.py"
+        src.write_text("x = 1 + 2\n")
+        with config(root_directory=tmp_path):
+            manifest = Manifest.from_flat([Path("sol.py")])
+            check = SourceCheck(
+                files=["sol.py"],
+                constraints=[KeywordConstraint(keywords=["for", "while"], max_count=0)],
+                language="python",
+            )
+            yields, final = _run_check(check, manifest)
+        assert final.is_ok
+        assert not [y for y in yields if y.is_err]
 
     def test_missing_file_fatal(self, tmp_path):
         with config(root_directory=tmp_path):
@@ -299,6 +376,25 @@ class TestSourceCheckCpp:
             yields, final = _run_check(check, manifest)
         assert final.is_ok
         assert not [y for y in yields if y.is_err]
+
+    def test_keyword_constraint_no_loops(self, tmp_path):
+        src = tmp_path / "sol.cpp"
+        src.write_text("int main() { for (int i = 0; i < 10; i++) {} return 0; }\n")
+        with config(root_directory=tmp_path):
+            manifest = Manifest.from_flat([Path("sol.cpp")])
+            check = SourceCheck(
+                files=["sol.cpp"],
+                constraints=[
+                    KeywordConstraint(keywords=["for", "while", "do"], max_count=0)
+                ],
+                language="cpp",
+            )
+            yields, final = _run_check(check, manifest)
+        assert final.is_ok
+        violations = [y for y in yields if y.is_err]
+        assert violations
+        v: SourceViolation = violations[0].danger_err
+        assert v.count > 0 and v.max_count == 0
 
     def test_operator_define_bypass_caught(self, tmp_path):
         src = tmp_path / "sol.cpp"

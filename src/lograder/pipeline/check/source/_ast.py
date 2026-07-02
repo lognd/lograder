@@ -76,10 +76,12 @@ class _Walker:
 
     op_node_types: frozenset[str] = frozenset()
     identifier_node_types: frozenset[str] = frozenset()
+    keyword_node_types: frozenset[str] = frozenset()
 
     def __init__(self) -> None:
         self.operators: Counter[str] = Counter()
         self.identifiers: Counter[str] = Counter()
+        self.keywords: Counter[str] = Counter()
 
     def _handle_extra(self, node: Node) -> None:  # noqa: B027 (intentional no-op)
         pass
@@ -105,6 +107,12 @@ class _Walker:
 
             if n.type in self.identifier_node_types and n.text:
                 self.identifiers[n.text.decode("utf-8", errors="replace")] += 1
+
+            # Loop keywords don't carry a single literal token, so key the
+            # counter off the statement's node type instead (e.g.
+            # "for_statement" -> "for").
+            if n.type in self.keyword_node_types:
+                self.keywords[n.type.removesuffix("_statement")] += 1
 
             self._handle_extra(n)
             stack.extend(reversed(n.children))
@@ -144,6 +152,7 @@ class _CppWalker(_Walker):
         }
     )
     identifier_node_types = frozenset({"identifier", "type_identifier"})
+    keyword_node_types = frozenset({"for_statement", "while_statement", "do_statement"})
 
     def __init__(self) -> None:
         super().__init__()
@@ -188,6 +197,7 @@ class _PythonWalker(_Walker):
         }
     )
     identifier_node_types = frozenset({"identifier"})
+    keyword_node_types = frozenset({"for_statement", "while_statement"})
 
     def __init__(self) -> None:
         super().__init__()
@@ -336,6 +346,7 @@ class CppAnalysis(BaseModel):
     identifiers: Counter[str]
     qualified_names: Counter[str]
     includes: Counter[str]
+    keywords: Counter[str]
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -344,6 +355,7 @@ class PythonAnalysis(BaseModel):
     operators: Counter[str]
     identifiers: Counter[str]
     imports: Counter[str]
+    keywords: Counter[str]
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -360,7 +372,7 @@ def analyze_cpp(
     """Preprocess then AST-analyse a C/C++ file."""
     preprocess_result = _preprocess(path, include_dirs or [])
     if preprocess_result.is_err:
-        return preprocess_result  # type: ignore[return-value]
+        return preprocess_result.swap_ok(CppAnalysis)
 
     cpp_parser = Parser(_CPP_LANGUAGE)
 
@@ -394,6 +406,7 @@ def analyze_cpp(
             identifiers=walker.identifiers,
             qualified_names=walker.qualified_names,
             includes=include_walker.includes,
+            keywords=walker.keywords,
         )
     )
 
@@ -414,5 +427,6 @@ def analyze_python(path: Path) -> Result[PythonAnalysis, OSError]:
             operators=walker.operators,
             identifiers=walker.identifiers,
             imports=walker.imports,
+            keywords=walker.keywords,
         )
     )

@@ -102,12 +102,30 @@ class ImportConstraint(BaseModel):
         return self.label or " | ".join(f"`{m}`" for m in self.modules)
 
 
+class KeywordConstraint(BaseModel):
+    """Limit occurrences of loop keywords (both languages).
+
+    Matches ``for``/``while``/``do`` loop statements  -  useful for
+    "no loops, only recursion" constraints. C/C++ supports all three;
+    Python has no ``do``-``while`` construct.
+    """
+
+    keywords: list[str]
+    max_count: int
+    label: str = ""
+
+    @property
+    def display_label(self) -> str:
+        return self.label or " | ".join(f"`{k}`" for k in self.keywords)
+
+
 AnyConstraint = (
     OperatorConstraint
     | IdentifierConstraint
     | QualifiedNameConstraint
     | IncludeConstraint
     | ImportConstraint
+    | KeywordConstraint
 )
 
 
@@ -179,6 +197,13 @@ def _apply_constraints(
         elif isinstance(c, ImportConstraint):
             src = py.imports if py is not None else Counter()
             count = sum(src.get(m, 0) for m in c.modules)
+        elif isinstance(c, KeywordConstraint):
+            src = (
+                cpp.keywords
+                if cpp is not None
+                else (py.keywords if py is not None else Counter())
+            )
+            count = sum(src.get(kw, 0) for kw in c.keywords)
         else:
             count = 0
         results.append((c, count))
@@ -208,6 +233,7 @@ class SourceCheck(
     - ``QualifiedNameConstraint`` -  ``std::vector``-style names (C/C++ only)
     - ``IncludeConstraint``       -  ``#include`` directives (C/C++ only)
     - ``ImportConstraint``        -  ``import`` statements (Python only)
+    - ``KeywordConstraint``       -  loop keywords, ``for``/``while``/``do`` (both languages)
 
     C/C++ files are preprocessed first so ``#define`` aliasing is resolved
     before the AST is built.  Violations are yielded as non-fatal ``Err``
