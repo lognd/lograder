@@ -13,7 +13,7 @@ Input -> Check -> Mixin -> Build -> Test
 ```bash
 pip install lograder
 # or for development:
-pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
 ---

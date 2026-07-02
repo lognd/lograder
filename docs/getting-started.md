@@ -19,7 +19,7 @@ For a dev install from source:
 ```bash
 git clone https://github.com/lognd/lograder
 cd lograder
-pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
 ## Step 1 -- Create the autograder script

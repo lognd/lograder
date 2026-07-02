@@ -1,65 +1,49 @@
-VENV := .venv/bin
-VENV_PY := $(VENV)/python
-
-ifeq ($(wildcard $(VENV_PY)),)
-PYTHON := python3
-PIP := pip3
-BLACK := black
-RUFF := ruff
-MYPY := mypy
-ISORT := isort
-PYTEST := pytest
-else
-PYTHON := $(VENV_PY)
-PIP := $(VENV)/pip3
-BLACK := $(VENV)/black
-RUFF := $(VENV)/ruff
-MYPY := $(VENV)/mypy
-ISORT := $(VENV)/isort
-PYTEST := $(VENV)/pytest
-endif
-
 APROG_PUBLIC  := ../aprog-public
 APROG_PRIVATE := ../aprog-private
 
-.PHONY: check build uninstall all test test-companions self-esteem
+.PHONY: install build uninstall all test test-verbose test-fast test-verbose-fast \
+        test-companions lint fmt typecheck check version self-esteem
 
 all: uninstall build check test
 
+install:
+	@uv sync --extra dev
+
+build: install
+
 uninstall:
-	@$(PIP) uninstall -y lograder
+	@uv pip uninstall -y lograder
 
-build:
-	@$(PIP) install -e .[dev]
+lint:
+	@uv run ruff check src/ tests/
 
-check:
-	@$(BLACK) src/ tests/
-	@$(RUFF) format src/ tests/
-	@$(RUFF) check src/ tests/ --fix
-	@$(ISORT) src/ tests/
-	@$(MYPY) --config-file mypy-py310.ini src/ tests/
-	@$(MYPY) --config-file mypy-py314.ini src/ tests/
+fmt:
+	@uv run ruff format src/ tests/
+	@uv run ruff check src/ tests/ --fix
+
+typecheck:
+	@uv run ty check src/
+
+check: fmt lint typecheck test
 
 version:
-	@$(PYTHON) --version
-	@$(PIP) --version
-	@$(PYTEST) --version
-	@$(BLACK) --version
-	@$(RUFF) --version
-	@$(ISORT) --version
-	@$(MYPY) --version
+	@uv run python --version
+	@uv --version
+	@uv run pytest --version
+	@uv run ruff --version
+	@uv run ty --version
 
 test:
-	@$(PYTEST)
+	@uv run pytest -n auto
 
 test-verbose:
-	@$(PYTEST) -v -s
+	@uv run pytest -v -s
 
 test-fast:
-	@$(PYTEST) -m "not slow"
+	@uv run pytest -n auto -m "not slow"
 
 test-verbose-fast:
-	@$(PYTEST) -v -s -m "not slow"
+	@uv run pytest -v -s -m "not slow"
 
 test-companions:
 	@if [ -f "$(APROG_PUBLIC)/Makefile" ]; then \
