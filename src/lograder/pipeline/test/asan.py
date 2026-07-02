@@ -10,8 +10,8 @@ from typing import Generator, final
 from lograder.common import Err, Ok, Result
 from lograder.pipeline.config import get_config
 from lograder.pipeline.test.test import Test, TestError, TestFailure, TestSuccess
-from lograder.pipeline.types.artifacts import Artifact, FileArtifact
-from lograder.process.executable import ExecutableInput, ExecutableOptions
+from lograder.pipeline.types.artifacts import Artifact
+from lograder.process.executable import ExecutableOptions
 from lograder.process.os_helpers import StreamMode
 
 __test__: bool = False
@@ -132,17 +132,15 @@ class ASanTest(
         None,
         Result[dict[str, Artifact], ASanError],
     ]:
-        artifact = artifacts.get(self._artifact_name)
-        if not isinstance(artifact, FileArtifact):
+        artifact_result = self._resolve_artifact(artifacts, self._artifact_name)
+        if artifact_result.is_err:
             return Err(
                 ASanError(
                     artifact_name=self._artifact_name,
-                    message=(
-                        f"Artifact '{self._artifact_name}' not found or is not a FileArtifact. "
-                        f"Available: {sorted(artifacts)}."
-                    ),
+                    message=artifact_result.danger_err,
                 )
             )
+        artifact = artifact_result.danger_ok
 
         cfg = get_config()
         base_options = (self._options or ExecutableOptions()).model_copy(
@@ -159,10 +157,7 @@ class ASanTest(
                 if isinstance(case.stdin, str)
                 else case.stdin
             )
-            out = artifact.executable(
-                ExecutableInput(arguments=case.args, stdin_bytes=stdin_bytes),
-                options=base_options,
-            )
+            out = self._invoke(artifact, case.args, stdin_bytes, base_options)
 
             stderr = out.stderr_text
             asan_hit = _ASAN_ERROR_RE.search(stderr) is not None

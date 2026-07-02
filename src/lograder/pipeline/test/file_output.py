@@ -11,8 +11,8 @@ from lograder.pipeline.test.output_compare import (
     make_unified_diff,
 )
 from lograder.pipeline.test.test import Test, TestError, TestFailure, TestSuccess
-from lograder.pipeline.types.artifacts import Artifact, FileArtifact
-from lograder.process.executable import ExecutableInput, ExecutableOptions
+from lograder.pipeline.types.artifacts import Artifact
+from lograder.process.executable import ExecutableOptions
 
 
 class FileOutputCase(BaseModel):
@@ -72,24 +72,15 @@ class FileOutputTest(
         None,
         Result[dict[str, Artifact], FileOutputError],
     ]:
-        artifact = artifacts.get(self._artifact_name)
-        if artifact is None:
+        artifact_result = self._resolve_artifact(artifacts, self._artifact_name)
+        if artifact_result.is_err:
             return Err(
                 FileOutputError(
                     artifact_name=self._artifact_name,
-                    message=(
-                        f"Artifact `{self._artifact_name}` not found. "
-                        f"Available: {sorted(artifacts)}."
-                    ),
+                    message=artifact_result.danger_err,
                 )
             )
-        if not isinstance(artifact, FileArtifact):
-            return Err(
-                FileOutputError(
-                    artifact_name=self._artifact_name,
-                    message=f"Artifact `{self._artifact_name}` exists but is not a file; cannot execute it.",
-                )
-            )
+        artifact = artifact_result.danger_ok
 
         options = self._options or ExecutableOptions()
 
@@ -102,8 +93,7 @@ class FileOutputTest(
             if out_path.exists():
                 out_path.unlink()
 
-            inp = ExecutableInput(stdin_bytes=case.stdin, arguments=case.args)
-            output = artifact.executable(inp, options=options)
+            output = self._invoke(artifact, case.args, case.stdin, options)
 
             actual_content: str | None = None
             if out_path.exists():
@@ -112,10 +102,7 @@ class FileOutputTest(
             file_ok = actual_content is not None and compare_outputs(
                 actual_content, case.expected_content, case.comparison
             )
-            exit_ok = (
-                case.expected_exit_code is None
-                or output.return_code == case.expected_exit_code
-            )
+            exit_ok = self._exit_code_ok(case.expected_exit_code, output.return_code)
 
             if file_ok and exit_ok:
                 yield Ok(
@@ -138,7 +125,7 @@ class FileOutputTest(
                         artifact_name=self._artifact_name,
                         args=case.args,
                         output_file=case.output_file,
-                        stdin_text=case.stdin.decode("utf-8", errors="replace"),
+                        stdin_text=self._decode_stdin(case.stdin),
                         expected_content=case.expected_content,
                         actual_content=actual_content,
                         diff=diff,

@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from lograder.common import Err, Ok, Result
 from lograder.pipeline.test.test import Test, TestError
-from lograder.pipeline.types.artifacts import Artifact, FileArtifact
+from lograder.pipeline.types.artifacts import Artifact
 from lograder.process.executable import ExecutableOptions
 from lograder.process.parsers.nm import parse_nm_output
 from lograder.process.registry.nm import NmArgs, NmExecutable
@@ -82,17 +82,15 @@ class SymbolTest(
         None,
         Result[dict[str, Artifact], SymbolError],
     ]:
-        artifact = artifacts.get(self._artifact_name)
-        if not isinstance(artifact, FileArtifact):
+        artifact_result = self._resolve_artifact(artifacts, self._artifact_name)
+        if artifact_result.is_err:
             return Err(
                 SymbolError(
                     artifact_name=self._artifact_name,
-                    message=(
-                        f"Artifact '{self._artifact_name}' not found or is not a FileArtifact. "
-                        f"Available: {list(artifacts.keys())}"
-                    ),
+                    message=artifact_result.danger_err,
                 )
             )
+        artifact = artifact_result.danger_ok
 
         nm_exe = NmExecutable()
         runnable = nm_exe.check_runnable()

@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from lograder.common import Err, Ok, Result
 from lograder.pipeline.config import get_config
 from lograder.pipeline.test.test import Test, TestError, TestFailure, TestSuccess
-from lograder.pipeline.types.artifacts import Artifact, FileArtifact
+from lograder.pipeline.types.artifacts import Artifact
 from lograder.process.executable import (
     ExecutableInput,
     ExecutableOptions,
@@ -102,24 +102,15 @@ class ValgrindTest(
         None,
         Result[dict[str, Artifact], ValgrindTestError],
     ]:
-        artifact = artifacts.get(self._artifact_name)
-        if artifact is None:
+        artifact_result = self._resolve_artifact(artifacts, self._artifact_name)
+        if artifact_result.is_err:
             return Err(
                 ValgrindTestError(
                     artifact_name=self._artifact_name,
-                    message=(
-                        f"Artifact `{self._artifact_name}` not found. "
-                        f"Available: {sorted(artifacts)}."
-                    ),
+                    message=artifact_result.danger_err,
                 )
             )
-        if not isinstance(artifact, FileArtifact):
-            return Err(
-                ValgrindTestError(
-                    artifact_name=self._artifact_name,
-                    message=f"Artifact `{self._artifact_name}` exists but is not a file; cannot run under valgrind.",
-                )
-            )
+        artifact = artifact_result.danger_ok
 
         runnable = _VALGRIND.check_runnable()
         if runnable.is_err:
@@ -204,7 +195,7 @@ class ValgrindTest(
                         test_name=case.name,
                         artifact_name=self._artifact_name,
                         args=case.args,
-                        stdin_text=case.stdin.decode("utf-8", errors="replace"),
+                        stdin_text=self._decode_stdin(case.stdin),
                         errors=errors,
                         crashed=crashed,
                     )

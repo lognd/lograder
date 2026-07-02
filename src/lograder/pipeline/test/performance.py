@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field, field_validator
 
 from lograder.common import Err, Ok, Result
 from lograder.pipeline.test.test import Test, TestError, TestFailure, TestSuccess
-from lograder.pipeline.types.artifacts import Artifact, FileArtifact
-from lograder.process.executable import ExecutableInput, ExecutableOptions
+from lograder.pipeline.types.artifacts import Artifact
+from lograder.process.executable import ExecutableOptions
 
 _SAFETY_MARGIN: float = 30.0
 
@@ -69,24 +69,15 @@ class PerformanceTest(
         None,
         Result[dict[str, Artifact], PerformanceTestError],
     ]:
-        artifact = artifacts.get(self._artifact_name)
-        if artifact is None:
+        artifact_result = self._resolve_artifact(artifacts, self._artifact_name)
+        if artifact_result.is_err:
             return Err(
                 PerformanceTestError(
                     artifact_name=self._artifact_name,
-                    message=(
-                        f"Artifact `{self._artifact_name}` not found. "
-                        f"Available: {sorted(artifacts)}."
-                    ),
+                    message=artifact_result.danger_err,
                 )
             )
-        if not isinstance(artifact, FileArtifact):
-            return Err(
-                PerformanceTestError(
-                    artifact_name=self._artifact_name,
-                    message=f"Artifact `{self._artifact_name}` exists but is not a file; cannot execute it.",
-                )
-            )
+        artifact = artifact_result.danger_ok
 
         base_options = self._base_options or ExecutableOptions()
 
@@ -97,11 +88,10 @@ class PerformanceTest(
             options = base_options.model_copy(
                 update={"timeout": case.time_limit + _SAFETY_MARGIN}
             )
-            inp = ExecutableInput(stdin_bytes=case.stdin, arguments=case.args)
 
             start = time.perf_counter()
             try:
-                artifact.executable(inp, options=options)
+                self._invoke(artifact, case.args, case.stdin, options)
             except Exception:
                 pass
             elapsed = time.perf_counter() - start

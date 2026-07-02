@@ -1,28 +1,17 @@
-import difflib
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Generator, final
 
 from lograder.common import Err, Ok, Result
 from lograder.pipeline.test.oracle import OracleInput
-from lograder.pipeline.test.output_compare import compare_outputs
+from lograder.pipeline.test.output_compare import compare_outputs, make_unified_diff
 from lograder.pipeline.test.test import Test, TestError, TestFailure, TestSuccess
-from lograder.pipeline.types.artifacts import Artifact, FileArtifact
+from lograder.pipeline.types.artifacts import Artifact
 from lograder.process.executable import (
     ExecutableInput,
     ExecutableOptions,
     StaticExecutable,
 )
-
-
-def _make_diff(reference: str, student: str) -> str:
-    lines = difflib.unified_diff(
-        reference.splitlines(keepends=True),
-        student.splitlines(keepends=True),
-        fromfile="reference",
-        tofile="student",
-    )
-    return "".join(lines)
 
 
 class DifferentialSuccess(TestSuccess):
@@ -125,45 +114,26 @@ class DifferentialTest(
         None,
         Result[dict[str, Artifact], DifferentialError],
     ]:
-        artifact = artifacts.get(self._artifact_name)
-        if artifact is None:
+        artifact_result = self._resolve_artifact(artifacts, self._artifact_name)
+        if artifact_result.is_err:
             return Err(
                 DifferentialError(
                     artifact_name=self._artifact_name,
-                    message=(
-                        f"Artifact `{self._artifact_name}` not found. "
-                        f"Available: {sorted(artifacts)}."
-                    ),
+                    message=artifact_result.danger_err,
                 )
             )
-        if not isinstance(artifact, FileArtifact):
-            return Err(
-                DifferentialError(
-                    artifact_name=self._artifact_name,
-                    message=f"Artifact `{self._artifact_name}` exists but is not a file; cannot execute it.",
-                )
-            )
+        artifact = artifact_result.danger_ok
 
         if self._reference_artifact is not None:
-            ref_artifact = artifacts.get(self._reference_artifact)
-            if ref_artifact is None:
+            ref_result = self._resolve_artifact(artifacts, self._reference_artifact)
+            if ref_result.is_err:
                 return Err(
                     DifferentialError(
                         artifact_name=self._reference_artifact,
-                        message=(
-                            f"Reference artifact `{self._reference_artifact}` not found. "
-                            f"Available: {sorted(artifacts)}."
-                        ),
+                        message=ref_result.danger_err,
                     )
                 )
-            if not isinstance(ref_artifact, FileArtifact):
-                return Err(
-                    DifferentialError(
-                        artifact_name=self._reference_artifact,
-                        message=f"Reference artifact `{self._reference_artifact}` exists but is not a file; cannot execute it.",
-                    )
-                )
-            reference_exe = ref_artifact.executable
+            reference_exe = ref_result.danger_ok.executable
         else:
             assert self._static_reference is not None
             reference_exe = self._static_reference
@@ -172,9 +142,11 @@ class DifferentialTest(
         ref_opts = self._reference_options or student_opts
 
         for case in self._test_cases:
-            inp = ExecutableInput(stdin_bytes=case.stdin, arguments=case.args)
-            student_out = artifact.executable(inp, options=student_opts)
-            ref_out = reference_exe(inp, options=ref_opts)
+            student_out = self._invoke(artifact, case.args, case.stdin, student_opts)
+            ref_out = reference_exe(
+                ExecutableInput(stdin_bytes=case.stdin, arguments=case.args),
+                options=ref_opts,
+            )
 
             stdout_ok = compare_outputs(
                 student_out.stdout_text, ref_out.stdout_text, case.comparison
@@ -198,11 +170,16 @@ class DifferentialTest(
                         test_name=case.name,
                         artifact_name=self._artifact_name,
                         args=case.args,
-                        stdin_text=case.stdin.decode("utf-8", errors="replace"),
+                        stdin_text=self._decode_stdin(case.stdin),
                         student_stdout=student_out.stdout_text,
                         reference_stdout=ref_out.stdout_text,
                         diff=(
-                            _make_diff(ref_out.stdout_text, student_out.stdout_text)
+                            make_unified_diff(
+                                ref_out.stdout_text,
+                                student_out.stdout_text,
+                                fromfile="reference",
+                                tofile="student",
+                            )
                             if not stdout_ok
                             else ""
                         ),

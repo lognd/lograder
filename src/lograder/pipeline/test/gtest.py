@@ -13,7 +13,7 @@ from lograder.pipeline.test.test import (
     JUnitTestSuccess,
     Test,
 )
-from lograder.pipeline.types.artifacts import Artifact, FileArtifact
+from lograder.pipeline.types.artifacts import Artifact
 from lograder.process.executable import ExecutableInput, ExecutableOptions
 from lograder.process.parsers.junit import JUnitTestCase, parse_junit_xml
 from lograder.process.registry.gtest import GTestArgs
@@ -99,17 +99,15 @@ class GTestTest(
         None,
         Result[dict[str, Artifact], GTestError],
     ]:
-        artifact = artifacts.get(self._artifact_name)
-        if not isinstance(artifact, FileArtifact):
+        artifact_result = self._resolve_artifact(artifacts, self._artifact_name)
+        if artifact_result.is_err:
             return Err(
                 GTestError(
                     artifact_name=self._artifact_name,
-                    message=(
-                        f"Artifact '{self._artifact_name}' not found or is not a FileArtifact. "
-                        f"Available: {sorted(artifacts)}."
-                    ),
+                    message=artifact_result.danger_err,
                 )
             )
+        artifact = artifact_result.danger_ok
 
         with tempfile.NamedTemporaryFile(suffix=".xml", delete=False) as tf:
             out_path = Path(tf.name)

@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, Generator, final
 from lograder.common import Err, Ok, Result
 from lograder.pipeline.config import get_config
 from lograder.pipeline.test.test import Test, TestError, TestFailure, TestSuccess
-from lograder.pipeline.types.artifacts import Artifact, FileArtifact
-from lograder.process.executable import ExecutableInput, ExecutableOptions
+from lograder.pipeline.types.artifacts import Artifact
+from lograder.process.executable import ExecutableOptions
 from lograder.process.os_helpers import StreamMode
 
 if TYPE_CHECKING:
@@ -233,17 +233,15 @@ class ComplexityTest(
         None,
         Result[dict[str, Artifact], ComplexityError],
     ]:
-        artifact = artifacts.get(self._artifact_name)
-        if not isinstance(artifact, FileArtifact):
+        artifact_result = self._resolve_artifact(artifacts, self._artifact_name)
+        if artifact_result.is_err:
             return Err(
                 ComplexityError(
                     artifact_name=self._artifact_name,
-                    message=(
-                        f"Artifact '{self._artifact_name}' not found or is not a FileArtifact. "
-                        f"Available: {sorted(artifacts)}."
-                    ),
+                    message=artifact_result.danger_err,
                 )
             )
+        artifact = artifact_result.danger_ok
 
         cfg = get_config()
 
@@ -263,13 +261,7 @@ class ComplexityTest(
                 run_times: list[float] = []
                 for _ in range(case.runs_per_size):
                     t0 = time.perf_counter()
-                    artifact.executable(
-                        ExecutableInput(
-                            arguments=case.args,
-                            stdin_bytes=stdin_bytes,
-                        ),
-                        options=base_options,
-                    )
+                    self._invoke(artifact, case.args, stdin_bytes, base_options)
                     run_times.append(time.perf_counter() - t0)
                 median_times.append(_median(run_times))
 
