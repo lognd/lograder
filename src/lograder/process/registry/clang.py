@@ -15,14 +15,16 @@ from lograder.process.cli_args import (
     CLIPresenceFlag,
 )
 from lograder.process.executable import TypedExecutable, register_typed_executable
-from lograder.process.install_script import InstallScript, PlatformInstallScript
+from lograder.process.install_script import InstallScript, simple_bash_install_script
 from lograder.process.os_helpers import is_posix
-from lograder.process.registry.bash import BashExecutable, BashScriptArgs
 from lograder.process.registry.common import (
     CStandard,
     CXXStandard,
     Standard,
+    _macro_value,
     find_missing,
+    validate_compiler_pipeline_flags,
+    validate_nonblank_items,
 )
 
 if TYPE_CHECKING:
@@ -81,6 +83,11 @@ class ClangCompilerArgs(CLIArgs, Generic[Standard]):
 
     optimization: str | None = CLIOption(default=None, emit=["-O{}"])
 
+    sanitizers: list[str] = CLIOption(
+        emitter=lambda ss: [f"-fsanitize={','.join(ss)}"] if ss else [],
+        default_factory=list,
+    )
+
     include_dirs: list[Path] = CLIMultiOption(default_factory=list, token_emit=["-I{}"])
     library_dirs: list[Path] = CLIMultiOption(default_factory=list, token_emit=["-L{}"])
     libraries: list[str] = CLIMultiOption(default_factory=list, token_emit=["-l{}"])
@@ -88,7 +95,7 @@ class ClangCompilerArgs(CLIArgs, Generic[Standard]):
     defines: dict[str, str | int | bool | None] = CLIKVOption(
         default_factory=dict,
         token_emitter=lambda k, v: (
-            [f"-D{k}"] if v is None else [f"-D{k}={_clang_macro(v)}"]
+            [f"-D{k}"] if v is None else [f"-D{k}={_macro_value(v)}"]
         ),
     )
 
@@ -132,35 +139,29 @@ class ClangCompilerArgs(CLIArgs, Generic[Standard]):
     @field_validator("include_dirs", "library_dirs", mode="before")
     @classmethod
     def validate_dirs(cls, v: Any) -> Any:
-        if isinstance(v, (list, tuple)):
-            for i, item in enumerate(v):
-                if isinstance(item, str) and not item.strip():
-                    raise ValueError(f"Blank path at index {i}.")
-        return v
+        return validate_nonblank_items(cls.__name__, "path", v)
 
     @field_validator(
-        "libraries", "compile_options", "linker_options", "add_opts", mode="before"
+        "libraries",
+        "compile_options",
+        "linker_options",
+        "add_opts",
+        "sanitizers",
+        mode="before",
     )
     @classmethod
     def validate_strings(cls, v: Any) -> Any:
-        if isinstance(v, (list, tuple)):
-            for i, item in enumerate(v):
-                if isinstance(item, str) and not item.strip():
-                    raise ValueError(f"Blank string at index {i}.")
-        return v
+        return validate_nonblank_items(cls.__name__, "string", v)
 
     @model_validator(mode="after")
     def validate_pipeline(self) -> Self:
-        active = sum([self.preprocess_only, self.compile_only, self.assemble_only])
-        if active > 1:
-            raise ValueError("Pipeline flags are mutually exclusive.")
+        validate_compiler_pipeline_flags(
+            self.__class__.__name__,
+            preprocess_only=self.preprocess_only,
+            compile_only=self.compile_only,
+            assemble_only=self.assemble_only,
+        )
         return self
-
-
-def _clang_macro(v: str | int | bool) -> str:
-    if isinstance(v, bool):
-        return "1" if v else "0"
-    return str(v)
 
 
 class ClangArgs(ClangCompilerArgs[ClangCStandard]):
@@ -174,28 +175,12 @@ class ClangXXArgs(ClangCompilerArgs[ClangCXXStandard]):
 @register_typed_executable(["clang"])
 class ClangExecutable(TypedExecutable[ClangArgs]):
     install_executable = InstallScript(
-        {
-            is_posix: PlatformInstallScript(
-                executable=BashExecutable(),
-                args=BashScriptArgs(
-                    script=Path(__file__).parents[2]
-                    / "data/install_scripts/install_clang.sh"
-                ),
-            )
-        }
+        {is_posix: simple_bash_install_script(__file__, "install_clang.sh")}
     )
 
 
 @register_typed_executable(["clang++"])
 class ClangXXExecutable(TypedExecutable[ClangXXArgs]):
     install_executable = InstallScript(
-        {
-            is_posix: PlatformInstallScript(
-                executable=BashExecutable(),
-                args=BashScriptArgs(
-                    script=Path(__file__).parents[2]
-                    / "data/install_scripts/install_clang.sh"
-                ),
-            )
-        }
+        {is_posix: simple_bash_install_script(__file__, "install_clang.sh")}
     )

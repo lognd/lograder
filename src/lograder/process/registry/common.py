@@ -136,35 +136,17 @@ class CompilerArgs(CLIArgs, Generic[Standard]):
     @field_validator("include_dirs", "library_dirs", mode="before")
     @classmethod
     def validate_nonempty_directory_strings(cls, v: Any) -> Any:
-        if isinstance(v, (list, tuple)):
-            for i, item in enumerate(v):
-                if isinstance(item, str) and not item.strip():
-                    raise ValueError(
-                        f"Blank path is not valid in `{cls.__name__}` at index `{i}`."
-                    )
-        return v
+        return validate_nonblank_items(cls.__name__, "path", v)
 
     @field_validator("libraries", "compile_options", "linker_options", mode="before")
     @classmethod
     def validate_nonempty_string_sequences(cls, v: Any) -> Any:
-        if isinstance(v, (list, tuple)):
-            for i, item in enumerate(v):
-                if isinstance(item, str) and not item.strip():
-                    raise ValueError(
-                        f"Blank string is not valid in `{cls.__name__}` at index `{i}`."
-                    )
-        return v
+        return validate_nonblank_items(cls.__name__, "string", v)
 
     @field_validator("sanitizers", mode="before")
     @classmethod
     def validate_nonempty_sanitizer_strings(cls, v: Any) -> Any:
-        if isinstance(v, (list, tuple)):
-            for i, item in enumerate(v):
-                if isinstance(item, str) and not item.strip():
-                    raise ValueError(
-                        f"Blank sanitizer entry is not valid in `{cls.__name__}` at index `{i}`."
-                    )
-        return v
+        return validate_nonblank_items(cls.__name__, "sanitizer", v)
 
     @field_validator("sanitizers", mode="after")
     @classmethod
@@ -205,13 +187,12 @@ class CompilerArgs(CLIArgs, Generic[Standard]):
 
     @model_validator(mode="after")
     def validate_pipeline_breaks_mutually_exclusive(self) -> Self:
-        active = sum([self.preprocess_only, self.compile_only, self.assemble_only])
-        if active > 1:
-            raise ValueError(
-                f"In `{self.__class__.__name__}`, parameters `preprocess_only` ({self.preprocess_only}), "
-                f"`compile_only` ({self.compile_only}), `assemble_only` ({self.assemble_only}) are mutually exclusive; "
-                f"only one may be active."
-            )
+        validate_compiler_pipeline_flags(
+            self.__class__.__name__,
+            preprocess_only=self.preprocess_only,
+            compile_only=self.compile_only,
+            assemble_only=self.assemble_only,
+        )
         return self
 
     @model_validator(mode="after")
@@ -237,3 +218,31 @@ def _macro_value(v: None | str | int | bool) -> str | None:
     if isinstance(v, bool):
         return "1" if v else "0"
     return str(v)
+
+
+def validate_nonblank_items(cls_name: str, field_name: str, v: Any) -> Any:
+    """Reject blank strings in a list/tuple-valued CLI field."""
+    if isinstance(v, (list, tuple)):
+        for i, item in enumerate(v):
+            if isinstance(item, str) and not item.strip():
+                raise ValueError(
+                    f"Blank `{field_name}` entry is not valid in `{cls_name}` at index `{i}`."
+                )
+    return v
+
+
+def validate_compiler_pipeline_flags(
+    cls_name: str,
+    *,
+    preprocess_only: bool,
+    compile_only: bool,
+    assemble_only: bool,
+) -> None:
+    """Enforce that at most one of preprocess/compile/assemble-only is set."""
+    active = sum([preprocess_only, compile_only, assemble_only])
+    if active > 1:
+        raise ValueError(
+            f"In `{cls_name}`, parameters `preprocess_only` ({preprocess_only}), "
+            f"`compile_only` ({compile_only}), `assemble_only` ({assemble_only}) are mutually "
+            f"exclusive; only one may be active."
+        )

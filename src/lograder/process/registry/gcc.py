@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Generic
 
 from lograder.exception import DeveloperException
 from lograder.process.cli_args import CLI_ARG_MISSING, CLIOption, CLIPresenceFlag
 from lograder.process.executable import TypedExecutable, register_typed_executable
-from lograder.process.install_script import InstallScript, PlatformInstallScript
+from lograder.process.install_script import InstallScript, simple_bash_install_script
 from lograder.process.os_helpers import is_posix
-from lograder.process.registry.bash import BashExecutable, BashScriptArgs
 from lograder.process.registry.common import (
     CompilerArgs,
     CStandard,
@@ -109,28 +107,12 @@ class GXXArgs(GNUCompilerArgs[GNUXXStandard]):
 @register_typed_executable(["gcc"])
 class GCCExecutable(TypedExecutable[GCCArgs]):
     install_executable = InstallScript(
-        {
-            is_posix: PlatformInstallScript(
-                executable=BashExecutable(),
-                args=BashScriptArgs(
-                    script=Path(__file__).parents[2]
-                    / "data/install_scripts/install_gcc.sh"
-                ),
-            )
-        }
+        {is_posix: simple_bash_install_script(__file__, "install_gcc.sh")}
     )
 
 
 @register_typed_executable(["g++"])
 class GXXExecutable(TypedExecutable[GXXArgs]):
     install_executable = InstallScript(
-        {
-            is_posix: PlatformInstallScript(
-                executable=BashExecutable(),
-                args=BashScriptArgs(
-                    script=Path(__file__).parents[2]
-                    / "data/install_scripts/install_gxx.sh"
-                ),
-            )
-        }
+        {is_posix: simple_bash_install_script(__file__, "install_gxx.sh")}
     )

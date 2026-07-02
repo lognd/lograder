@@ -9,9 +9,8 @@ from lograder.process.cli_args import (
     CLIPresenceFlag,
 )
 from lograder.process.executable import TypedExecutable, register_typed_executable
-from lograder.process.install_script import InstallScript, PlatformInstallScript
+from lograder.process.install_script import InstallScript, simple_bash_install_script
 from lograder.process.os_helpers import is_posix
-from lograder.process.registry.bash import BashExecutable, BashScriptArgs
 
 
 class CTestArgs(CLIArgs):
@@ -91,13 +90,5 @@ class CTestArgs(CLIArgs):
 @register_typed_executable(["ctest"])
 class CTestExecutable(TypedExecutable[CTestArgs]):
     install_executable = InstallScript(
-        {
-            is_posix: PlatformInstallScript(
-                executable=BashExecutable(),
-                args=BashScriptArgs(
-                    script=Path(__file__).parents[2]
-                    / "data/install_scripts/install_cmake.sh"
-                ),
-            )
-        }
+        {is_posix: simple_bash_install_script(__file__, "install_cmake.sh")}
     )

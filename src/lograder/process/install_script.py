@@ -14,6 +14,7 @@ from lograder.process.executable import (
     InstallationExecutable,
     TypedExecutable,
 )
+from lograder.process.registry.bash import BashExecutable, BashScriptArgs
 
 T = TypeVar("T")
 
@@ -26,6 +27,28 @@ class PlatformInstallScript(BaseModel):
     append_command_arguments: list[str] = Field(default_factory=list)
     input: ExecutableInput = Field(default_factory=ExecutableInput)
     options: ExecutableOptions = Field(default_factory=ExecutableOptions)
+
+
+def simple_bash_install_script(
+    caller_file: str,
+    script_filename: str,
+    *,
+    install_location: Optional[Path] = None,
+) -> PlatformInstallScript:
+    """Build a PlatformInstallScript that runs a bash script from data/install_scripts/.
+
+    ``caller_file`` should be the registry module's own ``__file__``, so the
+    script path resolves relative to that module regardless of caller depth.
+    """
+    return PlatformInstallScript(
+        executable=BashExecutable(),
+        args=BashScriptArgs(
+            script=Path(caller_file).parents[2]
+            / "data/install_scripts"
+            / script_filename
+        ),
+        install_location=install_location,
+    )
 
 
 class InstallScript(InstallationExecutable):
@@ -53,7 +76,7 @@ class InstallScript(InstallationExecutable):
     def validate_runnable(self) -> None:
         if not self._run_checker():
             raise DeveloperException(
-                f"None of the platform checks in (`{'`, `'.join(f.__name__ for f in self._p_checks)}`, total of {len(self._p_checks)} checks) "
+                f"None of the platform checks in (`{'`, `'.join(getattr(f, '__name__', repr(f)) for f in self._p_checks)}`, total of {len(self._p_checks)} checks) "
                 f"within class, `{self.__class__.__name__}`, were true, likely meaning that an install script is not implemented for your platform."
             )
 
