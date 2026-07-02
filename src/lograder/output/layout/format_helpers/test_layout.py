@@ -14,6 +14,18 @@ def args_str(args: list[str]) -> str:
     return f" {command_to_str(args)}" if args else ""
 
 
+def header_line_simple(
+    badge: str, artifact_name: str, test_name: str, args: list[str]
+) -> str:
+    return f"{badge} `{artifact_name}` - {test_name}{args_str(args)}"
+
+
+def header_line_ansi(
+    badge: str, artifact_name: str, test_name: str, args: list[str]
+) -> str:
+    return f"{badge} `{F.CYAN}{artifact_name}{F.RESET}` - {test_name}{args_str(args)}"
+
+
 def truncate(text: str, limit: int = 2000) -> str:
     if len(text) <= limit:
         return text

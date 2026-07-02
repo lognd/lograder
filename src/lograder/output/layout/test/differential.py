@@ -5,7 +5,12 @@ from colorama import Fore as F
 from lograder.output.layout.format_helpers.test_layout import ERROR as _ERROR
 from lograder.output.layout.format_helpers.test_layout import FAIL as _FAIL
 from lograder.output.layout.format_helpers.test_layout import PASS as _PASS
-from lograder.output.layout.format_helpers.test_layout import args_str as _args_str
+from lograder.output.layout.format_helpers.test_layout import (
+    header_line_ansi as _header_line_ansi,
+)
+from lograder.output.layout.format_helpers.test_layout import (
+    header_line_simple as _header_line_simple,
+)
 from lograder.output.layout.format_helpers.test_layout import truncate as _truncate
 from lograder.output.layout.layout import Layout, register_layout
 from lograder.pipeline.test.differential import (
@@ -19,15 +24,13 @@ from lograder.pipeline.test.differential import (
 class DifferentialSuccessLayout(Layout[DifferentialSuccess]):
     @classmethod
     def to_simple(cls, data: DifferentialSuccess) -> str:
-        return f"[PASS] `{data.artifact_name}` - {data.test_name}{_args_str(data.args)}"
+        return _header_line_simple(
+            "[PASS]", data.artifact_name, data.test_name, data.args
+        )
 
     @classmethod
     def to_ansi(cls, data: DifferentialSuccess) -> str:
-        return (
-            f"{_PASS}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}` - {data.test_name}"
-            f"{_args_str(data.args)}"
-        )
+        return _header_line_ansi(_PASS, data.artifact_name, data.test_name, data.args)
 
 
 @register_layout("differential-failure")
@@ -35,7 +38,8 @@ class DifferentialFailureLayout(Layout[DifferentialFailure]):
     @classmethod
     def to_simple(cls, data: DifferentialFailure) -> str:
         parts = [
-            f"[FAIL] `{data.artifact_name}` - {data.test_name}{_args_str(data.args)}\n"
+            _header_line_simple("[FAIL]", data.artifact_name, data.test_name, data.args)
+            + "\n"
         ]
         if data.diff:
             parts.append(
@@ -53,9 +57,8 @@ class DifferentialFailureLayout(Layout[DifferentialFailure]):
     @classmethod
     def to_ansi(cls, data: DifferentialFailure) -> str:
         parts = [
-            f"{_FAIL}"
-            f" `{F.CYAN}{data.artifact_name}{F.RESET}` - {data.test_name}"
-            f"{_args_str(data.args)}\n"
+            _header_line_ansi(_FAIL, data.artifact_name, data.test_name, data.args)
+            + "\n"
         ]
         if data.diff:
             parts.append(

@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from colorama import Fore as F
-from colorama import Style as S
 
+from lograder.output.layout.format_helpers.test_layout import ERROR as _ERROR
+from lograder.output.layout.format_helpers.test_layout import FAIL as _FAIL
+from lograder.output.layout.format_helpers.test_layout import PASS as _PASS
 from lograder.output.layout.layout import Layout, register_layout
 from lograder.pipeline.test.symbol import SymbolError, SymbolFailure, SymbolSuccess
-
-_PASS = f"{S.BRIGHT}{F.GREEN}[PASS]{F.RESET}{S.RESET_ALL}"
-_FAIL = f"{S.BRIGHT}{F.RED}[FAIL]{F.RESET}{S.RESET_ALL}"
-_ERROR = f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
 
 
 @register_layout("symbol-success")
