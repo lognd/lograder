@@ -240,6 +240,26 @@ class SourceCheck(
     packets (one per violated constraint per file); the step always returns
     ``Ok(manifest)`` unless a fatal error occurs (file missing, preprocessing
     failed, unreadable file).
+
+    WARNING -- preprocessed-translation-unit semantics: because ``identifier``,
+    ``type_identifier``, and ``qualified_identifier`` analysis runs on the
+    *preprocessed* C/C++ translation unit, declarations pulled in from system
+    headers (e.g. the ``printf`` family from ``<stdio.h>``, ``std::stoi`` from
+    ``<string>``) can be counted even though the student never wrote them.
+    Also, C++ keywords (``throw``/``new``/``delete``/``try``/``catch``/
+    ``template``) are keyword nodes in the tree-sitter grammar, never
+    identifier nodes, so ``IdentifierConstraint`` can never match them --
+    use ``KeywordConstraint`` for loop keywords, but note it only covers
+    ``for``/``while``/``do``. For forbid-lists that must scan the student's
+    own original source text (keywords included, system headers excluded),
+    use ``RawSourceCheck`` / ``ForbiddenTokenConstraint`` in
+    ``lograder.pipeline.check.source.raw_source_check`` instead.
+
+    WARNING -- scoring: violations are yielded as non-fatal ``Err`` packets;
+    the step's fatal return is ``Ok(manifest)`` regardless of violations.
+    Use ``CleanRunScorer`` to score this step. ``AllOrNothingScorer`` reacts
+    only to the fatal return and will award full credit even when every
+    constraint is violated -- see its docstring.
     """
 
     def __init__(

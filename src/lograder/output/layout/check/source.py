@@ -4,6 +4,7 @@ from colorama import Fore as F
 from colorama import Style as S
 
 from lograder.output.layout.layout import Layout, register_layout
+from lograder.pipeline.check.source.raw_source_check import RawSourceCheckError
 from lograder.pipeline.check.source.source_check import (
     SourceCheckData,
     SourceCheckError,
@@ -71,4 +72,19 @@ class SourceCheckErrorLayout(Layout[SourceCheckError]):
 
     @classmethod
     def to_simple(cls, data: SourceCheckError) -> str:
+        return f"[ERROR] {data.check_name} - {data.file}: {data.message}"
+
+
+@register_layout("raw-source-check-error")
+class RawSourceCheckErrorLayout(Layout[RawSourceCheckError]):
+    @classmethod
+    def to_ansi(cls, data: RawSourceCheckError) -> str:
+        return (
+            f"{S.BRIGHT}{F.RED}[ERROR]{F.RESET}{S.RESET_ALL}"
+            f" {data.check_name} - {F.CYAN}{data.file}{F.RESET}\n"
+            f"  {data.message}"
+        )
+
+    @classmethod
+    def to_simple(cls, data: RawSourceCheckError) -> str:
         return f"[ERROR] {data.check_name} - {data.file}: {data.message}"

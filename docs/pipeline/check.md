@@ -79,6 +79,17 @@ source_check.scorer = CleanRunScorer(0.0, extra_credit=5.0, label="Clean code")
 
 Every constraint counts matched occurrences and fails when that count exceeds `max_count`. Set `max_count=0` to forbid a feature outright, or a positive number to cap (rather than ban) its use. An optional `label` overrides the auto-generated display label.
 
+**Caveat -- preprocessed translation unit.** `SourceCheck` runs identifier /
+qualified-name analysis on the *preprocessed* C/C++ translation unit, so
+declarations pulled in from system headers (e.g. the `printf` family via
+`<stdio.h>`, `std::stoi` via `<string>`) can be counted against the student
+even if never written by hand. C++ keywords (`throw`/`new`/`delete`/`try`/
+`catch`/`template`) are keyword nodes in the grammar, not identifier nodes,
+so `IdentifierConstraint` can never match them, and `KeywordConstraint` only
+covers loop keywords (`for`/`while`/`do`). For a forbid-list that must scan
+the student's own original source text -- keywords included, system headers
+excluded -- use `RawSourceCheck` (below) instead.
+
 ### Constraint types
 
 #### `OperatorConstraint`
@@ -174,6 +185,56 @@ source_check.scorer = CleanRunScorer(
     label="Clean memory management",
 )
 ```
+
+**Do not use `AllOrNothingScorer` here.** `SourceCheck` (and `RawSourceCheck`,
+below) always fatally returns `Ok(manifest)` once every listed file is
+readable -- violations are reported as non-fatal `Err` packets only.
+`AllOrNothingScorer.on_packet` is a no-op, so attaching it to a source check
+awards full credit no matter how many constraints were violated.
+
+## `RawSourceCheck`: forbidden tokens in the original source
+
+`SourceCheck` cannot enforce every forbid-list: C++ keywords
+(`throw`/`new`/`delete`/`try`/`catch`/`template`) are keyword nodes in the
+tree-sitter grammar, never identifier nodes, so `IdentifierConstraint` never
+counts them; and because `SourceCheck` analyzes the *preprocessed*
+translation unit, declarations pulled in from system headers (`printf` via
+`<stdio.h>`, `std::stoi` via `<string>`) can count against the student even
+when never written by hand.
+
+`RawSourceCheck` scans each file's own original text instead -- no
+preprocessing, no AST -- with `//` and `/* */` comments and string/char
+literals stripped before matching. C/C++ only.
+
+```python
+from lograder.pipeline.check.source.raw_source_check import (
+    ForbiddenTokenConstraint,
+    RawSourceCheck,
+)
+from lograder.pipeline.score import CleanRunScorer
+
+pipeline.add(source := RawSourceCheck(
+    files=["hexdump.cpp"],
+    constraints=[
+        ForbiddenTokenConstraint(
+            tokens=["printf", "fopen", "malloc"],
+            max_count=0,
+            label="No printf/fopen/malloc family",
+        ),
+        # "a::b"-style tokens match as qualified names (whitespace-tolerant
+        # around each `::`), so this also catches `std :: sort`.
+        ForbiddenTokenConstraint(tokens=["std::sort"], max_count=0),
+        # Keywords work here, unlike SourceCheck's IdentifierConstraint.
+        ForbiddenTokenConstraint(tokens=["throw", "try", "catch"], max_count=0),
+    ],
+))
+source.scorer = CleanRunScorer(10.0, label="No Prohibited Symbols")
+```
+
+Matches are whole-token (`\b...\b`); tokens found only inside comments or
+string/char literals are not counted. `= delete` (deleted special member
+syntax) is neutralized before matching, so declaring `Foo(Foo&&) = delete;`
+does not count as a use of `delete`.
 
 ## Full example with both checks
 
