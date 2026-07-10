@@ -189,6 +189,28 @@ def test_all_or_nothing_no_on_complete_call_gives_zero():
     assert c.possible == 10.0
 
 
+def test_all_or_nothing_ignores_err_packets_awards_full_on_ok_return():
+    """FLAW-1 regression (documented, not changed): a source-style check that
+    yields per-violation Err packets but fatally returns Ok (SourceCheck,
+    RawSourceCheck, MypyCheck, TyCheck) awards FULL credit under
+    AllOrNothingScorer, because on_packet is intentionally a no-op. This is
+    the documented, tested contract of AllOrNothingScorer -- see its
+    docstring and docs/pipeline/scoring.md -- not a bug to fix here.
+    CleanRunScorer is the correct scorer for that case; see
+    test_clean_run_with_errors_above_max_awards_zero above for the
+    contrasting, correct behavior on the identical packet stream.
+    """
+    scorer = AllOrNothingScorer(10.0)
+    # Simulate a check step that yields several violation packets ...
+    scorer.on_packet(Err(_E()))
+    scorer.on_packet(Err(_E()))
+    scorer.on_packet(Err(_E()))
+    # ... but still fatally returns Ok (its own "job" -- reporting -- succeeded).
+    scorer.on_complete(Ok(1))
+    c = scorer.contribution()
+    assert c.earned == 10.0  # full credit despite 3 violations -- by design
+
+
 # --- CleanRunScorer ---
 
 

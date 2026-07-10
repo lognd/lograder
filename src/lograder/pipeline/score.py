@@ -367,6 +367,16 @@ class AllOrNothingScorer(Scorer):
 
     Responds only to the fatal return  -  use ``CleanRunScorer`` to score non-fatal Err yields.
 
+    WARNING: check steps such as ``SourceCheck``, ``RawSourceCheck``,
+    ``MypyCheck``, and ``TyCheck`` yield per-violation ``Err`` packets as
+    NON-FATAL display output and still fatally return ``Ok`` when the file(s)
+    were readable  -  that is the check succeeding at its job of reporting
+    findings, not the code being clean. ``AllOrNothingScorer.on_packet`` is
+    intentionally a no-op, so attaching it to one of these checks awards full
+    credit regardless of how many violations were found. Attach
+    ``CleanRunScorer`` to any step whose "pass" condition is "no violations
+    were yielded" rather than "the step didn't fatally error."
+
     Args:
         points: Regular points on success.
         extra_credit: Bonus points on success; NOT counted in ``possible``.

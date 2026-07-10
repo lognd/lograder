@@ -41,6 +41,8 @@ AllOrNothingScorer(
 
 The scorer fires on the step's final `return` value, not on yields. A step that yields warnings but returns `Ok` gets full points.
 
+**Never attach `AllOrNothingScorer` to `SourceCheck` / `RawSourceCheck` / `MypyCheck` / `TyCheck`.** These checks yield per-violation packets as non-fatal `Err`s and still fatally `return Ok(manifest)` once the listed files are readable, so `AllOrNothingScorer` would award full credit regardless of violation count. Use `CleanRunScorer` for these.
+
 ### `CleanRunScorer`
 
 Awards points if the number of non-fatal `Err` yields is at or below `max_errors`. Use for source/check steps where a clean run earns credit.
