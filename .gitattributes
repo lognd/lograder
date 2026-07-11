@@ -1,0 +1,6 @@
+# Normalize line endings in the repository to LF, and force LF on shell
+# scripts on every checkout -- these ship inside the wheel (the tool
+# auto-install fallback runs them with bash), and CRLF endings make bash
+# reject them ("set: pipefail\r: invalid option name").
+* text=auto
+*.sh text eol=lf
