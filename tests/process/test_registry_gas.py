@@ -126,21 +126,35 @@ def test_registered() -> None:
 
 # --- Real executable tests ---
 
+import platform as _platform  # noqa: E402
 import shutil as _shutil  # noqa: E402
 
 _AS_AVAILABLE = bool(_shutil.which("as"))
 
-# Minimal assembly - defines a function that returns 0 (AArch64 / x86-64 portable)
-_HELLO_ASM = """\
-    .text
-    .globl foo
-foo:
-    mov x0, #0
-    ret
-"""
+# Minimal "return 0 from foo" assembly, one variant per host architecture --
+# `as` is architecture-specific, so a single fixed source only assembles on the
+# arch it was written for (the previous AArch64-only source failed on x86-64 CI
+# runners). Select the matching source from the host's reported machine; when
+# the arch is not one we have a snippet for, _HELLO_ASM is None and the real-
+# assembly tests below skip.
+_HELLO_ASM_BY_ARCH = {
+    "x86_64": "    .text\n    .globl foo\nfoo:\n    xorl %eax, %eax\n    ret\n",
+    "amd64": "    .text\n    .globl foo\nfoo:\n    xorl %eax, %eax\n    ret\n",
+    "i386": "    .text\n    .globl foo\nfoo:\n    xorl %eax, %eax\n    ret\n",
+    "i686": "    .text\n    .globl foo\nfoo:\n    xorl %eax, %eax\n    ret\n",
+    "aarch64": "    .text\n    .globl foo\nfoo:\n    mov x0, #0\n    ret\n",
+    "arm64": "    .text\n    .globl foo\nfoo:\n    mov x0, #0\n    ret\n",
+    "armv7l": "    .text\n    .globl foo\nfoo:\n    mov r0, #0\n    bx lr\n",
+    "armv6l": "    .text\n    .globl foo\nfoo:\n    mov r0, #0\n    bx lr\n",
+    "riscv64": "    .text\n    .globl foo\nfoo:\n    li a0, 0\n    ret\n",
+}
+_HELLO_ASM = _HELLO_ASM_BY_ARCH.get(_platform.machine().lower())
+_AS_USABLE = _AS_AVAILABLE and _HELLO_ASM is not None
 
 
-@pytest.mark.skipif(not _AS_AVAILABLE, reason="as (gas) not available")
+@pytest.mark.skipif(
+    not _AS_USABLE, reason="as (gas) unavailable or no asm snippet for this arch"
+)
 def test_gas_real_assembles_x86_source(tmp_path) -> None:
     from lograder.process.executable import ExecutableOptions
 
@@ -156,7 +170,9 @@ def test_gas_real_assembles_x86_source(tmp_path) -> None:
     assert obj.exists()
 
 
-@pytest.mark.skipif(not _AS_AVAILABLE, reason="as (gas) not available")
+@pytest.mark.skipif(
+    not _AS_USABLE, reason="as (gas) unavailable or no asm snippet for this arch"
+)
 def test_gas_real_debug_info_flag(tmp_path) -> None:
     from lograder.process.executable import ExecutableOptions
 

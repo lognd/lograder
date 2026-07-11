@@ -36,6 +36,10 @@ dev = [
     # conditional-import fallback branch regardless of the interpreter version,
     # so it must be importable in the type-check environment on every version.
     "tomli>=2.0.0",
+    # mypy is exercised by the MypyCheck integration tests; without it in the
+    # test environment those tests could not run (their probe now skips
+    # cleanly, but installing mypy lets them actually execute in CI).
+    "mypy",
 ]
 
 [project.urls]

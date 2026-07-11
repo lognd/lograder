@@ -1,6 +1,6 @@
 """Unit tests for MypyCheck."""
 
-import subprocess
+import shutil
 
 import pytest
 
@@ -65,7 +65,10 @@ def test_parse_diagnostics_mixed():
 # ---------------------------------------------------------------------------
 
 
-_HAS_MYPY = subprocess.run(["mypy", "--version"], capture_output=True).returncode == 0
+# Probe for the mypy binary with shutil.which rather than actually invoking it:
+# subprocess.run(["mypy", ...]) raises FileNotFoundError (aborting collection)
+# when mypy is not installed, instead of letting these tests skip cleanly.
+_HAS_MYPY = shutil.which("mypy") is not None
 
 
 def _make_manifest(tmp_path, files):
