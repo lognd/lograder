@@ -31,7 +31,11 @@ dev = [
     "pytest",
     "pytest-xdist",
     "ty",
-    "ruff"
+    "ruff",
+    # tomli is only a runtime dependency on Python < 3.11, but ty checks the
+    # conditional-import fallback branch regardless of the interpreter version,
+    # so it must be importable in the type-check environment on every version.
+    "tomli>=2.0.0",
 ]
 
 [project.urls]

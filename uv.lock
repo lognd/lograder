@@ -85,6 +85,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-xdist" },
     { name = "ruff" },
+    { name = "tomli" },
     { name = "ty" },
 ]
 
@@ -98,6 +99,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "strenum", marker = "python_full_version < '3.11'", specifier = ">=0.4.15" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.0" },
+    { name = "tomli", marker = "extra == 'dev'", specifier = ">=2.0.0" },
     { name = "tree-sitter", specifier = ">=0.22" },
     { name = "tree-sitter-c", specifier = ">=0.21" },
     { name = "tree-sitter-cpp", specifier = ">=0.23" },
