@@ -46,7 +46,9 @@ class PythonAnnotationCheckError(CheckError):
 _IMPLICIT_RECEIVERS = frozenset({"self", "cls"})
 
 
-def _function_defs(tree: ast.Module) -> dict[str, ast.FunctionDef | ast.AsyncFunctionDef]:
+def _function_defs(
+    tree: ast.Module,
+) -> dict[str, ast.FunctionDef | ast.AsyncFunctionDef]:
     """Gradable function definitions, keyed by name.
 
     Includes top-level functions (keyed by bare name) and the methods of
@@ -82,7 +84,9 @@ def _default_targets(tree: ast.Module) -> list[str]:
     return targets
 
 
-def _missing_annotations(fn: ast.FunctionDef | ast.AsyncFunctionDef, require_return: bool) -> list[str]:
+def _missing_annotations(
+    fn: ast.FunctionDef | ast.AsyncFunctionDef, require_return: bool
+) -> list[str]:
     """Names of the parts of ``fn``'s signature that lack a type annotation."""
     missing: list[str] = []
     a = fn.args
@@ -92,7 +96,9 @@ def _missing_annotations(fn: ast.FunctionDef | ast.AsyncFunctionDef, require_ret
     if a.kwarg is not None:
         params.append(a.kwarg)
     for i, param in enumerate(params):
-        if param.annotation is None and not (i == 0 and param.arg in _IMPLICIT_RECEIVERS):
+        if param.annotation is None and not (
+            i == 0 and param.arg in _IMPLICIT_RECEIVERS
+        ):
             missing.append(param.arg)
     if require_return and fn.returns is None:
         missing.append("-> return")

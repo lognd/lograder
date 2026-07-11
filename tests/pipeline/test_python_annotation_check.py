@@ -73,7 +73,9 @@ class TestPythonAnnotationCheck:
         assert [y for y in yields if y.is_err]
 
     def test_required_but_missing_function_is_a_violation(self, tmp_path):
-        yields, final = _check(tmp_path, "def g(x: int) -> int:\n    return x\n", functions=["f"])
+        yields, final = _check(
+            tmp_path, "def g(x: int) -> int:\n    return x\n", functions=["f"]
+        )
         assert [y for y in yields if y.is_err]
 
     def test_missing_file_is_fatal_error(self, tmp_path):
