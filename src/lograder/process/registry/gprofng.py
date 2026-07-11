@@ -22,6 +22,11 @@ class GprofngCollectArgs(CLIArgs):
         default="collect", position=0, emit=["{}"]
     )
 
+    # binutils gprofng requires the experiment kind ("app") between `collect`
+    # and the target: `gprofng collect app [options] <target>`. Without it,
+    # gprofng rejects the target as an unsupported qualifier.
+    mode: Literal["app"] = CLIOption(default="app", position=1, emit=["{}"])
+
     output: Path | None = CLIOption(default=None, emit=["-o", "{}"])
     experiment: Path | None = CLIOption(default=None, emit=["-O", "{}"])
 
