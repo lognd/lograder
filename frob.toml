@@ -1,0 +1,41 @@
+# check_base lives in pyproject.toml's [tool.frob] table (that's the file
+# frob.app.config.AppConfig.from_external actually reads scalar CLI
+# defaults from); this frob.toml carries the [graph]/[gates]/[testing]/
+# [[test.runner]] tables, which are read directly from this file.
+
+[graph]
+# tests/integration/projects/** are vendored CMake/C++ fixture projects,
+# not real source under obligation. src/lograder.egg-info/** is a build
+# artifact. handlers.py and executable.py define property getter/setter
+# pairs with the same method name; frob 0.1.0a0's graph builder assigns
+# them the same symref and crashes with a UNIQUE constraint error on
+# `frob graph build` (sqlite3.IntegrityError: symbols.symref) -- excluded
+# until frob disambiguates getter/setter symrefs upstream.
+exclude = [
+    "tests/integration/projects/**",
+    "src/lograder.egg-info/**",
+    "src/lograder/output/handlers.py",
+    "src/lograder/process/executable.py",
+]
+
+[gates.severity]
+# Legacy-adoption baseline: snapshot-wide obligations warn on the
+# un-annotated legacy surface; diff-scoped and drift rules stay hard
+# errors. Raise these back to "error" as annotation coverage grows.
+COV001 = "warn"
+TEST001 = "warn"
+TEST002 = "warn"
+TEST003 = "warn"
+TEST005 = "warn"
+TEST006 = "warn"
+
+[testing]
+# min_unit_cases dropped from the 3-case aspirational target to 1 while
+# the gates dogfood milestone is in progress.
+min_unit_cases = 1
+
+[[test.runner]]
+language = "python"
+command = ["uv", "run", "pytest", "-q", "{ids}"]
+all_command = ["uv", "run", "pytest", "-n", "auto", "-q"]
+cwd = "."
