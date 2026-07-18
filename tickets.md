@@ -17,6 +17,8 @@ scope:
 - src/lograder/process/executable.py
 evidence: []
 attachments: []
+acceptance: []
+threat: null
 ```
 ## Context
 
@@ -54,6 +56,8 @@ scope:
 - src/lograder/**
 evidence: []
 attachments: []
+acceptance: []
+threat: null
 ```
 ## Context
 
@@ -88,6 +92,8 @@ scope:
 - scripts/**
 evidence: []
 attachments: []
+acceptance: []
+threat: null
 ```
 ## Context
 
@@ -129,6 +135,8 @@ scope:
 - scripts/**
 evidence: []
 attachments: []
+acceptance: []
+threat: null
 ```
 ## Context
 
@@ -154,3 +162,59 @@ added to the Makefile.
 ## Done report
 
 (pending)
+
+<!-- ticket:T-0005 -->
+```yaml
+id: T-0005
+title: Adopt strata self-model (design/lograder.strata) and drive frob sys audit clean
+state: done
+kind: docs
+origin: agent
+created: '2026-07-18'
+blocked_by: []
+parent: null
+scope:
+- design/lograder.strata
+evidence:
+- tests/test_design_model.py::test_frob_sys_audit_proves_clean
+- tests/test_design_model.py::test_strata_model_exists
+attachments: []
+acceptance: []
+threat: null
+```
+Pilot: model the real package graph (api/exception/common/output/pipeline/process), measured capability surface, and true isolation claims in strata; wire frob sys audit into the check loop.
+
+## Done report
+
+design/lograder.strata landed: 8 nodes (submission/api/exception/common/
+output/pipeline/process/data), 15 flows (all measured import edges,
+including the real output/pipeline/process package cycle), 5 assert
+claims (reach/noflow, all PROVED) plus 1 assume discharging the
+THREAT003 CWE-78 obligation that `may "exec"` on `process` drags in.
+Capability surface measured with frob.vet._capability scanner per node;
+`frob sys audit` exits 0: PROVED across 9 views, self-conformance
+PROVED (SYS101 verified falsifiable: a probe `may "net"` on `common`
+was correctly flagged, then removed). Regression guard:
+tests/test_design_model.py runs `frob sys audit` in CI-with-frob
+environments and skips cleanly elsewhere. Flow-level TEST001 coverage
+debt (15 warn-severity findings) deferred to T-0006.
+
+<!-- ticket:T-0006 -->
+```yaml
+id: T-0006
+title: Bind unit/integration tests to lograder.strata flows (TEST001 debt from strata
+  pilot)
+state: queued
+kind: feature
+origin: agent
+created: '2026-07-18'
+blocked_by: []
+parent: null
+scope:
+- design/lograder.strata
+evidence: []
+attachments: []
+acceptance: []
+threat: null
+```
+The strata self-model (T-0005) declares 15 flows; each currently has no frob:tests unit edge, adding 15 warn-severity TEST001 findings to the adoption baseline. Bind existing integration tests (tests/integration/ CMake pipelines already exercise pipeline->process->submission paths) via frob:tests directives, or add targeted tests, once the model has stabilized. Mirrors typani's T-0005 debt-ticket pattern.

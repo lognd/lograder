@@ -1,0 +1,249 @@
+// lograder.strata -- lograder's own architecture, modeled in strata
+// (frob's provable system-design language). lograder is a Gradescope
+// autograder framework: it builds, runs, and scores untrusted student
+// submissions (C/C++/Python) and renders results for the Gradescope
+// harness. This file documents the REAL package graph of src/lograder/
+// as enforced truth for `frob sys audit` -- every node's `code` glob was
+// chosen by reading the tree, every flow below is a measured
+// `from lograder.X import ...` edge (computed by grepping every file's
+// import block per package), and every `may` declaration was measured
+// with frob's own scanner (frob.vet._capability.scan_file_capabilities)
+// over every file the node's globs bind. Nothing here is aspirational.
+//
+// Measured capability surface (2026-07-18, frob 0.1.0a0 scanner):
+//   api/exception/common -> ZERO capabilities (pure in-memory types)
+//   output   -> env (layout/process/executable.py), fs-write (handlers,
+//               gradescope.py results-JSON writer, logger.py)
+//   pipeline -> eval (pipeline/test/pytest.py), fs-write (config, score,
+//               parcels, mixin, compile_check, test runners)
+//   process  -> env + exec + fs-write (process/executable.py is the ONE
+//               subprocess spawn site in the repo; os_helpers.py,
+//               registry/cmake.py write files)
+// No network capability was observed anywhere in src/lograder/ -- this
+// framework does no network I/O of its own (Gradescope invokes it).
+//
+// Known model/graph skew, stated rather than hidden: frob.toml
+// [graph].exclude drops src/lograder/output/handlers.py and
+// src/lograder/process/executable.py from the OBLIGATION graph (frob
+// 0.1.0a0 symref crash on property getter/setter pairs, ticket T-0001).
+// The strata `code` globs below still bind those files -- the capability
+// measurements above include them, which matters because executable.py
+// is precisely where `exec` lives.
+
+// frob:doc docs/index.md#lograder-documentation
+// frob:ticket T-0005
+module lograder
+
+// -- nodes -------------------------------------------------------------
+
+// Untrusted student submission code: the C/C++/Python sources lograder
+// compiles and executes. Foreign trust by definition -- course staff
+// configure the pipeline, students supply the code under test. It has no
+// `code` glob because it is not part of this repo; it exists in the model
+// because `process` really does spawn it (subprocess.Popen in
+// src/lograder/process/executable.py) and any honest model of an
+// autograder must show that trust edge.
+// frob:doc docs/index.md#lograder-documentation
+// frob:ticket T-0005
+node submission : foreign { clearance Public; }
+
+// Public re-export surface: src/lograder/__init__.py plus the
+// _build_test.py smoke module it re-exports (`hello_world`). Deliberately
+// tiny today -- consumers import subpackages directly (docs/index.md).
+// frob:doc docs/index.md#lograder-documentation
+// frob:ticket T-0005
+node api : trusted {
+    clearance Public;
+    code "src/lograder/__init__.py" "src/lograder/_build_test.py";
+}
+
+// src/lograder/exception.py: LograderException tree + UncaughtException
+// carrier model. Leaf: imports pydantic/stdlib only, nothing in
+// lograder. Zero measured capabilities.
+// frob:doc docs/index.md#lograder-documentation
+// frob:ticket T-0005
+node exception : trusted {
+    clearance Public;
+    code "src/lograder/exception.py";
+}
+
+// src/lograder/common/**: shared value types and helpers. Imports only
+// `exception` (and stdlib/pydantic). Zero measured capabilities.
+// frob:doc docs/concepts.md#concepts
+// frob:ticket T-0005
+node common : trusted {
+    clearance Internal;
+    code "src/lograder/common/**";
+}
+
+// src/lograder/output/**: Gradescope results rendering -- layouts,
+// handlers, the results-JSON writer (gradescope.py) and run logger.
+// `may`: fs-write (handlers.py/gradescope.py/logger.py), env
+// (layout/process/executable.py reads environment for display).
+// frob:doc docs/output.md#output-layouts
+// frob:ticket T-0005
+node output : trusted {
+    clearance Internal;
+    code "src/lograder/output/**";
+    may "env";
+    may "fs";
+}
+
+// src/lograder/pipeline/**: the staff-facing build/check/test/score
+// pipeline that orchestrates everything. `may`: fs-write (config
+// loading, score/parcel serialization, compile_check scratch files,
+// per-runner report files), eval (pipeline/test/pytest.py -- measured by
+// the scanner; it is the pytest runner's collection shim, not a raw
+// eval of student text).
+// frob:doc docs/concepts.md#pipeline
+// frob:ticket T-0005
+node pipeline : trusted {
+    clearance Internal;
+    code "src/lograder/pipeline/**";
+    may "eval";
+    may "fs";
+}
+
+// src/lograder/process/**: subprocess layer -- the tool registry
+// (gcc/cmake/valgrind/pytest/...), output parsers, and executable.py,
+// the single Popen site that actually runs student binaries. `may`:
+// exec + env (executable.py), fs-write (os_helpers.py, registry
+// scratch dirs).
+// frob:doc docs/process.md#process-layer
+// frob:ticket T-0005
+node process : trusted {
+    clearance Internal;
+    code "src/lograder/process/**";
+    may "env";
+    may "exec";
+    may "fs";
+}
+
+// src/lograder/data/**: packaged static assets -- HTML templates and
+// install scripts shipped inside the wheel. No Python source of its
+// own (config/asset-only node; see the frob T-0172 gap re: a managed
+// marker for nodes like this).
+// frob:doc docs/output.md#output-layouts
+// frob:ticket T-0005
+node data : trusted {
+    clearance Internal;
+    code "src/lograder/data/**";
+}
+
+// -- flows -------------------------------------------------------------
+// The output/pipeline/process trio is a REAL dependency cycle at package
+// granularity (each imports the other two); this model declares all six
+// edges rather than pretending the graph is a DAG. common -> exception
+// is the only edge out of `common`; `api` touches only `_build_test`
+// (rolled into the api node itself), so api has no outbound flows.
+
+// common/*.py: `from lograder.exception import ...`.
+// frob:doc docs/concepts.md#concepts
+// frob:ticket T-0005
+flow f_common_exception : common -> exception { label Internal; }
+
+// output/*: imports common, exception, pipeline, process.
+// frob:doc docs/output.md#output-layouts
+// frob:ticket T-0005
+flow f_output_common : output -> common { label Internal; }
+// frob:doc docs/output.md#output-layouts
+// frob:ticket T-0005
+flow f_output_exception : output -> exception { label Internal; }
+// frob:doc docs/output.md#output-layouts
+// frob:ticket T-0005
+flow f_output_pipeline : output -> pipeline { label Internal; }
+// frob:doc docs/output.md#output-layouts
+// frob:ticket T-0005
+flow f_output_process : output -> process { label Internal; }
+
+// pipeline/*: imports common, exception, output, process.
+// frob:doc docs/concepts.md#pipeline
+// frob:ticket T-0005
+flow f_pipeline_common : pipeline -> common { label Internal; }
+// frob:doc docs/concepts.md#pipeline
+// frob:ticket T-0005
+flow f_pipeline_exception : pipeline -> exception { label Internal; }
+// frob:doc docs/concepts.md#pipeline
+// frob:ticket T-0005
+flow f_pipeline_output : pipeline -> output { label Internal; }
+// frob:doc docs/concepts.md#pipeline
+// frob:ticket T-0005
+flow f_pipeline_process : pipeline -> process { label Internal; }
+
+// process/*: imports common, exception, output, pipeline.
+// frob:doc docs/process.md#process-layer
+// frob:ticket T-0005
+flow f_process_common : process -> common { label Internal; }
+// frob:doc docs/process.md#process-layer
+// frob:ticket T-0005
+flow f_process_exception : process -> exception { label Internal; }
+// frob:doc docs/process.md#process-layer
+// frob:ticket T-0005
+flow f_process_output : process -> output { label Internal; }
+// frob:doc docs/process.md#process-layer
+// frob:ticket T-0005
+flow f_process_pipeline : process -> pipeline { label Internal; }
+
+// output/gradescope.py renders results from packaged HTML templates in
+// data/ (importlib.resources read of static assets).
+// frob:doc docs/output.md#output-layouts
+// frob:ticket T-0005
+flow f_output_data : output -> data { label Internal; }
+
+// process/executable.py spawns the student submission as a subprocess
+// (create_process -> subprocess.Popen). This is the trust edge the whole
+// framework exists to manage: trusted orchestration invoking foreign
+// code.
+// frob:doc docs/process.md#process-layer
+// frob:ticket T-0005
+flow f_process_submission : process -> submission { label Public; }
+
+// -- claims ------------------------------------------------------------
+
+// The ONLY path from anything trusted to the foreign submission node
+// goes through `process` -- pipeline reaches student code only via the
+// process layer's Popen site. True today: no other package imports
+// subprocess (measured, scanner found `exec` only under process/**).
+// frob:doc docs/process.md#process-layer
+// frob:ticket T-0005
+assert c_pipeline_reaches_submission reach pipeline -> submission
+
+// `common` and `exception` are pure leaves: neither imports the
+// orchestration trio (verified by grepping their import blocks -- common
+// imports only lograder.exception; exception imports only pydantic).
+// frob:doc docs/concepts.md#concepts
+// frob:ticket T-0005
+assert c_common_no_process noflow common -> process
+// frob:doc docs/concepts.md#concepts
+// frob:ticket T-0005
+assert c_common_no_pipeline noflow common -> pipeline
+// frob:doc docs/index.md#lograder-documentation
+// frob:ticket T-0005
+assert c_exception_leaf noflow exception -> common
+
+// THREAT003: declaring `may "exec"` on `process` (measured honestly from
+// the Popen site in executable.py) drags in a CWE-78 OS-command-injection
+// discharge obligation. This `assume` is the honest tool, not a
+// workaround: executing foreign code IS the autograder's purpose, so the
+// question is whether foreign BYTES can inject into trusted argv
+// construction. They cannot today: every argv list is built by pydantic
+// registry models from staff-authored pipeline config (process/registry/
+// *.py validators reject blank/malformed args), student-influenced tokens
+// are shell-quoted by BashCommandArgs (regression-tested in
+// tests/process/test_registry_bash.py::
+// test_bash_command_args_quotes_shell_sensitive_tokens and
+// ..._quotes_single_quotes_correctly), and student stdout/stderr is
+// consumed by process/parsers as data, never fed back into a command
+// line. Reviewed 2026-07 (agent-measured, owner attests on review date).
+// frob:doc docs/process.md#process-layer
+// frob:ticket T-0005
+assume "weakness:CWE-78:process" noflow submission -> process owner logan review "2026-10-15"
+
+// The submission never flows back INTO the trusted graph as code --
+// student output is parsed as data by process' parsers, but no model
+// edge carries submission -> anywhere. (A foreign->trusted endorsement
+// boundary would be aspirational today: there is no checksum/signature
+// step, so none is claimed.)
+// frob:doc docs/process.md#process-layer
+// frob:ticket T-0005
+assert c_submission_no_direct_pipeline noflow submission -> pipeline
